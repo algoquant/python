@@ -1,0 +1,11 @@
+conda update anaconda
+conda install pyopengl
+conda update spyder
+conda install spyder=4.0.1
+
+
+
+
+
+
+

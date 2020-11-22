@@ -1,0 +1,6 @@
+# Ignore files
+foo*
+# Ignore directories
+.pylint.d/
+__pycache__/
+data/

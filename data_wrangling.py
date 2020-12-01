@@ -5,15 +5,16 @@ https://towardsdatascience.com/a-checklist-for-data-wrangling-8f106c093fef
 https://stackoverflow.com/questions/36814100/pandas-to-numeric-for-multiple-columns
 https://stackoverflow.com/questions/44117326/how-can-i-remove-all-non-numeric-characters-from-all-the-values-in-a-particular
 
-Note about 'axis' parameter:
+Note about 'axis' parameter in pandas:
 https://stackoverflow.com/questions/22149584/what-does-axis-in-pandas-mean
     axis = 'index' (axis=0) means calculate by columns
     axis = 'columns' (axis=1) means calculate by rows
 
 """
 
-# Import packages for OS commands
+## Import package for OS commands
 import os
+
 # Show current working directory
 os.getcwd()
 # List files in the directory
@@ -21,6 +22,8 @@ os.listdir()
 # Change working directory
 os.chdir("C:/Develop/python/scripts")
 os.listdir()
+
+
 
 
 ## Load data from csv files
@@ -42,6 +45,9 @@ score_s.dtypes
 score_s.shape
 # Get number of rows
 len(score_s)
+
+# Select rows by number range
+score_s.iloc[2:4, :]
 
 # Print column names
 score_s.columns
@@ -128,7 +134,7 @@ score_s.interpolate()
 score_s[cols].interpolate(axis=1)
 
 # Add new column calculated from existing columns
-score_s['test1_sum'] = score_s['test1_score'] + score_s['test2_score']
+score_s.loc[:, 'test1_sum'] = score_s['test1_score'] + score_s['test2_score']
 # Rename the last column
 cols = score_s.columns.values
 cols[-1, ] = "tests_sum"

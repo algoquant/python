@@ -48,14 +48,14 @@ type(clos_e)
 
 ema_15 = clos_e.ewm(span=15).mean()
 
+# Set plot style
 plt.style.use('fivethirtyeight')
-
-# The size for our chart:
-plt.figure(figsize = (12,6))
-#Plotting price and SMA lines:
+# Set plot dimensions
+plt.figure(figsize = (12, 6))
+# Plot price and SMA lines:
 plt.plot(clos_e, label='GOOG', linewidth = 2)
 plt.plot(ema_15, label='15 day rolling SMA', linewidth = 1.5)
-#Adding title and labeles on the axes, making legend visible:
+# Add title and labeles on the axes, making legend visible:
 plt.xlabel('Date')
 plt.ylabel('Adjusted closing price ($)')
 plt.title('Price with a single Simple Moving Average')

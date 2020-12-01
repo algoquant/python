@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 # import mplfinance as mpf
 
 
-## Load OHLC data from csv file and format the index
+## Load OHLC data from csv file and format the time index
 
 se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 # Rename columns

@@ -21,11 +21,11 @@ se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, 
 # Rename columns
 se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
 
-# Calculate the short and long-window simple moving averages
-# ma_short = se_ries['Close'].rolling(window=20).mean()
-# ma_long = se_ries['Close'].rolling(window=100).mean()
-ma_short = se_ries['Close'].ewm(span=30, adjust=False).mean()
-ma_long = se_ries['Close'].ewm(span=100, adjust=False).mean()
+# Calculate the fast and slow-window simple moving averages
+# ma_fast = se_ries.Close.rolling(window=20).mean()
+# ma_slow = se_ries.Close.rolling(window=100).mean()
+ma_fast = se_ries.Close.ewm(span=30, adjust=False).mean()
+ma_slow = se_ries.Close.ewm(span=100, adjust=False).mean()
 
 start_date = '2019-01-01'
 end_date = '2020-04-17'
@@ -35,8 +35,8 @@ fig, ax = plt.subplots(figsize = (16, 9))
 
 # Add plot objects
 ax.plot(se_ries.loc[start_date:end_date, :].index, se_ries.loc[start_date:end_date, 'Close'], label = 'GOOG', linewidth = 2, color = 'red')
-ax.plot(ma_long.loc[start_date:end_date].index, ma_long.loc[start_date:end_date], label = '100-days EWMA', linewidth = 2, color = 'green')
-ax.plot(ma_short.loc[start_date:end_date].index, ma_short.loc[start_date:end_date], label = '30-days EWMA', linewidth = 2, color = 'blue')
+ax.plot(ma_slow.loc[start_date:end_date].index, ma_slow.loc[start_date:end_date], label = '100-days EWMA', linewidth = 2, color = 'green')
+ax.plot(ma_fast.loc[start_date:end_date].index, ma_fast.loc[start_date:end_date], label = '30-days EWMA', linewidth = 2, color = 'blue')
 ax.set_ylabel('Price in $', size = 14)
 
 # Add legend
@@ -53,22 +53,22 @@ plt.show()
 ## Simulate a Moving Average Crossover Strategy
 
 # Calculate rolling VWAP
-vwap = se_ries['Close']
-vol_ume = se_ries['Volume']
+vwap = se_ries.Close
+vol_ume = se_ries.Volume
 vwap = vwap * vol_ume
 vwap = vwap.rolling(window=150).sum()
 vol_ume = vol_ume.rolling(window=150).sum()
 vwap = vwap / vol_ume
 
 # Calculate differences between the prices and the VWAP timeseries
-position_s = se_ries['Close'] - vwap
+position_s = se_ries.Close - vwap
 # Positions are equal to the sign of the differences
 position_s = position_s.apply(np.sign)
 # Lag the positions by 1 period
 position_s = position_s.shift(1)
 
 # Calculate asset log returns
-return_s = np.log(se_ries['Close']).diff()
+return_s = np.log(se_ries.Close).diff()
 
 # Calculate cumulative strategy returns
 strategy_returns = position_s * return_s

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-## Load data from Excel file and format the time index
+## Load data from Excel file
 se_ries = pd.read_excel(r'C:/Develop/predictive/data/Impact of Covid News on Equities.xlsx', 
                         sheet_name='dailies')
 
@@ -54,12 +54,13 @@ se_ries.loc[:, 'sent_slow'] = se_ries.sentiment.ewm(span=lagg2, adjust=False).me
 se_ries.loc[0, 'sent_slow'] = 0
 
 
-# Calculate differences between the rolling averages
-position_s = se_ries.sent_fast - se_ries.sent_slow
-# Positions are equal to the sign of the differences
-position_s = position_s.apply(np.sign)
+# Calculate the sentiment indicator equal to the difference 
+# of the fast moving average minus the slow moving average.
+indica_tor = se_ries.sent_fast - se_ries.sent_slow
+# Indica_tor is equal to the sign of the indica_tor
+indica_tor = indica_tor.apply(np.sign)
 # Lag the positions by 1 period
-position_s = position_s.shift(1)
+position_s = indica_tor.shift(1)
 position_s[0] = 0
 
 # Calculate cumulative strategy returns

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-## Load data from Excel file and format the time index
+## Load data from Excel file
 se_ries = pd.read_excel(r'C:/Develop/predictive/data/Impact of Covid News on Equities.xlsx', 
                         sheet_name='dailies')
 
@@ -77,7 +77,7 @@ in_dex = pd.to_datetime(se_ries.date)
 
 # Select symbol
 sym_bols = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
-sym_bol = sym_bols[3]
+sym_bol = sym_bols[1]
 
 # Calculate asset log returns
 return_s = np.log(se_ries[sym_bol]).diff()
@@ -92,12 +92,13 @@ se_ries.loc[:, 'sent_slow'] = se_ries.sentiment.ewm(span=lagg2, adjust=False).me
 se_ries.loc[0, 'sent_slow'] = 0
 
 
-# Calculate differences between the rolling averages
-position_s = se_ries.sent_fast - se_ries.sent_slow
-# Positions are equal to the sign of the differences
-position_s = position_s.apply(np.sign)
+# Calculate the sentiment indicator equal to the difference 
+# of the fast moving average minus the slow moving average.
+indica_tor = se_ries.sent_fast - se_ries.sent_slow
+# Indica_tor is equal to the sign of the indica_tor
+indica_tor = indica_tor.apply(np.sign)
 # Lag the positions by 1 period
-position_s = position_s.shift(1)
+position_s = indica_tor.shift(1)
 position_s[0] = 0
 
 # Calculate cumulative strategy returns
@@ -204,8 +205,8 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
 # Plot strategy cumulative returns
 ax1.set_title('Covid Sentiment and its Moving Averages', size=16)
 ax1.plot(in_dex, se_ries.sentiment, label='sentiment', linewidth=2, color='black')
-ax1.plot(in_dex, se_ries.sent_fast, label='sent_fast', linewidth=2, color='red')
-ax1.plot(in_dex, se_ries.sent_slow, label='sent_slow', linewidth=2, color='blue')
+ax1.plot(in_dex, se_ries.sent_fast, label='fast_ma', linewidth=2, color='red')
+ax1.plot(in_dex, se_ries.sent_slow, label='slow_ma', linewidth=2, color='blue')
 ax1.set_ylabel('Sentiment', size=12)
 
 # Add legend
@@ -214,9 +215,9 @@ for line in leg_end.get_lines():
     line.set_linewidth(10)
 
 # Plot strategy positions
-ax2.set_title('Strategy Risk Positions', size=14)
-ax2.plot(in_dex, position_s, label='Trading Positions')
-ax2.set_ylabel('Positions', size=12)
+ax2.set_title('Sentiment Indicator', size=14)
+ax2.plot(in_dex, indica_tor, label='Trading Positions')
+ax2.set_ylabel('Indicator', size=12)
 
 # Set tight plot layout
 fig_ure.tight_layout()
@@ -237,25 +238,26 @@ in_dex = pd.to_datetime(se_ries.date)
 # se_ries = se_ries.drop('date', axis=1)
 
 
-# Set fonts to bold
-plt.rcParams["font.weight"] = "bold"
-plt.rcParams["axes.labelweight"] = "bold"
-
+# Set all fonts to bold
+# plt.rcParams["font.weight"] = "bold"
+# plt.rcParams["axes.labelweight"] = "bold"
 
 
 ## Plot SPY and Sentiment - first method
 
 # Create plot window with subplots
-fig, ax1 = plt.subplots(figsize = (12, 7))
+fig_ure, (ax1, ax3) = plt.subplots(2, 1, figsize=(16, 18), 
+                                   gridspec_kw={'height_ratios': [3, 1]})
 
 # Create x-values
 # x_val = np.arange(len(se_ries))
 
 # Plot the first series
 col_or = 'tab:red'
+ax1.set_title(sym_bol + ' ETF and Moving Average Covid Sentiment Indicator', size=16)
 ax1.set_xlabel('date', size=12)
 ax1.set_ylabel(sym_bol, color=col_or, size=12)
-series1 = ax1.plot(in_dex, se_ries.spy, label=sym_bol, color=col_or)
+series1 = ax1.plot(in_dex, se_ries.spy, label=sym_bol, linewidth=2, color=col_or)
 # Change color of ticks
 ax1.tick_params(axis='y', labelcolor=col_or)
 
@@ -264,8 +266,9 @@ ax1.tick_params(axis='y', labelcolor=col_or)
 ax2 = ax1.twinx()
 col_or = 'tab:blue'
 ax2.set_ylabel('Sentiment', color=col_or, size=12)
-series2 = ax2.plot(in_dex, se_ries.sent_roll, label='Sentiment', color=col_or)
+series2 = ax2.plot(in_dex, indica_tor, label='Sentiment', linewidth=2, color=col_or)
 ax2.tick_params(axis='y', labelcolor=col_or)
+ax2.axhline(linewidth=2, color=col_or)
 
 # Add legend with both lines
 lines1, labels1 = ax1.get_legend_handles_labels()
@@ -275,8 +278,13 @@ leg_end = ax2.legend(lines1 + lines2, labels1 + labels2, loc='best', prop=dict(s
 for line in leg_end.get_lines():
     line.set_linewidth(10)
 
+# Plot strategy positions
+ax3.set_title('Strategy Risk Positions', size=14)
+ax3.plot(in_dex, position_s, label='Trading Positions')
+ax3.set_ylabel('Positions', size=12)
+
 # Set tight plot layout
-fig.tight_layout()
+fig_ure.tight_layout()
 # Render the plot
 plt.show()
 

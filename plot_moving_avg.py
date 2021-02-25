@@ -58,7 +58,7 @@ plt.plot(ema_15, label='15 day rolling SMA', linewidth = 1.5)
 # Add title and labeles on the axes, making legend visible:
 plt.xlabel('Date')
 plt.ylabel('Adjusted closing price ($)')
-plt.title('Price with a single Simple Moving Average')
+plt.title('Price with a Simple Moving Average')
 plt.legend()
 plt.show()
 
@@ -73,7 +73,7 @@ fig_ure = px.line(clos_e['2020'])
 fig_ure.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)
 # Plot interactive plot in browser and save to html file
 plot(fig_ure, filename='stock_prices.html', auto_open=True)
-# Show the plot - works only in Jupyter notebook
+# Show the plot
 # fig_ure.show()
 
 # Create bar plot of volumes
@@ -211,6 +211,6 @@ mpf.plot(slic_e['2014':'2020'], type='candle', style='charles', title='GOOG',
   
 # fig.tight_layout() 
   
-# Show the plot - works in Jupyter notebook
+# Show the plot
 # plt.show()
 

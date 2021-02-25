@@ -143,7 +143,7 @@ score_s.columns = cols
 # Continue with replace()
 # https://towardsdatascience.com/a-checklist-for-data-wrangling-8f106c093fef
 
-# Add LOCF
+# Add LOCF - pandas ffill()
 # https://stackoverflow.com/questions/47024931/how-to-fill-missing-dates-in-pandas-dataframe
 # https://stackoverflow.com/questions/27905295/how-to-replace-nans-by-preceding-values-in-pandas-dataframe
 

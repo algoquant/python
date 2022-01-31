@@ -1,6 +1,15 @@
-# Ignore files
-foo*
+# Ignore all files
+*
 # Ignore directories
 .pylint.d/
 __pycache__/
 data/
+new/
+base/
+trade_by_tic/
+
+# Include Python files
+!*.py
+!*.ipynb
+!*.txt
+

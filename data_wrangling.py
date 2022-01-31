@@ -20,10 +20,8 @@ os.getcwd()
 # List files in the directory
 os.listdir()
 # Change working directory
-os.chdir("C:/Develop/python/scripts")
+os.chdir("/Users/jerzy/Develop/python/scripts")
 os.listdir()
-
-
 
 
 ## Load data from csv files
@@ -33,112 +31,119 @@ import numpy as np
 import pandas as pd
 
 # Load student scores data from csv file
-score_s = pd.read_csv('C:/Develop/lecture_slides/data/student_scores.csv')
+scores = pd.read_csv('/Users/jerzy/Develop/lecture_slides/data/student_scores.csv')
 
 # Get data frame info
-score_s.info()
+scores.info()
+# Set default: Display all the columns in output
+pd.set_option('display.max_columns', None)
+scores
+
 # Get column types
-type(score_s)
-score_s.dtypes
+type(scores)
+scores.dtypes
 
 # Get dimensions
-score_s.shape
+scores.shape
 # Get number of rows
-len(score_s)
+len(scores)
 
-# Select rows by number range
-score_s.iloc[2:4, :]
+# Select element in third row and fifth column
+scores.iloc[2, 4]
+
+# Select whole rows by number range
+scores.iloc[2:4, :]
 
 # Print column names
-score_s.columns
+scores.columns
 
 # Select column by name
-score_s['HW1_score']
+scores['HW1_score']
 # Select multiple columns by name
-score_s[['HW1_score', 'HW2_score', 'HW3_score']]
+scores[['HW1_score', 'HW2_score', 'HW3_score']]
 # Select columns by number range
-score_s.iloc[:, 2:4]
+scores.iloc[:, 2:4]
 # Select columns by numbers
-score_s.iloc[:, [1, 3, 4]]
+scores.iloc[:, [1, 3, 4]]
 
 # Select rows except one of them
-score_s.drop(5, axis=0)
+scores.drop(5, axis=0)
 # Select columns except one of them
-score_s.drop('HW1_score', axis=1)
+scores.drop('HW1_score', axis=1)
 
 # Get unique values in column
-score_s["finance_track"].unique()
+scores["finance_track"].unique()
 # Get number of unique values in column
-score_s['finance_track'].nunique()
+scores['finance_track'].nunique()
 # Get number of rows for each unique value
-score_s["finance_track"].value_counts()
+scores["finance_track"].value_counts()
 
 # Calculate column means
-score_s.mean()
+scores.mean()
 # Doesn't work for columns with some non-numeric values
-score_s['HW1_score'].mean()
+scores['HW1_score'].mean()
 
 # Get number of NaN values in each column
-score_s.isna().sum()
-score_s.isnull().sum()
+scores.isna().sum()
+scores.isnull().sum()
 
 # Get percentage of NaN values in each column
-100*score_s.isnull().sum()/len(score_s)
+100*scores.isnull().sum()/len(scores)
 
 # Remove all rows containing NA values
-score_s.dropna()
+scores.dropna()
 # Remove all columns containing NA values
-score_s.dropna(axis=1)
+scores.dropna(axis=1)
 # Remove columns with less than 5 NaN values
-score_s.dropna(axis=1, thresh=5)
+scores.dropna(axis=1, thresh=5)
 
 # Replace all NA values with -9999
-score_s.fillna(-9999)
+scores.fillna(-9999)
 # Replace NA values in specific column
-score_s['HW1_score'].fillna(-9999)
+scores['HW1_score'].fillna(-9999)
 # Replace specific cell value
-score_s.at[1, 'HW1_score']= 9999
+scores.at[1, 'HW1_score']= 9999
 # Fill NA values with NaN
-score_s.fillna(np.NaN)
+scores.fillna(np.NaN)
 # Fill NA values with strings
-score_s.fillna('data missing')
+scores.fillna('data missing')
 # Fill missing values with mean column values
 # Doesn't work if there are some non-numeric values in a column
-score_s.fillna(score_s.mean())
+scores.fillna(scores.mean())
 
 # Coerce column to numeric and replace non-numeric with NA
 # Works only for single column
-# pd.to_numeric(score_s[['test1_score', 'test2_score']], errors='coerce')
-col_umn = pd.to_numeric(score_s['test1_score'], errors='coerce')
+# pd.to_numeric(scores[['test1_score', 'test2_score']], errors='coerce')
+col_umn = pd.to_numeric(scores['test1_score'], errors='coerce')
 # Replace NA values with mean column value
 col_umn.fillna(col_umn.mean())
 # Replace NA values of specific columns with mean value
 # Doesn't work because there are some non-numeric values in the column
-score_s['HW1_score'].fillna(score_s['HW1_score'].mean())
+scores['HW1_score'].fillna(scores['HW1_score'].mean())
 # Get names of columns except the first two
-cols = score_s.columns[2:]
+cols = scores.columns[2:]
 # Coerce selected columns to numeric and replace non-numeric with NA
-score_s[cols] = score_s[cols].apply(pd.to_numeric, errors='coerce')
+scores[cols] = scores[cols].apply(pd.to_numeric, errors='coerce')
 # Fill NA values with column means
-score_s = score_s.fillna(score_s.mean(axis=0))
+scores = scores.fillna(scores.mean(axis=0))
 # Replace NA values with row means
 # https://stackoverflow.com/questions/33058590/pandas-dataframe-replacing-nan-with-row-average
-score_s = score_s.T.fillna(score_s.mean(axis=1)).T
+scores = scores.T.fillna(scores.mean(axis=1)).T
 # Or using lambda function
-score_s[cols] = score_s[cols].apply(lambda row: row.fillna(row.mean()), axis=1)
+scores[cols] = scores[cols].apply(lambda row: row.fillna(row.mean()), axis=1)
 # Interpolate single column
-score_s['HW1_score'].interpolate()
+scores['HW1_score'].interpolate()
 # Replace NA values with interpolation of columns
-score_s.interpolate()
+scores.interpolate()
 # Replace NA values with interpolation of rows
-score_s[cols].interpolate(axis=1)
+scores[cols].interpolate(axis=1)
 
 # Add new column calculated from existing columns
-score_s.loc[:, 'test1_sum'] = score_s['test1_score'] + score_s['test2_score']
+scores.loc[:, 'test1_sum'] = scores['test1_score'] + scores['test2_score']
 # Rename the last column
-cols = score_s.columns.values
+cols = scores.columns.values
 cols[-1, ] = "tests_sum"
-score_s.columns = cols
+scores.columns = cols
 
 # Continue with replace()
 # https://towardsdatascience.com/a-checklist-for-data-wrangling-8f106c093fef
@@ -155,7 +160,7 @@ score_s.columns = cols
 ## Load OHLC data from csv file
 
 # Load OHLC data from csv file and format the time index
-se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+se_ries = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 
 # Get data frame info
 se_ries.info()

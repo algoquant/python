@@ -1,0 +1,13 @@
+# Dan's Acct 1
+
+os.environ["APCA_API_BASE_URL"] = "https://paper-api.alpaca.markets"
+os.environ["APCA_API_KEY_ID"] = "PK2E1EDFPQLE8W7A89TK"
+os.environ["APCA_API_SECRET_KEY"] = "uZYBmwtAk7CbkxGW7LU2t76t7E0WEtM8I4AVhFW5"
+
+# Dan's Acct 2
+
+
+os.environ["APCA_API_BASE_URL"] = "https://paper-api.alpaca.markets"
+os.environ["APCA_API_KEY_ID"] = "PKJXFW0QE0VWGSJEOV90"
+os.environ["APCA_API_SECRET_KEY"] = "0YaxxoFNAkuSkkRGaJdQG2Zu6HRF01bUoxTxCMag"
+

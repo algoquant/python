@@ -21,9 +21,14 @@ se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, 
 # Rename columns
 se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
 
-# Calculate the fast and slow-window simple moving averages
+# Calculate the fast and slow simple moving averages
 # ma_fast = se_ries.Close.rolling(window=20).mean()
+# Or
+# ma_fastn = se_ries['Close'].rolling(window=20).mean()
+# Compare them
+# ma_fast.equals(ma_fastn)
 # ma_slow = se_ries.Close.rolling(window=100).mean()
+# Calculate EWMA
 ma_fast = se_ries.Close.ewm(span=30, adjust=False).mean()
 ma_slow = se_ries.Close.ewm(span=100, adjust=False).mean()
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Script for Python date and time functions
+Script with examples of using Python date and time functions
 
+https://stackoverflow.com/questions/7479777/difference-between-python-datetime-vs-time-modules
 https://stackoverflow.com/questions/13031559/how-to-change-a-struct-time-object
 
 Comment:
@@ -17,7 +18,7 @@ import time
 
 # Get current time in seconds since epoch
 seconds = time.time()
-print("Seconds since epoch =", seconds)    
+print("Seconds since epoch =", seconds)
 
 # Get date and local clock time object from seconds since epoch
 local_time = time.ctime(seconds)
@@ -45,6 +46,8 @@ local_time = time.asctime(date_time)
 print("Local date and clock time:", local_time)
 # Get date and time string from date-time structure
 local_time = time.strftime("%d.%m.%Y %H:%M:%S", date_time)
+# Get date string from date-time structure
+local_date = time.strftime("%Y-%m-%d", date_time)
 print("Local date and clock time:", local_time)
 
 # Create date-time structure from string
@@ -57,7 +60,7 @@ print("Date and time object:", date_time)
 # https://www.w3schools.com/python/python_datetime.asp
 """
 Comment:
-    Importing whole datetime module later requires 
+    Importing whole datetime module later requires
     using the double datetime syntax:
     datetime.datetime.strptime()
 """
@@ -66,11 +69,21 @@ Comment:
 
 from datetime import date, datetime, timedelta
 
+# Get date and local clock time object from seconds since epoch
+local_time = datetime.fromtimestamp(seconds)
+
+# Coerce datetime to date
+local_time.date()
+# Coerce date to string
+str(local_time.date())
+
 # Get today's date as datetime structure
 to_day = date.today()
+print(to_day)
 yesterday = (to_day - timedelta(days = 1))
 # Format datetime structures into strings
 to_day = str(to_day)
+print(to_day)
 yesterday = str(yesterday)
 # Remove hyphens
 m_date = to_day.replace("-", "")

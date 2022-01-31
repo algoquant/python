@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 ## Load OHLC data from csv file and format the time index
 
-se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+se_ries = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 # Rename columns
 se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
 

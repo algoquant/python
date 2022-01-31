@@ -1,0 +1,49 @@
+# create prediction rows
+* 7-16 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/run_create_prediction_rows.py
+1 20 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/delete_old_prediction_rows.py
+
+
+# make predictions
+1 8 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/predict_5min_qqq.py
+
+# confirming orders -- qqq
+30-59 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_confirms_qqq.py > /Users/danielsavage/logs/make_confirms.log 2>&1
+* 10-15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_confirms_qqq.py
+
+# covering trades - qqq
+30-59 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_long_cover_trades_qqq.py > /Users/danielsavage/logs/long_cover_buy.log 2>&1
+30-59 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_short_cover_trades_qqq.py> /Users/danielsavage/logs/short_cover_buy.log 2>&1
+* 10-15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_long_cover_trades_qqq.py
+* 10-15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_short_cover_trades_qqq.py
+
+# long trading scripts -- qqq
+30-59 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_long_limit_buy_eachsec_qqq_dan1.py > /Users/danielsavage/logs/long_limit_buy.log 2>&1
+* 10-14 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_long_limit_buy_eachsec_qqq_dan1.py
+1-53 15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_long_limit_buy_eachsec_qqq_dan1.py
+
+# short trading scripts -- qqq
+30-59 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_short_limit_buy_eachsec_qqq_dan2.py> /Users/danielsavage/logs/short_limit_buy.log 2>&1
+* 10-14 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_short_limit_buy_eachsec_qqq_dan2.py
+1-53 15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/make_short_limit_buy_eachsec_qqq_dan2.py
+
+# new qqq pricing scripts
+1 1 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/create_clean_qqq_daily.py
+1 5 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/qqq_prices_today_every_second.py
+* 6-17 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/run_new_qqq_prices.py
+
+# close positions start of day
+30 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/close_positions_eod_dan1.py  > /Users/danielsavage/logs/close_positions_dan1.log 2>&1
+30 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/close_positions_eod_dan2.py  > /Users/danielsavage/logs/close_positions_dan2.log 2>&1
+30 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/close_positions_eod_nikki.py  > /Users/danielsavage/logs/close_positions_nikki.log 2>&1
+
+# close positions end of day
+59 15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/close_positions_eod_dan1.py  > /Users/danielsavage/logs/close_positions_dan1.log 2>&1
+59 15 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/close_positions_eod_dan2.py  > /Users/danielsavage/logs/close_positions_dan2.log 2>&1
+
+# record trade/short status in asset tables
+29 9 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/check_assets.py
+
+# reporting
+45 9-16 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/report_profit_todate.py
+#30 9-16 * * 1-5 /usr/bin/python3 /Users/danielsavage/trading/report_account_balances.py
+

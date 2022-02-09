@@ -84,7 +84,7 @@ for symbol in symbols:
     # Coerce json to data frame and write OHLC data to file
     if queryCount > 1:
         ohlc = pd.DataFrame(bardata)
-        # Create Date column equal to datetime
+        # Create Date column equal to datetime - Polygon timestamp is in milliseconds
         ohlc['Date'] = pd.to_datetime(ohlc['t'], unit='ms')
         # Coerce column of type datetime to type date
         ohlc['Date'] = ohlc['Date'].dt.date

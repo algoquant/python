@@ -125,8 +125,8 @@ plot(plotfig, filename='stock_ohlc_volume.html', auto_open=True)
 # https://plotly.com/python/candlestick-charts/
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 
 plotfig = go.Figure(data=[go.Candlestick(x=ohlcsub.index,
                 open=ohlcsub.Open, high=ohlcsub.High, low=ohlcsub.Low, close=ohlcsub.Close, 

@@ -3,6 +3,9 @@
 # Then open:
 # http://127.0.0.1:8050/
 
+""" To-do: Add downloading of stock prices from Polygon. """
+
+
 import dash
 from dash import dcc
 from dash import html

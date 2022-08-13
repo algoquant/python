@@ -3,6 +3,8 @@
 # Then open:
 # http://127.0.0.1:8050/
 
+# print("This is a Dash app which plots stock prices\nSelect a stock symbol from the menu below:\n")
+
 import dash
 from dash import dcc
 from dash import html
@@ -17,6 +19,7 @@ app = dash.Dash(__name__)
 
 
 app.layout = html.Div([
+  html.H2(['This is a Dash app which plots stock prices', html.Br(), 'Select a stock symbol from the menu below:']),
     dcc.Dropdown(
         id="ticker",
         options=[{"label": x, "value": x} 
@@ -32,7 +35,7 @@ app.layout = html.Div([
     Output("time-series-chart", "figure"), 
     [Input("ticker", "value")])
 def display_time_series(ticker):
-    fig = px.line(df, x='date', y=ticker)
+    fig = px.line(df, x='date', y=ticker, width=1700, height=900)
     return fig
 
 

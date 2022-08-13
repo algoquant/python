@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Script for Python data wrangling
+Script for data wrangling in Python.
+Mostly pandas and numpy data frames and time series.
+
 https://towardsdatascience.com/a-checklist-for-data-wrangling-8f106c093fef
 https://stackoverflow.com/questions/36814100/pandas-to-numeric-for-multiple-columns
 https://stackoverflow.com/questions/44117326/how-can-i-remove-all-non-numeric-characters-from-all-the-values-in-a-particular
@@ -12,23 +14,12 @@ https://stackoverflow.com/questions/22149584/what-does-axis-in-pandas-mean
 
 """
 
-## Import package for OS commands
-import os
-
-# Show current working directory
-os.getcwd()
-# List files in the directory
-os.listdir()
-# Change working directory
-os.chdir("/Users/jerzy/Develop/python/scripts")
-os.listdir()
-
-
-## Load data from csv files
-
 # Import packages for matrices and data frames
 import numpy as np
 import pandas as pd
+
+
+## Load data from csv files
 
 # Load student scores data from csv file
 scores = pd.read_csv('/Users/jerzy/Develop/lecture_slides/data/student_scores.csv')
@@ -114,9 +105,9 @@ scores.fillna(scores.mean())
 # Coerce column to numeric and replace non-numeric with NA
 # Works only for single column
 # pd.to_numeric(scores[['test1_score', 'test2_score']], errors='coerce')
-col_umn = pd.to_numeric(scores['test1_score'], errors='coerce')
+scorest = pd.to_numeric(scores['test1_score'], errors='coerce')
 # Replace NA values with mean column value
-col_umn.fillna(col_umn.mean())
+scorest.fillna(scorest.mean())
 # Replace NA values of specific columns with mean value
 # Doesn't work because there are some non-numeric values in the column
 scores['HW1_score'].fillna(scores['HW1_score'].mean())
@@ -160,34 +151,40 @@ scores.columns = cols
 ## Load OHLC data from csv file
 
 # Load OHLC data from csv file and format the time index
-se_ries = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+# ohlc = pd.read_csv('/Users/jerzy/Develop/data/SPY_daily.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='Date')
+ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 
 # Get data frame info
-se_ries.info()
+ohlc.info()
 # Get column types
-type(se_ries)
-se_ries.dtypes
+type(ohlc)
+ohlc.dtypes
 
 # Get dimensions
-se_ries.shape
+ohlc.shape
 
 # Print column names
-se_ries.columns
+ohlc.columns
 # Rename columns
-se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-se_ries.head()
-se_ries.tail()
+ohlc.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+ohlc.head()
+ohlc.tail()
+
+# Pandas set default: Display all the columns in the output
+# pd.set_option('display.max_columns', None)
+
+
 
 # Extract time index
-in_dex = se_ries.index
+indeks = ohlc.index
 
 # Subset data frame
-se_ries.iloc[0:5, :]
+ohlc.iloc[0:5, :]
 
 # Select Close prices
-clos_e = se_ries['Close']
+closep = ohlc['Close']
 # Or
-# clos_e = se_ries.iloc[:, 3]
-type(clos_e)
+# closep = ohlc.iloc[:, 3]
+type(closep)
 
 

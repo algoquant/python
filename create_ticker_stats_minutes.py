@@ -1,6 +1,6 @@
 ##################
 # This script reads in a loop OHLC data from the files: 
-# /Volumes/external_drive/one_minute_bars/[ticker]_polygon_aggr.csv
+# /Volumes/external_drive/one_minute_bars/[ticker]_polygonaggr.csv
 # It then calculates rolling averages and EWMA for each symbol, 
 # and writes the data to csv files.
 # This script runs every minute from 6 AM to 8 PM.
@@ -17,7 +17,7 @@ starttime = time.time()
 ##################
 ## Set aggregation parameters.
 
-win_dow = 60
+look_back = 60
 
 
 ##################
@@ -31,7 +31,7 @@ for symbol in symbols:
 	print("Processing the symbol " + symbol)
 
 	# Load the OHLC data from csv file into a data frame.
-	filename = "/Volumes/external_drive/one_minute_bars/" + symbol + "_polygon_aggr.csv"
+	filename = "/Volumes/external_drive/one_minute_bars/" + symbol + "_polygonaggr.csv"
 	df = pd.read_csv(filename)
 	#print(df)
 	
@@ -50,11 +50,11 @@ for symbol in symbols:
 	df['pct1'] = (df['change1']/df['close'])*100 
 	
 	# Calculate simple rolling averages and EWMA
-	avg = df['close'].rolling(win_dow).mean()
-	xavg = df.close.ewm(com=win_dow).mean()
-	avgtp = df['tp'].rolling(win_dow).mean()
+	avg = df['close'].rolling(look_back).mean()
+	xavg = df.close.ewm(com=look_back).mean()
+	avgtp = df['tp'].rolling(look_back).mean()
 	# Calculate rolling standard deviation of returns
-	std = df.change1.rolling(win_dow).std()
+	std = df.change1.rolling(look_back).std()
 
 	df['avg'] = avg
 	df['std'] = std

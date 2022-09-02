@@ -79,7 +79,7 @@ for x in range(1,7):
 		ticker = 'vxx'
 		 		
 
-	filename = mdate+ "_polygon_aggr.csv"
+	filename = mdate+ "_polygonaggr.csv"
 	print(filename)
 
 	dfx = pd.read_csv (filename)

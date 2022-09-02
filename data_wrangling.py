@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 
-## Load data from csv files
+## Load data frame from csv file
 
 # Load student scores data from csv file
 scores = pd.read_csv('/Users/jerzy/Develop/lecture_slides/data/student_scores.csv')
@@ -48,8 +48,9 @@ scores.iloc[2:4, :]
 # Print column names
 scores.columns
 
-# Select column by name
+# Select single column by name
 scores['HW1_score']
+scores.HW1_score
 # Select multiple columns by name
 scores[['HW1_score', 'HW2_score', 'HW3_score']]
 # Select columns by number range
@@ -93,7 +94,7 @@ scores.fillna(-9999)
 # Replace NA values in specific column
 scores['HW1_score'].fillna(-9999)
 # Replace specific cell value
-scores.at[1, 'HW1_score']= 9999
+scores.at[1, 'HW1_score'] = 9999
 # Fill NA values with NaN
 scores.fillna(np.NaN)
 # Fill NA values with strings
@@ -146,13 +147,20 @@ scores.columns = cols
 # Add code for writing to csv file
 
 
+# To delete an object in Python, we use the ‘del’ keyword
+del scores
 
 
 ## Load OHLC data from csv file
 
+from utils import read_csv
+
+# Load OHLC data from csv file - the time index is formatted inside read_csv()
+ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
+
 # Load OHLC data from csv file and format the time index
 # ohlc = pd.read_csv('/Users/jerzy/Develop/data/SPY_daily.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='Date')
-ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+# ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 
 # Get data frame info
 ohlc.info()
@@ -173,8 +181,6 @@ ohlc.tail()
 # Pandas set default: Display all the columns in the output
 # pd.set_option('display.max_columns', None)
 
-
-
 # Extract time index
 indeks = ohlc.index
 
@@ -186,5 +192,51 @@ closep = ohlc['Close']
 # Or
 # closep = ohlc.iloc[:, 3]
 type(closep)
+
+# Difference the Seconds column
+diffsec = ohlc.Seconds.diff()
+
+
+### Plot OHLC
+
+## Plotly dynamic interactive time series plots using plotly.graph_objects
+
+import plotly.graph_objects as go
+
+# Select time slice of data
+ohlcsub = ohlc['2019':'2020']
+
+# Create plotly line graph object from data frame
+plotfig = go.Figure([go.Scatter(x=ohlc.index, y=ohlc.Close)])
+plotdata = plotfig.update_layout(title=symbol, yaxis_title='Log Price', xaxis_rangeslider_visible=False, 
+            title_font_size=12)
+# Plot interactive plot in browser and save to html file
+# plot(plotfig, filename='stock_prices.html', auto_open=True)
+plotfig.show()
+
+
+## Plotly simple candlestick with moving average
+
+plotfig = go.Figure(data=[go.Candlestick(x=ohlc.index,
+                open=ohlc.Open, high=ohlc.High, low=ohlc.Low, close=ohlc.Close, 
+                name=symbol+' Log OHLC Prices', showlegend=False)])
+plotdata = plotfig.update_layout(title=symbol+' Log OHLC Prices', 
+                                title_font_size=24, title_font_color="blue", 
+                                yaxis_title='Prices', font_color="black", font_size=18,
+                                xaxis_rangeslider_visible=False)
+# Calculate moving average stock prices
+closep = ohlc['Close']
+lookback = 55
+pricema = closep.ewm(span=lookback).mean()
+# Add moving average
+plotdata = plotfig.add_trace(go.Scatter(x=ohlc.index, y=pricema[ohlc.index], 
+                            name="Moving Average", line=dict(color="blue")))
+# Customize legend
+plotdata = plotfig.update_layout(legend=dict(x=0.2, y=0.9, traceorder="normal",
+                      font=dict(family="sans-serif", size=18, color="blue")))
+# Plot interactive plot in browser and save to html file
+# plot(plotfig, filename='stock_candlesticks.html', auto_open=True)
+plotfig.show()
+
 
 

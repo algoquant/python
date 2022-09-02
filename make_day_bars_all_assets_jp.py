@@ -45,10 +45,10 @@ assets = cursor.fetchall()
 
 ## Set time variables
 # Convert todays time from seconds to string
-to_day = int(time.time())
-print("Local time:", time.ctime(to_day))
+todayd = int(time.time())
+print("Local time:", time.ctime(todayd))
 dayseconds = 86400
-end_date = datetime.utcfromtimestamp(to_day).strftime('%Y-%m-%d')
+endd = datetime.utcfromtimestamp(todayd).strftime('%Y-%m-%d')
 
 ## Set global polygon_key
 polygon_key = "SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r" # angry_hoover key
@@ -58,8 +58,8 @@ polygon_key = "SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r" # angry_hoover key
 
 ### Download data for last 30 days
 
-start_date = (to_day - (30*dayseconds))
-start_date = datetime.utcfromtimestamp(start_date).strftime('%Y-%m-%d')
+startd = (todayd - (30*dayseconds))
+startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 
 for asset in assets:
@@ -68,9 +68,9 @@ for asset in assets:
     symbol = str(ticker)
     print("Symbol 30days: ", symbol)
 
-    path_str = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" + symbol
 
-    filename = path_str + "_30day_bars.csv"
+    filename = pathstr + "_30day_bars.csv"
 
     # print("create file:", filename)
 
@@ -79,7 +79,7 @@ for asset in assets:
     except:
         PrintException()
 
-    getstring = filepointer'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/{start_date}/{end_date}?sort=asc&limit=30000&apiKey={polygon_key}'
+    getstring = filepointer'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/{startd}/{endd}?sort=asc&limit=30000&apiKey={polygon_key}'
     # print(getstring)
 
     resp = requests.get(getstring)
@@ -143,8 +143,8 @@ dbcon.close()
 
 ### Download data for last 90 days
 
-start_date = (to_day - (90*dayseconds))
-start_date = datetime.utcfromtimestamp(start_date).strftime('%Y-%m-%d')
+startd = (todayd - (90*dayseconds))
+startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 for y in result:
     t = (y[0])
@@ -152,10 +152,10 @@ for y in result:
     symbol = str(t)
     print("Symbol 90days: ",symbol)
 
-    path_str = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" + symbol
 
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
 
     # print("create file:", filename)
 
@@ -166,7 +166,7 @@ for y in result:
 
 
 
-    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{start_date}/{end_date}?sort=asc&limit=30000&apiKey={polygon_key}'
+    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{startd}/{endd}?sort=asc&limit=30000&apiKey={polygon_key}'
     # print(getstring)
 
     resp = requests.get(getstring)
@@ -226,7 +226,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
     # print("open file:", filename)
 
     try:
@@ -254,7 +254,7 @@ dbcon.close()
 
 ### Download data for last 180 days
 
-start_date = (to_day - (180*dayseconds))
+startd = (todayd - (180*dayseconds))
 
 for y in result:
     t = (y[0])
@@ -262,9 +262,9 @@ for y in result:
     symbol = str(t)
     print("Symbol: 180days",symbol)
 
-    path_str = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" + symbol
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
 
     # print("create file:", filename)
 
@@ -275,7 +275,7 @@ for y in result:
 
 
 
-    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{start_date}/{end_date}?sort=asc&limit=30000&apiKey={polygon_key}'
+    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{startd}/{endd}?sort=asc&limit=30000&apiKey={polygon_key}'
     # print(getstring)
 
     resp = requests.get(getstring)
@@ -335,7 +335,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
     # print("open file:", filename)
 
     try:
@@ -362,7 +362,7 @@ dbcon.close()
 
 ### Download data for last 5 years
 
-start_date = (to_day - (1500*dayseconds))
+startd = (todayd - (1500*dayseconds))
 
 for y in result:
     t = (y[0])
@@ -372,13 +372,13 @@ for y in result:
 
 
 
-    path_str = "/Volumes/ext_drive/get_ticker_data/5_year_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/5_year_bars/" + symbol
 
-    end_date = datetime.utcfromtimestamp(to_day).strftime('%Y-%m-%d')
-    start_date = datetime.utcfromtimestamp(start_date).strftime('%Y-%m-%d')
+    endd = datetime.utcfromtimestamp(todayd).strftime('%Y-%m-%d')
+    startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
 
     # print("create file:", filename)
 
@@ -389,7 +389,7 @@ for y in result:
 
 
 
-    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{start_date}/{end_date}?sort=asc&limit=50000&apiKey={polygon_key}'
+    getstring = f'https://api.polygon.io/v2/aggs/ticker/{t}/range/1/day/{startd}/{endd}?sort=asc&limit=50000&apiKey={polygon_key}'
     # print(getstring)
 
     resp = requests.get(getstring)
@@ -449,7 +449,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = path_str + "_day_bars.csv"
+    filename = pathstr + "_day_bars.csv"
     # print("open file:", filename)
 
     try:

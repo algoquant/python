@@ -38,8 +38,8 @@ plt.plot(x_val, y_val, label='Function', linewidth=2, color='blue')
 plt.ylabel('y_val', size=14)
 plt.xlabel('x_val', size=14)
 plt.title('Sine of Squared Function', size=14)
-leg_end = plt.legend(loc='upper left', prop=dict(size=12))
-for line in leg_end.get_lines():
+legendo = plt.legend(loc='upper left', prop=dict(size=12))
+for line in legendo.get_lines():
     line.set_linewidth(10)
 plt.show()
 

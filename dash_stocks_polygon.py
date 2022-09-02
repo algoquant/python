@@ -25,7 +25,7 @@ from dash import html
 from dash.dependencies import Input, Output
 
 # Define the list of symbols to download
-symbols = ["SPY", "VXX", "SVXY"]
+symbols = ["AAPL", "META", "SPY", "VXX", "SVXY"]
 # df = px.data.stocks()
 
 # range = "minute"
@@ -33,11 +33,11 @@ range = "day"
 
 ## Set time variables
 # Create a date from integers
-start_date = datetime.date(2000, 1, 1)
-# print("Start date is:", start_date)
+startd = datetime.date(2000, 1, 1)
+# print("Start date is:", startd)
 # Get today's date
-end_date = datetime.date.today()
-# print("Today is:", end_date)
+endd = datetime.date.today()
+# print("Today is:", endd)
 
 # Create the Dash web app
 app = dash.Dash(__name__)
@@ -45,7 +45,7 @@ app = dash.Dash(__name__)
 # Define the Dash app UI layout in HTML
 app.layout = html.Div([
   # Create a title banner
-  html.H2(['This is a Dash app which plots stock prices', html.Br(), 
+  html.H2(['This is a Dash app which plots OHLC stock prices downloaded from Polygon', html.Br(), 
           'Select a stock symbol from the menu below:']),
   # Create the dropdown menu
   dcc.Dropdown(id="symbol",
@@ -66,7 +66,7 @@ app.layout = html.Div([
     )
 def display_time_series(symbol):
     # Download stock prices from Polygon for the symbol
-    ohlc = get_symbol(symbol=symbol, start_date=start_date, end_date=end_date, range=range)
+    ohlc = get_symbol(symbol=symbol, startd=startd, endd=endd, range=range)
     # Calculate log stock prices
     ohlc[['Open', 'High', 'Low', 'Close']] = np.log(ohlc[['Open', 'High', 'Low', 'Close']])
     # closep = math.log(ohlc['Close'])
@@ -78,7 +78,7 @@ def display_time_series(symbol):
     plotdata = plotfig.update_layout(title_text='Candlestick plot of Log OHLC Prices for: ' + symbol, 
                                     title_font_size=24, title_font_color="blue", 
                                     yaxis_title='Prices', font_color="black", font_size=18,
-                                    xaxis_rangeslider_visible=False, width=1700, height=900)
+                                    xaxis_rangeslider_visible=False, width=1600, height=800)
     # Line plot of the log stock prices
     # plotfig = px.line(ohlc, title='Log Stock Prices for: ' + symbol, y='Close', width=1700, height=900)
     return plotfig

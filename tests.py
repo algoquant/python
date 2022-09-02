@@ -5,24 +5,24 @@ Created on Sun Nov 29 12:37:12 2020
 """
 
 # Using map()
-sym_bols = ['amzn', 'spy', 'bac', 'qqq']
-list(map((lambda i: (i + '_ma')), sym_bols))
+symbolv = ['amzn', 'spy', 'bac', 'qqq']
+list(map((lambda i: (i + '_ma')), symbolv))
 
 # Or
-def myfunc(i):
+def testfunc(i):
   return (i + '_ma')
 
-myfunc(sym_bols[0])
-list(map(myfunc, sym_bols))
+testfunc(symbolv[0])
+list(map(testfunc, symbolv))
 
 
 # Alternative to map(): Using list comprehension
 
-[myfunc(x) for x in sym_bols]
+[testfunc(x) for x in symbolv]
 # Or
-[(lambda x: (x + '_ma'))(x) for x in sym_bols]
+[(lambda x: (x + '_ma'))(x) for x in symbolv]
 
-list(zip(sym_bols, '_ma'))
+list(zip(symbolv, '_ma'))
 
 a = ("John", "Charles", "Mike")
 b = ("Jenny", "Christy", "Monica")

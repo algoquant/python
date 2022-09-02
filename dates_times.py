@@ -78,15 +78,15 @@ local_time.date()
 str(local_time.date())
 
 # Get today's date as datetime structure
-to_day = date.today()
-print(to_day)
-yesterday = (to_day - timedelta(days = 1))
+todayd = date.today()
+print(todayd)
+yesterday = (todayd - timedelta(days = 1))
 # Format datetime structures into strings
-to_day = str(to_day)
-print(to_day)
+todayd = str(todayd)
+print(todayd)
 yesterday = str(yesterday)
 # Remove hyphens
-m_date = to_day.replace("-", "")
+m_date = todayd.replace("-", "")
 
 
 # Create a datetime structure from integers

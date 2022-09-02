@@ -91,7 +91,7 @@ def signint_handler(a, b):  # define the handler
 
 def file_maker(ticker):
 	global f
-	f[ticker.lower()]=open(ticker.lower()+"_polygon_aggr", "a")
+	f[ticker.lower()]=open(ticker.lower()+"_polygonaggr", "a")
 	print("file open successfully")
 
 
@@ -228,7 +228,7 @@ class StocksStreamer(PolygonStreamer):
 							out += str(int(msg["starttime"]/1000))+"," + str(int(msg["endtime"]/1000))+"\n"
 							print(msg["symbol"])
 							print(out)
-							f=open(mdate.lower()+"_polygon_aggr.csv", "a")
+							f=open(mdate.lower()+"_polygonaggr.csv", "a")
 							f.write(out)
 
 							f.close()

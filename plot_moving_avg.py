@@ -25,35 +25,35 @@ from plotly.offline import plot
 
 
 ## Load OHLC data from csv file and format the index
-se_ries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
-type(se_ries)
-se_ries.dtypes
+tseries = pd.read_csv('C:/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+type(tseries)
+tseries.dtypes
 # Print column names
-se_ries.columns
+tseries.columns
 # Rename columns
-se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-# se_ries = se_ries[['Open', 'High', 'Low', 'Close']]
-se_ries.shape
-se_ries.iloc[0:5, :]
-se_ries.head()
-se_ries.tail()
+tseries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+# tseries = tseries[['Open', 'High', 'Low', 'Close']]
+tseries.shape
+tseries.iloc[0:5, :]
+tseries.head()
+tseries.tail()
 # Extract time index
-in_dex = se_ries.index
+indeks = tseries.index
 
 # Select Close prices
-clos_e = se_ries['Close']
+closep = tseries['Close']
 # Or
-# clos_e = se_ries.iloc[:, 3]
-type(clos_e)
+# closep = tseries.iloc[:, 3]
+type(closep)
 
-ema_15 = clos_e.ewm(span=15).mean()
+ema_15 = closep.ewm(span=15).mean()
 
 # Set plot style
 plt.style.use('fivethirtyeight')
 # Set plot dimensions
 plt.figure(figsize = (12, 6))
 # Plot price and SMA lines:
-plt.plot(clos_e, label='GOOG', linewidth = 2)
+plt.plot(closep, label='GOOG', linewidth = 2)
 plt.plot(ema_15, label='15 day rolling SMA', linewidth = 1.5)
 # Add title and labeles on the axes, making legend visible:
 plt.xlabel('Date')
@@ -67,9 +67,9 @@ plt.show()
 # https://plotly.com/python/time-series/
 
 # Import built-in time series data frame
-# fram_e = px.data.stocks()
+# dframe = px.data.stocks()
 # Create line time series of prices from data frame
-fig_ure = px.line(clos_e['2020'])
+fig_ure = px.line(closep['2020'])
 fig_ure.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)
 # Plot interactive plot in browser and save to html file
 plot(fig_ure, filename='stock_prices.html', auto_open=True)
@@ -77,8 +77,8 @@ plot(fig_ure, filename='stock_prices.html', auto_open=True)
 # fig_ure.show()
 
 # Create bar plot of volumes
-vol_ume = se_ries['Volume']
-fig_ure = px.bar(vol_ume['2020'])
+volumev = tseries['Volume']
+fig_ure = px.bar(volumev['2020'])
 fig_ure.update_layout(title='GOOG Volume', yaxis_title='Volume', xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
 plot(fig_ure, filename='stock_volumes.html', auto_open=True)
@@ -89,7 +89,7 @@ plot(fig_ure, filename='stock_volumes.html', auto_open=True)
 import plotly.graph_objects as go
 
 # Select time slice of data
-slic_e = se_ries['2019':'2020']
+slic_e = tseries['2019':'2020']
 # Create plotly graph object from data frame
 fig_ure = go.Figure([go.Scatter(x=slic_e.index, y=slic_e['Close'])])
 fig_ure.update_layout(title='GOOG', yaxis_title='Price', xaxis_rangeslider_visible=False)
@@ -104,7 +104,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Select time slice of data
-slic_e = se_ries['2019':'2020']
+slic_e = tseries['2019':'2020']
 # Create line of prices from data frame
 # trace_1 = go.Scatter(x=slic_e.index, y=slic_e['Close'], name='Prices', showlegend=False)
 # Create candlestick time series from data frame
@@ -148,20 +148,20 @@ app.run_server(debug=True, use_reloader=False)
 ## Matplotlib static candlestick plots
 
 # Select time slice of data
-slic_e = se_ries['2019':'2020']
+slic_e = tseries['2019':'2020']
 
 # Calculate the short and long-window simple moving averages
-short_rolling = se_ries.rolling(window=20).mean()
-long_rolling = se_ries.rolling(window=100).mean()
+short_rolling = tseries.rolling(window=20).mean()
+long_rolling = tseries.rolling(window=100).mean()
 
-start_date = '2019-01-01'
-end_date = '2020-04-17'
+startd = '2019-01-01'
+endd = '2020-04-17'
 
 fig, ax = plt.subplots(figsize=(16,9))
 
-ax.plot(se_ries.loc[start_date:end_date, :].index, se_ries.loc[start_date:end_date, :], label='Close')
-ax.plot(long_rolling.loc[start_date:end_date, :].index, long_rolling.loc[start_date:end_date, :], label = '100-days SMA')
-ax.plot(short_rolling.loc[start_date:end_date, :].index, short_rolling.loc[start_date:end_date, :], label = '20-days SMA')
+ax.plot(tseries.loc[startd:endd, :].index, tseries.loc[startd:endd, :], label='Close')
+ax.plot(long_rolling.loc[startd:endd, :].index, long_rolling.loc[startd:endd, :], label = '100-days SMA')
+ax.plot(short_rolling.loc[startd:endd, :].index, short_rolling.loc[startd:endd, :], label = '20-days SMA')
 
 ax.legend(loc='best')
 ax.set_ylabel('Price in $')
@@ -190,7 +190,7 @@ mpf.plot(slic_e['2014':'2020'], type='candle', style='charles', title='GOOG',
 # fig, ax = plt.subplots() 
   
 # Plot the data 
-# mpf.candlestick_ohlc(ax, se_ries.values, width = 0.6, 
+# mpf.candlestick_ohlc(ax, tseries.values, width = 0.6, 
                  # colorup = 'green', colordown = 'red',  
                  # alpha = 0.8) 
   

@@ -1,4 +1,4 @@
-# Copy of create_ticker_stats-2
+# Copy of create_tickerstats-2
 # This script runs every minute 24x7
 
 # import requests
@@ -32,24 +32,24 @@ print("Local time:", localtime, day, hour, minute)
 # print(df)
 # quit()
 
-to_day = date.today()
-print(to_day)
+todayd = date.today()
+print(todayd)
 
 if (day == 'Mon'):
-	yesterday = str(to_day - timedelta(days = 3))
+	yesterday = str(todayd - timedelta(days = 3))
 	myesterday = str(yesterday)
 	ydate = myesterday.replace("-","")
 else:
-	yesterday = str(to_day - timedelta(days = 1))
+	yesterday = str(todayd - timedelta(days = 1))
 	myesterday = str(yesterday)
 	ydate = myesterday.replace("-","")
 
-mtoday = str(to_day)
+mtoday = str(todayd)
 mdate = mtoday.replace("-", "")
 print(mdate, ydate)
 
 ## Load data from csv file
-filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygon_aggr.csv"
+filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygonaggr.csv"
 print(filename)
 dfx = pd.read_csv(filename)
 

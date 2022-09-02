@@ -10,63 +10,63 @@ import pandas as pd
 
 
 ## Load data from Excel file
-se_ries = pd.read_excel(r'C:/Develop/predictive/data/Impact of Covid News on Equities.xlsx', 
+tseries = pd.read_excel(r'C:/Develop/predictive/data/Impact of Covid News on Equities.xlsx', 
                         sheet_name='dailies')
 
 # Get column names and coerce them to pandas series
-cols = se_ries.columns.to_series()
+cols = tseries.columns.to_series()
 # Remove leading and trailing spaces
 cols = cols.apply(lambda col: col.strip())
 cols[8] = 'sentiment'
 # Rename columns
-se_ries.columns = cols
+tseries.columns = cols
 
 
 # Select only some columns by name
-# se_ries = se_ries[['date', 'amzn', 'spy', 'bac', 'qqq', 'vxx', 'sentiment_n', 'sentiment_p']]
-se_ries = se_ries[['date', 'amzn', 'spy', 'bac', 'qqq', 'vxx', 'sentiment']]
+# tseries = tseries[['date', 'amzn', 'spy', 'bac', 'qqq', 'vxx', 'sentiment_n', 'sentiment_p']]
+tseries = tseries[['date', 'amzn', 'spy', 'bac', 'qqq', 'vxx', 'sentiment']]
 
 # Remove rows containing NA values in spy column
-se_ries.dropna(subset=['spy'], inplace=True)
+tseries.dropna(subset=['spy'], inplace=True)
 
 
 
 ## Simulate a Crossover Strategy for the Moving Averages of Covid Sentiment
 
 # Convert the date column to datetime type
-in_dex = pd.to_datetime(se_ries.date)
+indeks = pd.to_datetime(tseries.date)
 
 # Define symbols
-sym_bols = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
+symbolv = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
 # Modify this to select symbol to trade: 
-sym_bol = sym_bols[3]
+symbol = symbolv[3]
 
 # Calculate asset log returns
-return_s = np.log(se_ries[sym_bol]).diff()
-return_s[0] = 0
+returnts = np.log(tseries[symbol]).diff()
+returnts[0] = 0
 
 # Calculate the fast and slow moving averages of sentiment
 lagg1 = 5
-se_ries.loc[:, 'sent_fast'] = se_ries.sentiment.ewm(span=lagg1, adjust=False).mean()
-se_ries.loc[0, 'sent_fast'] = 0
+tseries.loc[:, 'sent_fast'] = tseries.sentiment.ewm(span=lagg1, adjust=False).mean()
+tseries.loc[0, 'sent_fast'] = 0
 lagg2 = 21
-se_ries.loc[:, 'sent_slow'] = se_ries.sentiment.ewm(span=lagg2, adjust=False).mean()
-se_ries.loc[0, 'sent_slow'] = 0
+tseries.loc[:, 'sent_slow'] = tseries.sentiment.ewm(span=lagg2, adjust=False).mean()
+tseries.loc[0, 'sent_slow'] = 0
 
 
 # Calculate the sentiment indicator equal to the difference 
 # of the fast moving average minus the slow moving average.
-indica_tor = se_ries.sent_fast - se_ries.sent_slow
-# Indica_tor is equal to the sign of the indica_tor
-indica_tor = indica_tor.apply(np.sign)
+indic = tseries.sent_fast - tseries.sent_slow
+# Indica_tor is equal to the sign of the indic
+indic = indic.apply(np.sign)
 # Lag the positions by 1 period
-position_s = indica_tor.shift(1)
-position_s[0] = 0
+posit = indic.shift(1)
+posit[0] = 0
 
 # Calculate cumulative strategy returns
-strategy_returns = position_s * return_s
+strategy_returns = posit * returnts
 strategy_returns = strategy_returns.cumsum()
-asset_cum_returns = return_s.cumsum()
+asset_cum_returns = returnts.cumsum()
 
 import matplotlib.pyplot as plt
 
@@ -75,19 +75,19 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
-ax1.set_title(sym_bol + ' Strategy Cumulative Log Returns', size=16)
-ax1.plot(in_dex, asset_cum_returns, label=sym_bol, linewidth=2, color='blue')
-ax1.plot(in_dex, strategy_returns, label='Strategy', linewidth=2, color='red')
+ax1.set_title(symbol + ' Strategy Cumulative Log Returns', size=16)
+ax1.plot(indeks, asset_cum_returns, label=symbol, linewidth=2, color='blue')
+ax1.plot(indeks, strategy_returns, label='Strategy', linewidth=2, color='red')
 ax1.set_ylabel('Returns', size=12)
 
 # Add legend
-leg_end = ax1.legend(loc='best', prop=dict(size=14))
-for line in leg_end.get_lines():
+legendo = ax1.legend(loc='best', prop=dict(size=14))
+for line in legendo.get_lines():
     line.set_linewidth(10)
 
 # Plot strategy positions
 ax2.set_title('Strategy Risk Positions', size=14)
-ax2.plot(in_dex, position_s, label='Trading Positions')
+ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
@@ -105,19 +105,19 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
 
 # Plot strategy cumulative returns
 ax1.set_title('Covid Sentiment and its Moving Averages', size=16)
-ax1.plot(in_dex, se_ries.sentiment, label='sentiment', linewidth=2, color='black')
-ax1.plot(in_dex, se_ries.sent_fast, label='sent_fast', linewidth=2, color='red')
-ax1.plot(in_dex, se_ries.sent_slow, label='sent_slow', linewidth=2, color='blue')
+ax1.plot(indeks, tseries.sentiment, label='sentiment', linewidth=2, color='black')
+ax1.plot(indeks, tseries.sent_fast, label='sent_fast', linewidth=2, color='red')
+ax1.plot(indeks, tseries.sent_slow, label='sent_slow', linewidth=2, color='blue')
 ax1.set_ylabel('Sentiment', size=12)
 
 # Add legend
-leg_end = ax1.legend(loc='best', prop=dict(size=14))
-for line in leg_end.get_lines():
+legendo = ax1.legend(loc='best', prop=dict(size=14))
+for line in legendo.get_lines():
     line.set_linewidth(10)
 
 # Plot strategy positions
 ax2.set_title('Strategy Risk Positions', size=14)
-ax2.plot(in_dex, position_s, label='Trading Positions')
+ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout

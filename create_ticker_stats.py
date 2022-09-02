@@ -61,7 +61,7 @@ mdate = mtoday.replace("-","")
 print(mdate, ydate)
 
 mdate = '20220126'
-filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygon_aggr.csv"
+filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygonaggr.csv"
 dfx = pd.read_csv (filename)
 dfx.columns = ['symbol','volume','avg_vol','open_price','open','high','low','localtime','close','average','volume','starttime','endtime']
 

@@ -16,10 +16,10 @@ import plotly.graph_objects as go
 # Load dataset
 symbol = "SPY"
 range = "day"
-start_date = datetime.date(2000, 1, 1)
-end_date = datetime.date.today()
+startd = datetime.date(2000, 1, 1)
+endd = datetime.date.today()
 # Download stock prices from Polygon for the symbol
-ohlc = get_symbol(symbol=symbol, start_date=start_date, end_date=end_date, range=range)
+ohlc = get_symbol(symbol=symbol, startd=startd, endd=endd, range=range)
 # Calculate log stock prices
 ohlc[['Open', 'High', 'Low', 'Close']] = np.log(ohlc[['Open', 'High', 'Low', 'Close']])
 closep = ohlc['Close']

@@ -109,7 +109,7 @@ newerlist = [fruit for fruit in fruits if "a" in fruit]
 # https://stackoverflow.com/questions/40659212/futurewarning-elementwise-comparison-failed-returning-scalar-but-in-the-futur
 
 
-## Compare two lists to see if they contain the same values.
+## Compare two listv to see if they contain the same values.
 # The "==" operator returns true only if the two objects are the same object 
 # (i.e. if they refer to the same address in memory).
 

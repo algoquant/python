@@ -20,13 +20,13 @@ from utils import get_symbol
 
 ## Set time variables
 # Get today's date
-to_day = datetime.date.today()
-end_date = to_day
-print("Today is:", to_day)
+todayd = datetime.date.today()
+endd = todayd
+print("Today is:", todayd)
 
 # Create a date from integers
-start_date = datetime.date(2000, 1, 1)
-print("Start date is:", start_date)
+startd = datetime.date(2000, 1, 1)
+print("Start date is:", startd)
 
 # range = "minute"
 range = "day"
@@ -38,9 +38,9 @@ symbols = ["SPY", "VXX", "SVXY"]
 print("Downloading stock prices for the symbols: ", symbols)
 for symbol in symbols:
     # Download stock prices from Polygon for the symbol
-    ohlc = get_symbol(symbol=symbol, start_date=start_date, end_date=end_date, range=range)
+    ohlc = get_symbol(symbol=symbol, startd=startd, endd=endd, range=range)
     # Write OHLC data to csv file
-    filename = "/Users/jerzy/Develop/data/" + symbol + "_daily.csv"
+    filename = "/Users/jerzy/Develop/data/" + symbol + "_" + range + ".csv"
     ohlc.to_csv(filename)
     print("Finished downloading", symbol)
 

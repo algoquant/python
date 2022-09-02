@@ -6,6 +6,21 @@ import pandas as pd
 # Package for download
 import requests
 
+
+## Load OHLC data from CSV file
+# For example:
+# ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
+
+def read_csv(filename):
+    ohlc = pd.read_csv(filename)
+    ohlc.set_index('Date', inplace=True)
+    ohlc.index = pd.to_datetime(ohlc.index, utc=True)
+    return ohlc
+# end read_csv
+
+
+## Download OHLC time series from Polygon
+
 # Set Polygon key - angry_hoover
 polygon_key = "SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r"
 
@@ -21,9 +36,9 @@ def CatchException():
 
 
 ## get_symbol() downloads data from Polygon and returns an OHLC data frame
-def get_symbol(symbol, start_date, end_date, range='day', polygon_key=polygon_key):
+def get_symbol(symbol, startd, endd, range='day', polygon_key=polygon_key):
     print("Downloading", symbol)
-    getstring = f'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/{range}/{start_date}/{end_date}?adjusted=true&sort=asc&limit=50000&apiKey={polygon_key}'
+    getstring = f'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/{range}/{startd}/{endd}?adjusted=true&sort=asc&limit=50000&apiKey={polygon_key}'
     # Download the data from url
     response = requests.get(getstring)
     # Coerce url response to json
@@ -46,9 +61,10 @@ def get_symbol(symbol, start_date, end_date, range='day', polygon_key=polygon_ke
     if queryCount > 1:
         ohlc = pd.DataFrame(bardata)
         # Create Date column equal to datetime - Polygon timestamp is in milliseconds
-        ohlc['Date'] = pd.to_datetime(ohlc['t'], unit='ms')
+        ohlc["Date"] = pd.to_datetime(ohlc.t, unit='ms', utc=True)
         # Coerce column of type datetime to type date
-        ohlc['Date'] = ohlc['Date'].dt.date
+        if (range == 'day'):
+          ohlc.Date = ohlc.Date.dt.date
         # Convert Date column to ohlc index
         ohlc.set_index('Date', inplace=True)
         # Change time zone - doesn't work as expected
@@ -58,6 +74,8 @@ def get_symbol(symbol, start_date, end_date, range='day', polygon_key=polygon_ke
         # Rename and rearrange columns
         ohlc.rename(columns={'t': 'Seconds', 'o': 'Open', 'h': 'High', 'l': 'Low', 'c': 'Close', 'v': 'Volume', 'vw': 'VWAP'}, inplace=True)
         ohlc = ohlc[['Seconds', 'Open', 'High', 'Low', 'Close', 'Volume', 'VWAP']]
+        # Convert from milliseconds to seconds
+        ohlc.Seconds = ohlc.Seconds / 1000
     # Return OHLC data
     return ohlc
 # end get_symbol

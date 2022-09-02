@@ -63,7 +63,7 @@ for y in result:
 
 
 
-	path_str = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -75,12 +75,12 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filename_str = path_str+ "_30day_bars.csv"  	
+	filenamesvtr = pathstr+ "_30day_bars.csv"  	
 
-	#print("create file:", filename_str)	
+	#print("create file:", filenamesvtr)	
 
 	try:	
-		f = open(str(filename_str), "w")
+		f = open(str(filenamesvtr), "w")
 	except: 
 		PrintException()
 
@@ -147,7 +147,7 @@ for y in result:
 		pass		
 
 		
-	filename = path_str+ "_30day_bars.csv"  	
+	filename = pathstr+ "_30day_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -201,7 +201,7 @@ for y in result:
 
 
 
-	path_str = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -213,12 +213,12 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filename_str = path_str+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_day_bars.csv"  	
 
-	#print("create file:", filename_str)	
+	#print("create file:", filenamesvtr)	
 
 	try:	
-		f = open(str(filename_str), "w")
+		f = open(str(filenamesvtr), "w")
 	except: 
 		PrintException()
 
@@ -284,7 +284,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = path_str+ "_day_bars.csv"  	
+	filename = pathstr+ "_day_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -339,7 +339,7 @@ for y in result:
 
 
 
-	path_str = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -351,12 +351,12 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filename_str = path_str+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_day_bars.csv"  	
 
-	#print("create file:", filename_str)	
+	#print("create file:", filenamesvtr)	
 
 	try:	
-		f = open(str(filename_str), "w")
+		f = open(str(filenamesvtr), "w")
 	except: 
 		PrintException()
 
@@ -422,7 +422,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = path_str+ "_day_bars.csv"  	
+	filename = pathstr+ "_day_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -476,7 +476,7 @@ for y in result:
 
 
 
-	path_str = "/Volumes/ext_drive/get_ticker_data/5_year_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/5_year_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -488,12 +488,12 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filename_str = path_str+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_day_bars.csv"  	
 
-	#print("create file:", filename_str)	
+	#print("create file:", filenamesvtr)	
 
 	try:	
-		f = open(str(filename_str), "w")
+		f = open(str(filenamesvtr), "w")
 	except: 
 		PrintException()
 
@@ -559,7 +559,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = path_str+ "_day_bars.csv"  	
+	filename = pathstr+ "_day_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:

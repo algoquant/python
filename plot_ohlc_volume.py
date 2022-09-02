@@ -51,7 +51,7 @@ import plotly.express as px
 from plotly.offline import plot
 
 # Import built-in time series data frame
-# fram_e = px.data.stocks()
+# dframe = px.data.stocks()
 # Create line time series of prices from data frame
 plotfig = px.line(closep['2020'])
 stuff = plotfig.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)

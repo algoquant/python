@@ -3,10 +3,10 @@
 
 import justpy as jp
 
-def hello_world():
+def hellowporld():
     wp = jp.WebPage()
     d = jp.Div(text='Hello world!')
     wp.add(d)
     return wp
 
-jp.justpy(hello_world)
+jp.justpy(hellowporld)

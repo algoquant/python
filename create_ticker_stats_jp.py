@@ -1,5 +1,5 @@
 ##################
-# This script reads OHLC panel data from the file polygon_aggr, 
+# This script reads OHLC panel data from the file polygonaggr, 
 # then calculates rolling averages and EWMA by symbol, 
 # and writes the data to csv files.
 # This script runs every minute 24x7
@@ -15,17 +15,17 @@ from datetime import date, datetime, timedelta
 
 # Get current time in seconds since epoch
 starttime = time.time()
-to_day = date.today()
-mtoday = str(to_day)
+todayd = date.today()
+mtoday = str(todayd)
 mdate = mtoday.replace("-", "")
 
 
 ##################
 ## Load the OHLC panel data from csv file into a data frame.
 
-# filename = mdate + "_polygon_aggr.csv"
+# filename = mdate + "_polygonaggr.csv"
 mdate = '20220126'
-filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygon_aggr.csv"
+filename = "/Volumes/external/Develop/data/polygon/" + mdate + "_polygonaggr.csv"
 dfx = pd.read_csv(filename)
 # Or use package datatable
 # import datatable as dt
@@ -44,7 +44,7 @@ dfx.columns = ['symbol', 'volume', 'avg_vol', 'open_price', 'open', 'high', 'low
 ##################
 ## Set aggregation parameters.
 
-win_dow = 60
+look_back = 60
 
 
 ##################
@@ -75,11 +75,11 @@ for symbol in symbols:
 	df['pct1'] = (df['change1']/df['close'])*100 
 	
   # Calculate simple rolling averages and EWMA
-	avg = df['close'].rolling(win_dow).mean()
-	xavg = df.close.ewm(com=win_dow).mean()
-	avgtp = df['tp'].rolling(win_dow).mean()
+	avg = df['close'].rolling(look_back).mean()
+	xavg = df.close.ewm(com=look_back).mean()
+	avgtp = df['tp'].rolling(look_back).mean()
   # Calculate rolling standard deviation of returns
-	std = df.change1.rolling(win_dow).std()
+	std = df.change1.rolling(look_back).std()
 
 	df['avg'] = avg
 	df['std'] = std

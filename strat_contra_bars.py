@@ -17,33 +17,33 @@ import matplotlib.pyplot as plt
 
 ## Load OHLC data from csv file and format the time index
 
-se_ries = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+tseries = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 # Rename columns
-se_ries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+tseries.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
 
 # Calculate the fast and slow-window simple moving averages
-# ma_fast = se_ries.Close.rolling(window=20).mean()
-# ma_slow = se_ries.Close.rolling(window=100).mean()
-ma_fast = se_ries.Close.ewm(span=30, adjust=False).mean()
-ma_slow = se_ries.Close.ewm(span=100, adjust=False).mean()
+# mafast = tseries.Close.rolling(window=20).mean()
+# maslow = tseries.Close.rolling(window=100).mean()
+mafast = tseries.Close.ewm(span=30, adjust=False).mean()
+maslow = tseries.Close.ewm(span=100, adjust=False).mean()
 
-start_date = '2019-01-01'
-end_date = '2020-04-17'
+startd = '2019-01-01'
+endd = '2020-04-17'
 
 # Create plot objects
 fig, ax = plt.subplots(figsize = (16, 9))
 
 # Add plot objects
-ax.plot(se_ries.loc[start_date:end_date, :].index, se_ries.loc[start_date:end_date, 'Close'], label = 'GOOG', linewidth = 2, color = 'red')
-ax.plot(ma_slow.loc[start_date:end_date].index, ma_slow.loc[start_date:end_date], label = '100-days EWMA', linewidth = 2, color = 'green')
-ax.plot(ma_fast.loc[start_date:end_date].index, ma_fast.loc[start_date:end_date], label = '30-days EWMA', linewidth = 2, color = 'blue')
+ax.plot(tseries.loc[startd:endd, :].index, tseries.loc[startd:endd, 'Close'], label = 'GOOG', linewidth = 2, color = 'red')
+ax.plot(maslow.loc[startd:endd].index, maslow.loc[startd:endd], label = '100-days EWMA', linewidth = 2, color = 'green')
+ax.plot(mafast.loc[startd:endd].index, mafast.loc[startd:endd], label = '30-days EWMA', linewidth = 2, color = 'blue')
 ax.set_ylabel('Price in $', size = 14)
 
 # Add legend
-leg_end = ax.legend(loc='best', prop=dict(size=16))
-# leg_end.get_frame().set_facecolor('grey')
+legendo = ax.legend(loc='best', prop=dict(size=16))
+# legendo.get_frame().set_facecolor('grey')
 
-for line in leg_end.get_lines():
+for line in legendo.get_lines():
     line.set_linewidth(10)
 
 # Render the plot
@@ -53,43 +53,43 @@ plt.show()
 ## Simulate a Moving Average Crossover Strategy
 
 # Calculate rolling VWAP
-vwap = se_ries.Close
-vol_ume = se_ries.Volume
-vwap = vwap * vol_ume
+vwap = tseries.Close
+volumev = tseries.Volume
+vwap = vwap * volumev
 vwap = vwap.rolling(window=150).sum()
-vol_ume = vol_ume.rolling(window=150).sum()
-vwap = vwap / vol_ume
+volumev = volumev.rolling(window=150).sum()
+vwap = vwap / volumev
 
 # Calculate differences between the prices and the VWAP timeseries
-position_s = se_ries.Close - vwap
+posit = tseries.Close - vwap
 # Positions are equal to the sign of the differences
-position_s = position_s.apply(np.sign)
+posit = posit.apply(np.sign)
 # Lag the positions by 1 period
-position_s = position_s.shift(1)
+posit = posit.shift(1)
 
 # Calculate asset log returns
-return_s = np.log(se_ries.Close).diff()
+returnts = np.log(tseries.Close).diff()
 
 # Calculate cumulative strategy returns
-strategy_returns = position_s * return_s
+strategy_returns = posit * returnts
 strategy_cum_returns = strategy_returns.cumsum()
-asset_cum_returns = return_s.cumsum()
+asset_cum_returns = returnts.cumsum()
 
 # Create plot objects for plotting in two panels
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18))
 
 # Plot strategy cumulative returns
-ax1.plot(se_ries.index, asset_cum_returns, label = 'GOOG', linewidth = 2, color = 'b')
-ax1.plot(se_ries.index, strategy_cum_returns, label = 'Strategy', linewidth = 2, color = 'r')
+ax1.plot(tseries.index, asset_cum_returns, label = 'GOOG', linewidth = 2, color = 'b')
+ax1.plot(tseries.index, strategy_cum_returns, label = 'Strategy', linewidth = 2, color = 'r')
 ax1.set_ylabel('Cumulative log returns', size = 14)
 
 # Add legend
-leg_end = ax1.legend(loc='best', prop=dict(size=16))
-for line in leg_end.get_lines():
+legendo = ax1.legend(loc='best', prop=dict(size=16))
+for line in legendo.get_lines():
     line.set_linewidth(10)
 
 # Plot strategy positions
-ax2.plot(se_ries.index, position_s, label='Trading Positions')
+ax2.plot(tseries.index, posit, label='Trading Positions')
 ax2.set_ylabel('Trading Positions', size = 14)
 
 # Render the plot

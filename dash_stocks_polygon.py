@@ -25,7 +25,7 @@ from dash import html
 from dash.dependencies import Input, Output
 
 # Define the list of symbols to download
-symbols = ["AAPL", "META", "SPY", "VXX", "SVXY"]
+symbolv = ["AAPL", "META", "SPY", "VXX", "SVXY"]
 # df = px.data.stocks()
 
 # range = "minute"
@@ -49,8 +49,8 @@ app.layout = html.Div([
           'Select a stock symbol from the menu below:']),
   # Create the dropdown menu
   dcc.Dropdown(id="symbol",
-      options=[{"label": symbol, "value": symbol} for symbol in symbols],
-      value=symbols[0],
+      options=[{"label": symbol, "value": symbol} for symbol in symbolv],
+      value=symbolv[0],
       clearable=False,
       style={"width": "50%"}
       ),

@@ -1,17 +1,8 @@
-""" This is a Dash App for a Moving Average Crossover Strategy. """
-""" The stock prices are downloaded from Polygon. """
-""" Adapted from: """
-""" https://plotly.com/python/dropdowns/ """
-
-""" The slider layout is coded using Bootstrap Components. """
-""" https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/ """
-
-
 # Run this Dash app as follows:
 # In a terminal run:
-# python3 /Users/jerzy/Develop/Python/dash_strat_moving_avg.py
+# python3 /Users/jerzy/Develop/Python/dash_test.py
 # Then in the browser open the url:
-# http://127.0.0.1:8050/
+# http://127.0.0.1:8051/
 
 
 import warnings
@@ -60,9 +51,9 @@ ohlc = read_csv(filename)
 # ohlcsub = ohlc.loc["2019":"2022"]
 
 # Drop non-market data
-# if (range == "minute"):
-#   ohlc = ohlc.drop(ohlc.between_time("0:00", "9:00").index)
-#   ohlc = ohlc.drop(ohlc.between_time("17:00", "23:59").index)
+if (range == "minute"):
+  ohlc = ohlc.drop(ohlc.between_time("0:00", "9:00").index)
+  ohlc = ohlc.drop(ohlc.between_time("17:00", "23:59").index)
 
 # Extract time index
 datev = ohlc.index
@@ -84,13 +75,13 @@ app.layout = dbc.Container([
     dbc.Col([
       # Create the look-back slider
       html.H3("Select the look-back interval:", style={"color": "red"}),
-      html.Div(dcc.Slider(id="ma_slider", min=50, max=120, step=1, value=55, marks=marklb), 
+      html.Div(dcc.Slider(id="ma_slider", min=50, max=120, step=1, value=80, marks=marklb), 
                style={"width": "100%", "font_size": "24", "color": "red"})
     ], width=3),
     dbc.Col([
       # Create the lag slider
       html.H3("Select the lag amount:", style={"color": "red"}),
-      html.Div(dcc.Slider(id="lag_slider", min=1, max=7, step=1, value=6, marks=marklag),
+      html.Div(dcc.Slider(id="lag_slider", min=1, max=7, step=1, value=1, marks=marklag),
                style={"width": "100%", "font_size": "24", "color": "red"})
     ], width=3),
   ]),
@@ -112,10 +103,7 @@ def display_time_series(lookback, lagv):
     retstrat = strat_movavg(closep, returnts, lookback, lagv)
     # Calculate the strategy Sharpe ratio
     sharpestrat = calc_sharpe(retstrat)
-    textv = "Strategy Sharpe = " + str(round(sharpestrat, 3)) + "<br>" + \
-      symbol + " Sharpe = " + str(sharpass) + "<br>" + \
-      "lookback = " + str(lookback) + "<br>" + \
-      "lagv = " + str(lagv)
+    textv = "Strategy Sharpe = " + str(round(sharpestrat, 3)) + "<br>" + symbol + " Sharpe = " + str(sharpass)
     # Calculate the cumulative strategy returns
     # retstrat = retstrat.cumsum()
     ## Plot the strategy returns
@@ -142,7 +130,7 @@ def display_time_series(lookback, lagv):
 
 if __name__ == "__main__":
     # On Mac:
-    app.run_server(debug=True, port=8050)
+    app.run_server(debug=True, port=8051)
     # On mini server:
     # app.run_server(debug=True, host="0.0.0.0")
 

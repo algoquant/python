@@ -1,10 +1,49 @@
 ## Utility functions
 
-# import numpy as np
+import math
+import numpy as np
 import pandas as pd
 
 # Package for download
 import requests
+
+
+## Lag a numpy array and pad with zeros
+def lagit(xs, n):
+    e = np.empty_like(xs)
+    if n >= 0:
+        e[:n] = 0
+        e[n:] = xs[:-n]
+    else:
+        e[n:] = 0
+        e[:n] = xs[-n:]
+    return e
+# end lagit
+
+
+## Calculate the rolling sum - output same length as input
+# https://stackoverflow.com/questions/30399534/shift-elements-in-a-numpy-array
+def calc_rollsum(a, lb=3):
+    ret = np.cumsum(a)
+    ret[lb:] = ret[lb:] - ret[:-lb]
+    return ret
+# end calc_rollsum
+
+
+
+## Calculate the Sharpe ratio
+def calc_sharpe(returnts, raterf=0.0):
+    # Calculate mean returns
+    meanret = returnts.mean()
+    # Calculate standard deviation
+    stdev = returnts.std()
+    # Calculate daily Sharpe ratio
+    sharper = (meanret-raterf)/stdev
+    # Annualize Sharpe ratio
+    sharper = math.sqrt(252)*sharper
+    return sharper
+# end calc_sharpe
+
 
 
 ## Load OHLC data from CSV file
@@ -12,6 +51,7 @@ import requests
 # ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
 
 def read_csv(filename):
+    print("Loading data from: ", filename)
     ohlc = pd.read_csv(filename)
     ohlc.set_index('Date', inplace=True)
     ohlc.index = pd.to_datetime(ohlc.index, utc=True)
@@ -79,4 +119,5 @@ def get_symbol(symbol, startd, endd, range='day', polygon_key=polygon_key):
     # Return OHLC data
     return ohlc
 # end get_symbol
+
 

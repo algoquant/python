@@ -21,15 +21,15 @@ ohlc = get_symbol(symbol=symbol, startd=startd, endd=endd, range=range)
 # ohlc[["Open", "High", "Low", "Close"]] = np.log(ohlc[["Open", "High", "Low", "Close"]])
 # Calculate log asset returns
 closep = np.log(ohlc.Close)
-returnts = closep.diff()
-sharpass = round(calc_sharpe(returnts), 3)
+retsp = closep.diff()
+sharpev = round(calc_sharpe(retsp), 3)
 
 # Calculate the strategy Sharpe ratio
 lookback = 21
 lagv = 5
-retstrat = strat_movavg(closep, returnts, lookback, lagv)
+retstrat = strat_movavg(closep, retsp, lookback, lagv)
 sharpestrat = calc_sharpe(retstrat)
-textv = "Strategy Sharpe = " + str(round(sharpestrat, 3)) + "\n" + symbol + " Sharpe = " + str(sharpass)
+textv = "Strategy Sharpe = " + str(round(sharpestrat, 3)) + "\n" + symbol + " Sharpe = " + str(sharpev)
 
 print(textv)
 

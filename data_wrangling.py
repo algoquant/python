@@ -159,7 +159,7 @@ from utils import read_csv
 ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
 
 # Load OHLC data from csv file and format the time index
-# ohlc = pd.read_csv('/Users/jerzy/Develop/data/SPY_daily.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='Date')
+# ohlc = pd.read_csv('/Users/jerzy/Develop/data/SPY_day.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='Date')
 # ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
 
 # Get data frame info

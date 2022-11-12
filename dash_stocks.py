@@ -3,7 +3,7 @@
 # Then open:
 # http://127.0.0.1:8050/
 
-# print("This is a Dash app which plots stock prices\nSelect a stock symbol from the menu below:\n")
+# print("This is a Dash app which plots stock prices from plotly.express\nSelect a stock symbol from the dropdown menu.\n")
 
 import dash
 from dash import dcc
@@ -19,13 +19,14 @@ app = dash.Dash(__name__)
 
 
 app.layout = html.Div([
-  html.H2(['This is a Dash app which plots stock prices', html.Br(), 'Select a stock symbol from the menu below:']),
+  html.H2(['This is a Dash app which plots stock prices from plotly.express.', html.Br(), 'Select a stock symbol from the menu below:']),
     dcc.Dropdown(
         id="ticker",
         options=[{"label": x, "value": x} 
                  for x in df.columns[1:]],
         value=df.columns[1],
         clearable=False,
+    style={"width": "30%"}
     ),
     dcc.Graph(id="time-series-chart"),
 ])

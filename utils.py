@@ -32,12 +32,12 @@ def calc_rollsum(a, lb=3):
 
 
 ## Calculate the Sharpe ratio
-def calc_sharpe(returnts, raterf=0.0):
+def calc_sharpe(retsp, raterf=0.0):
     # Calculate mean returns
-    meanret = returnts.mean()
+    meanret = retsp.mean()
     # Calculate standard deviation
-    stdev = returnts.std()
-    # Calculate daily Sharpe ratio
+    stdev = retsp.std()
+    # Calculate day Sharpe ratio
     sharper = (meanret-raterf)/stdev
     # Annualize Sharpe ratio
     sharper = math.sqrt(252)*sharper

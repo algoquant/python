@@ -42,8 +42,8 @@ symbolv = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
 symbol = symbolv[3]
 
 # Calculate asset log returns
-returnts = np.log(tseries[symbol]).diff()
-returnts[0] = 0
+retsp = np.log(tseries[symbol]).diff()
+retsp[0] = 0
 
 # Calculate the fast and slow moving averages of sentiment
 lagg1 = 5
@@ -64,9 +64,9 @@ posit = indic.shift(1)
 posit[0] = 0
 
 # Calculate cumulative strategy returns
-strategy_returns = posit * returnts
-strategy_returns = strategy_returns.cumsum()
-asset_cum_returns = returnts.cumsum()
+retstrat = posit * retsp
+retstrat = retstrat.cumsum()
+retsum = retsp.cumsum()
 
 import matplotlib.pyplot as plt
 
@@ -76,8 +76,8 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
 
 # Plot strategy cumulative returns
 ax1.set_title(symbol + ' Strategy Cumulative Log Returns', size=16)
-ax1.plot(indeks, asset_cum_returns, label=symbol, linewidth=2, color='blue')
-ax1.plot(indeks, strategy_returns, label='Strategy', linewidth=2, color='red')
+ax1.plot(indeks, retsum, label=symbol, linewidth=2, color='blue')
+ax1.plot(indeks, retstrat, label='Strategy', linewidth=2, color='red')
 ax1.set_ylabel('Returns', size=12)
 
 # Add legend

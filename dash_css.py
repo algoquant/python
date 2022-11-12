@@ -1,9 +1,17 @@
 """ This is a Dash web app with CSS markup. """
+""" It doesn't do anything but only writes some formatted text. """
 
 # https://dash.plotly.com/external-resources
 # Created folder /assets in the same directory as the Dash app: /Users/jerzy/Develop/Python/
-# Added to the folder /assets the .css files.  
+# The .css files are in the folder /assets 
 # This will affect all the Dash apps in the parent directory /Users/jerzy/Develop/Python/
+
+# Run this Dash app as follows:
+# In a terminal run:
+# python3 /Users/jerzy/Develop/Python/dash_css.py
+# Then in the browser open the url:
+# http://127.0.0.1:8050/
+
 
 
 from dash import Dash, html, dcc

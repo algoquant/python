@@ -44,10 +44,10 @@ assets = cursor.fetchall()
 
 
 ## Set time variables
-# Convert todays time from seconds to string
+# Convert today time from seconds to string
 todayd = int(time.time())
 print("Local time:", time.ctime(todayd))
-dayseconds = 86400
+dayeconds = 86400
 endd = datetime.utcfromtimestamp(todayd).strftime('%Y-%m-%d')
 
 ## Set global polygon_key
@@ -56,9 +56,9 @@ polygon_key = "SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r" # angry_hoover key
 ###### Setup code end ######
 
 
-### Download data for last 30 days
+### Download data for last 30 day
 
-startd = (todayd - (30*dayseconds))
+startd = (todayd - (30*dayeconds))
 startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 
@@ -68,9 +68,9 @@ for asset in assets:
     symbol = str(ticker)
     print("Symbol 30days: ", symbol)
 
-    pathstr = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/30_daily_bars/" + symbol
 
-    filename = pathstr + "_30day_bars.csv"
+    filename = pathstr + "_30daily_bars.csv"
 
     # print("create file:", filename)
 
@@ -141,9 +141,9 @@ dbcon.close()
 
 
 
-### Download data for last 90 days
+### Download data for last 90 day
 
-startd = (todayd - (90*dayseconds))
+startd = (todayd - (90*dayeconds))
 startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 for y in result:
@@ -152,10 +152,10 @@ for y in result:
     symbol = str(t)
     print("Symbol 90days: ",symbol)
 
-    pathstr = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/90_daily_bars/" + symbol
 
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
 
     # print("create file:", filename)
 
@@ -226,7 +226,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
     # print("open file:", filename)
 
     try:
@@ -252,19 +252,19 @@ dbcon.close()
 
 
 
-### Download data for last 180 days
+### Download data for last 180 day
 
-startd = (todayd - (180*dayseconds))
+startd = (todayd - (180*dayeconds))
 
 for y in result:
     t = (y[0])
 
     symbol = str(t)
-    print("Symbol: 180days",symbol)
+    print("Symbol: 180day",symbol)
 
-    pathstr = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" + symbol
+    pathstr = "/Volumes/ext_drive/get_ticker_data/180_daily_bars/" + symbol
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
 
     # print("create file:", filename)
 
@@ -335,7 +335,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
     # print("open file:", filename)
 
     try:
@@ -362,7 +362,7 @@ dbcon.close()
 
 ### Download data for last 5 years
 
-startd = (todayd - (1500*dayseconds))
+startd = (todayd - (1500*dayeconds))
 
 for y in result:
     t = (y[0])
@@ -378,7 +378,7 @@ for y in result:
     startd = datetime.utcfromtimestamp(startd).strftime('%Y-%m-%d')
 
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
 
     # print("create file:", filename)
 
@@ -449,7 +449,7 @@ for y in result:
         PrintException()
         pass
 
-    filename = pathstr + "_day_bars.csv"
+    filename = pathstr + "_daily_bars.csv"
     # print("open file:", filename)
 
     try:

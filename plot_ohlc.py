@@ -12,15 +12,16 @@ import pandas as pd
 # Print pandas version
 print(pd.__version__)
 
+import numpy as np
 
 # Load OHLC data from csv file - the time index is formatted inside read_csv()
-from utils import read_csv
+# from utils import read_csv
 
 symbol = "SPY"
 # range = "minute"
 range = "day"
 filename = "/Users/jerzy/Develop/data/" + symbol + "_" + range + ".csv"
-ohlc = read_csv(filename)
+ohlc = pd.read_csv(filename)
 
 ohlc.index = pd.to_datetime(ohlc.index)
 
@@ -30,7 +31,7 @@ if (range == "minute"):
   ohlc = ohlc.drop(ohlc.between_time("17:00", "23:59").index)
 
 
-# ohlc = pd.read_csv("/Users/jerzy/Develop/data/SPY_daily.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
+# ohlc = pd.read_csv("/Users/jerzy/Develop/data/SPY_day.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
 # ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="index")
 
 # Or load raw data and parse dates by hand
@@ -70,7 +71,7 @@ closep = ohlc.Close
 type(closep)
 
 # Extract time index
-datev = ohlc.index
+datev = ohlc.Date
 
 
 ## Plotly dynamic interactive time series plots using plotly.express - a simplified plotly
@@ -112,14 +113,11 @@ import plotly.graph_objects as go
 
 # Select time slice of data
 ohlc = ohlc["2019":"2020"]
-
-## Plotly line plot with moving average
-
 # Create plotly line graph object from data frame
 plotfig = go.Figure([go.Scatter(x=datev, y=closep)])
 plotfig = plotfig.update_layout(title=symbol, yaxis_title="Log Price", xaxis_rangeslider_visible=False, 
             title_font_size=12)
-# Hide non-market periods
+# Hide non-market periods - needs fixing
 plotfig = plotfig.update_xaxes(rangebreaks=[
   dict(bounds=["sat", "mon"]), # Hide weekends
   dict(bounds=[17, 9], pattern="hour"),  # Hide overnight hours 5PM to 9AM
@@ -134,7 +132,7 @@ plotfig.show()
 
 # Calculate the moving average
 lookback = 55
-pricema = closep.ewm(span=lookback, adjust=False).mean()
+pricema = ohlc.Close.ewm(span=lookback, adjust=False).mean()
 
 # Create empty graph object
 plotfig = go.Figure()
@@ -142,9 +140,9 @@ plotfig = go.Figure()
 plotfig = plotfig.add_trace(go.Scatter(x=datev, y=closep,
   name=symbol, line=dict(color="blue")))
 # Add trace for moving average
-plotfig = plotfig.add_trace(go.Scatter(x=datev, y=pricema[datev],
+plotfig = plotfig.add_trace(go.Scatter(x=datev, y=pricema,
   name="Moving Average", line=dict(color="orange")))
-# Hide non-market periods
+# Hide non-market periods - needs fixing
 plotfig = plotfig.update_xaxes(rangebreaks=[
   dict(bounds=["sat", "mon"]), # Hide weekends
   dict(bounds=[17, 9], pattern="hour"),  # Hide overnight hours 5PM to 9AM
@@ -166,7 +164,7 @@ plotfig = plotfig.add_trace(go.Candlestick(x=datev,
                 open=ohlc.Open, high=ohlc.High, low=ohlc.Low, close=ohlc.Close, 
                 name=symbol+" Log OHLC Prices", showlegend=False))
 # Add trace for moving average
-plotfig = plotfig.add_trace(go.Scatter(x=datev, y=pricema[datev], 
+plotfig = plotfig.add_trace(go.Scatter(x=datev, y=pricema, 
                             name="Moving Average", line=dict(color="orange")))
 # Hide non-market periods
 plotfig = plotfig.update_xaxes(rangebreaks=[
@@ -286,8 +284,8 @@ endd = "2020-04-17"
 fig, ax = plt.subplots(figsize=(16,9))
 # Add plots
 ax.plot(closep[startd:endd], label=symbol + " Stock", color="blue")
-ax.plot(maslow[startd:endd], label=str(backs) + "-days MA", color="green")
-ax.plot(mafast[startd:endd], label=str(backf) + "-days MA", color="red")
+ax.plot(maslow[startd:endd], label=str(backs) + "-day MA", color="green")
+ax.plot(mafast[startd:endd], label=str(backf) + "-day MA", color="red")
 ax.set_ylabel("Price")
 ax.set_title(symbol + " Stock Price and Moving Averages")
 # Add legend

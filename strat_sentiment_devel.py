@@ -40,9 +40,9 @@ tseries.dropna(subset=['spy'], inplace=True)
 
 
 
-# Calculate the total daily sentiment - same as 'sentiment daily'
+# Calculate the total day sentiment - same as 'sentiment day'
 # tseries.loc[:, 'sentiment'] = tseries['sentiment_n'] + tseries['sentiment_p']
-# sum(tseries.sentiment - tseries['sentiment daily'])
+# sum(tseries.sentiment - tseries['sentiment day'])
 # Calculate the rolling average of sentiment
 lagg = 5
 # tseries.loc[:, 'sent_roll'] = tseries.sentiment.rolling(window=lagg).mean()
@@ -80,8 +80,8 @@ symbolv = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
 symbol = symbolv[1]
 
 # Calculate asset log returns
-returnts = np.log(tseries[symbol]).diff()
-returnts[0] = 0
+retsp = np.log(tseries[symbol]).diff()
+retsp[0] = 0
 
 # Calculate the fast and slow moving averages of sentiment
 lagg1 = 5
@@ -102,9 +102,9 @@ posit = indic.shift(1)
 posit[0] = 0
 
 # Calculate cumulative strategy returns
-strategy_returns = posit * returnts
-strategy_returns = strategy_returns.cumsum()
-asset_cum_returns = returnts.cumsum()
+retstrat = posit * retsp
+retstrat = retstrat.cumsum()
+retsum = retsp.cumsum()
 
 import matplotlib.pyplot as plt
 
@@ -114,8 +114,8 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
 
 # Plot strategy cumulative returns
 ax1.set_title(symbol + ' Strategy Cumulative Log Returns', size=16)
-ax1.plot(indeks, asset_cum_returns, label=symbol, linewidth=2, color='blue')
-ax1.plot(indeks, strategy_returns, label='Strategy', linewidth=2, color='red')
+ax1.plot(indeks, retsum, label=symbol, linewidth=2, color='blue')
+ax1.plot(indeks, retstrat, label='Strategy', linewidth=2, color='red')
 ax1.set_ylabel('Returns', size=12)
 
 # Add legend
@@ -145,8 +145,8 @@ symbolv = ['amzn', 'spy', 'bac', 'qqq', 'vxx']
 symbol = symbolv[3]
 
 # Calculate asset log returns
-returnts = np.log(tseries[symbol]).diff()
-returnts[0] = 0
+retsp = np.log(tseries[symbol]).diff()
+retsp[0] = 0
 
 # Calculate the rolling average of change in sentiment
 lagg = 41
@@ -163,9 +163,9 @@ posit = posit.shift(1)
 posit[0] = 0
 
 # Calculate cumulative strategy returns
-strategy_returns = posit * returnts
-strategy_returns = strategy_returns.cumsum()
-asset_cum_returns = returnts.cumsum()
+retstrat = posit * retsp
+retstrat = retstrat.cumsum()
+retsum = retsp.cumsum()
 
 import matplotlib.pyplot as plt
 
@@ -175,8 +175,8 @@ fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18),
 
 # Plot strategy cumulative returns
 ax1.set_title(symbol + ' Strategy Cumulative Log Returns', size=16)
-ax1.plot(indeks, asset_cum_returns, label=symbol, linewidth=2, color='blue')
-ax1.plot(indeks, strategy_returns, label='Strategy', linewidth=2, color='red')
+ax1.plot(indeks, retsum, label=symbol, linewidth=2, color='blue')
+ax1.plot(indeks, retstrat, label='Strategy', linewidth=2, color='red')
 ax1.set_ylabel('Returns', size=12)
 
 # Add legend

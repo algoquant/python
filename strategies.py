@@ -7,7 +7,7 @@ from utils import lagit, calc_rollsum
 
 
 ## Calculate the moving average strategy returns
-def strat_movavg(closep, returnts, lookback, lagv):
+def strat_movavg(closep, retsp, lookback, lagv):
     # Calculate moving average stock prices
     pricema = closep.ewm(span=lookback, adjust=False).mean()
     # Calculate differences between the stock prices and the moving average
@@ -17,12 +17,12 @@ def strat_movavg(closep, returnts, lookback, lagv):
     # Lag the positions by lagv periods
     posit = posit.shift(lagv)
     # Calculate the strategy returns
-    return posit*returnts
+    return posit*retsp
 # end strat_movavg
 
 
 ## Calculate the moving average strategy returns - increase positions gradually
-def strat_movavg2(closep, returnts, lookback, lagv):
+def strat_movavg2(closep, retsp, lookback, lagv):
     # Calculate moving average stock prices
     pricema = closep.ewm(span=lookback, adjust=False).mean()
     # Calculate differences between the stock prices and the moving average
@@ -32,6 +32,6 @@ def strat_movavg2(closep, returnts, lookback, lagv):
     # Lag the positions by 1 period
     posit = lagit(posit, 1)
     # Calculate the strategy returns
-    return posit*returnts/lagv
+    return posit*retsp/lagv
 # end strat_movavg2
 

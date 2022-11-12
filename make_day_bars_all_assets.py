@@ -63,7 +63,7 @@ for y in result:
 
 
 
-	pathstr = "/Volumes/ext_drive/get_ticker_data/30_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/30_daily_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -75,7 +75,7 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filenamesvtr = pathstr+ "_30day_bars.csv"  	
+	filenamesvtr = pathstr+ "_30daily_bars.csv"  	
 
 	#print("create file:", filenamesvtr)	
 
@@ -147,7 +147,7 @@ for y in result:
 		pass		
 
 		
-	filename = pathstr+ "_30day_bars.csv"  	
+	filename = pathstr+ "_30daily_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -201,7 +201,7 @@ for y in result:
 
 
 
-	pathstr = "/Volumes/ext_drive/get_ticker_data/90_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/90_daily_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -213,7 +213,7 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filenamesvtr = pathstr+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_daily_bars.csv"  	
 
 	#print("create file:", filenamesvtr)	
 
@@ -284,7 +284,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = pathstr+ "_day_bars.csv"  	
+	filename = pathstr+ "_daily_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -335,11 +335,11 @@ for y in result:
 	t = (y[0])
 	
 	symbol = str(t)
-	print("Symbol: 180days",symbol)
+	print("Symbol: 180day",symbol)
 
 
 
-	pathstr = "/Volumes/ext_drive/get_ticker_data/180_day_bars/" +symbol
+	pathstr = "/Volumes/ext_drive/get_ticker_data/180_daily_bars/" +symbol
 
 	ux1s = str(ux1)
 
@@ -351,7 +351,7 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filenamesvtr = pathstr+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_daily_bars.csv"  	
 
 	#print("create file:", filenamesvtr)	
 
@@ -422,7 +422,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = pathstr+ "_day_bars.csv"  	
+	filename = pathstr+ "_daily_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:
@@ -488,7 +488,7 @@ for y in result:
 	dt2 = datetime.utcfromtimestamp(ux2).strftime('%Y-%m-%d')
 	
 		
-	filenamesvtr = pathstr+ "_day_bars.csv"  	
+	filenamesvtr = pathstr+ "_daily_bars.csv"  	
 
 	#print("create file:", filenamesvtr)	
 
@@ -559,7 +559,7 @@ for y in result:
 		PrintException()
 		pass		
 
-	filename = pathstr+ "_day_bars.csv"  	
+	filename = pathstr+ "_daily_bars.csv"  	
 	#print("open file:", filename)	
 
 	try:

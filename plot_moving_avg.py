@@ -160,8 +160,8 @@ endd = '2020-04-17'
 fig, ax = plt.subplots(figsize=(16,9))
 
 ax.plot(tseries.loc[startd:endd, :].index, tseries.loc[startd:endd, :], label='Close')
-ax.plot(long_rolling.loc[startd:endd, :].index, long_rolling.loc[startd:endd, :], label = '100-days SMA')
-ax.plot(short_rolling.loc[startd:endd, :].index, short_rolling.loc[startd:endd, :], label = '20-days SMA')
+ax.plot(long_rolling.loc[startd:endd, :].index, long_rolling.loc[startd:endd, :], label = '100-day SMA')
+ax.plot(short_rolling.loc[startd:endd, :].index, short_rolling.loc[startd:endd, :], label = '20-day SMA')
 
 ax.legend(loc='best')
 ax.set_ylabel('Price in $')

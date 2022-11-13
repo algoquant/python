@@ -14,9 +14,66 @@ https://stackoverflow.com/questions/22149584/what-does-axis-in-pandas-mean
 
 """
 
-# Import packages for matrices and data frames
+## Import packages for matrices and data frames
 import numpy as np
 import pandas as pd
+
+# Ignore FutureWarning
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
+## Removing outliers using zscores
+https://stackoverflow.com/questions/69735372/futurewarning-automatic-reindexing-on-dataframe-vs-series-comparisons-is-deprec
+
+numerical_cols=df.select_dtypes(['int64','float64'])
+for col in numerical_cols:
+    feature_value_less_than_3sigma = df[col].mean()-3*(df[col].std())
+    feature_value_greater_than_3sigma = df[col].mean()+3*(df[col].std())
+    df = df[~((df[col].lt(feature_value_less_than_3sigma)) | (df[col].gt(feature_value_greater_than_3sigma)))]
+    df = df[~((df[col] < (feature_value_less_than_3sigma)) | (df[col] > (feature_value_greater_than_3sigma)))]
+else:
+    print('\nAfter: ', df.shape)
+
+
+# Create an array (vector) of numbers
+np.arange(11, 17, 0.5)
+
+# Create a list of numbers
+np.arange(11, 17, 0.5).tolist()
+
+# https://pynative.com/python-range-function/
+range(11, 17)
+
+# Create a 15x4 data frame of random integers
+df = pd.DataFrame(np.random.randint(0, 10, size=(15, 4)), columns=list('ABCD'))
+
+# Perform an ifelse loop
+np.where(df['A'] > df['B'], df['A'], df['B'])
+
+# Select two rows in first column
+df.iloc[2:4, 0]
+# Or
+df.iloc[2:4, 0:1]
+
+# Set two rows in first column to nan
+df.iloc[2:4, 0] = np.nan
+
+# Perform an locf loop forward
+df.fillna(method='ffill')
+# Perform an locf loop backward
+df.fillna(method='bfill')
+
+
+## Allocate data frame, ifelse, and locf on the data
+# Use numpy arrays instead of pandas?
+# https://stackoverflow.com/questions/41190852/most-efficient-way-to-forward-fill-nan-values-in-numpy-array
+
+
+# Allocate a data frame with two columns filled with nan values
+df = pd.DataFrame(np.nan, index=range(11, 17), columns=['A', 'B'])
+# Set one cell to zero
+df.iloc[3, 1] = 0
 
 
 ## Load data frame from csv file
@@ -182,7 +239,7 @@ ohlc.tail()
 # pd.set_option('display.max_columns', None)
 
 # Extract time index
-indeks = ohlc.index
+datev = ohlc.index
 
 # Subset data frame
 ohlc.iloc[0:5, :]

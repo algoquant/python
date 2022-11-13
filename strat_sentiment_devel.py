@@ -10,7 +10,7 @@ import pandas as pd
 
 
 ## Load data from Excel file
-tseries = pd.read_excel(r'C:/Develop/predictive/data/Impact of Covid News on Equities.xlsx', 
+tseries = pd.read_excel(r'/Users/jerzy/Develop/data/Impact of Covid News on Equities.xlsx', 
                         sheet_name='dailies')
 
 # Get data frame info

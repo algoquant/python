@@ -57,7 +57,7 @@ plt.show()
 # Calculate rolling VWAP
 vwap = ohlc.Close
 volumev = ohlc.Volume
-vwap = vwap * volumev
+vwap = vwap*volumev
 vwap = vwap.rolling(window=150).sum()
 volumev = volumev.rolling(window=150).sum()
 vwap = vwap/volumev

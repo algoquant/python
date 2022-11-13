@@ -13,10 +13,11 @@
 # http://127.0.0.1:8050/
 
 
+# Ignore FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-import datetime
+# import datetime
 import pandas as pd
 import numpy as np
 
@@ -39,7 +40,7 @@ marklag = {i: {"label": str(i), "style": {"fontSize": "24px"}} for i in range(1,
 
 # Define parameters
 symbol = "SPY"
-range = "day"
+range = "daily"
 # range = "minute"
 
 # Load OHLC stock prices from CSV file

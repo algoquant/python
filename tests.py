@@ -3,15 +3,25 @@
 Created on Sun Nov 29 12:37:12 2020
 
 """
+import datetime
 
-# Using map()
-symbolv = ['amzn', 'spy', 'bac', 'qqq']
-list(map((lambda i: (i + '_ma')), symbolv))
+datev = datetime.datetime.now()
+print(f"Modified on {datev:%B %d, %Y}")
 
-# Or
+
+# Simple for loop
+fruitv = ["apple", "banana", "cherry"]
+for x in fruitv:
+  print(x)
+
+
+# Loop using map() with lambda
+symbolv = ["amzn", "spy", "bac", "qqq"]
+list(map((lambda i: (i + "_ma")), symbolv))
+
+# Or using a function
 def testfunc(i):
-  return (i + '_ma')
-
+  return (i + "_ma")
 testfunc(symbolv[0])
 list(map(testfunc, symbolv))
 
@@ -20,9 +30,10 @@ list(map(testfunc, symbolv))
 
 [testfunc(x) for x in symbolv]
 # Or
-[(lambda x: (x + '_ma'))(x) for x in symbolv]
+[(lambda x: (x + "_ma"))(x) for x in symbolv]
 
-list(zip(symbolv, '_ma'))
+# Zip together two lists
+list(zip(symbolv, "_ma"))
 
 a = ("John", "Charles", "Mike")
 b = ("Jenny", "Christy", "Monica")

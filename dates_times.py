@@ -2,6 +2,9 @@
 """
 Script with examples of using Python date and time functions
 
+Date and time types:
+https://docs.python.org/3/library/datetime.html
+
 https://stackoverflow.com/questions/7479777/difference-between-python-datetime-vs-time-modules
 https://stackoverflow.com/questions/13031559/how-to-change-a-struct-time-object
 
@@ -13,46 +16,47 @@ Comment:
 
 ## Import package for time commands
 
-# Module time for time functions
+# Package time for time functions
 import time
 
+# Create date and time structure from string, as a struct_time structure
+datev = time.strptime("23.10.2012", "%d.%m.%Y")
+print("Date and time object:", datev)
+type(datev)
+
 # Get current time in seconds since epoch
-seconds = time.time()
-print("Seconds since epoch =", seconds)
+secondsn = time.time()
+print("Seconds since epoch =", secondsn)
 
 # Get date and local clock time object from seconds since epoch
-local_time = time.ctime(seconds)
-print("Local date and clock time:", local_time)
-# Create date and local clock time struct_time structure from seconds since epoch
-date_time = time.localtime(seconds)
+datev = time.ctime(secondsn)
+print("Local date and clock time:", datev)
+# Create the date and time from seconds since epoch, as a struct_time structure
+datev = time.localtime(secondsn)
 # Create Greenwich date-time structure from seconds since epoch
-gm_time = time.gmtime(seconds)
-print("Greenwich date and time structure:", gm_time)
+timegm = time.gmtime(secondsn)
+print("Greenwich date and time structure:", timegm)
 
 # Get time in seconds from date-time structure
-seconds = time.mktime(date_time)
-print("Seconds since epoch:", seconds)
+secondsn = time.mktime(datev)
+print("Seconds since epoch:", secondsn)
 
 # Get date and local clock time as struct_time structure
-date_time = time.localtime()
-print("Date and local clock time structure:", date_time)
+datev = time.localtime()
+print("Date and local clock time structure:", datev)
 # Get year
-print("Year:", date_time.tm_year)
+print("Year:", datev.tm_year)
 # Get hour
-print("Hour:", date_time.tm_hour)
+print("Hour:", datev.tm_hour)
 
 # Get date and time string from date-time structure
-local_time = time.asctime(date_time)
-print("Local date and clock time:", local_time)
+datestr = time.asctime(datev)
+print("Local date and clock time:", datestr)
 # Get date and time string from date-time structure
-local_time = time.strftime("%d.%m.%Y %H:%M:%S", date_time)
+datestr = time.strftime("%d.%m.%Y %H:%M:%S", datev)
 # Get date string from date-time structure
-local_date = time.strftime("%Y-%m-%d", date_time)
-print("Local date and clock time:", local_time)
-
-# Create date-time structure from string
-date_time = time.strptime("23.10.2012", "%d.%m.%Y")
-print("Date and time object:", date_time)
+datestr = time.strftime("%Y-%m-%d", datev)
+print("Date:", datestr)
 
 
 
@@ -65,64 +69,141 @@ Comment:
     datetime.datetime.strptime()
 """
 
+# Import datetime for dates and times
+# Don't import the whole module because it requires the double datetime syntax
 # import datetime
-
 from datetime import date, datetime, timedelta
 
-# Get date and local clock time object from seconds since epoch
-local_time = datetime.fromtimestamp(seconds)
+# Create a datetime object from the year, month, and day
+datev = datetime(2020, 5, 17)
+print(datev)
+# Get the year
+print(datev.year)
+# Create a datetime object for May 5, 2023, 12:00 PM
+datev = datetime(2023, 5, 5, 12, 0)
+# Create a datetime object from the attributes: 
+# year, month, day, hour, minute, second, and microsecond
+datev = datetime(2024, 8, 25, 11, 36, 7, 204690)
 
-# Coerce datetime to date
-local_time.date()
-# Coerce date to string
-str(local_time.date())
+# Get current date and local clock time as a datetime object
+datev = datetime.now()
+print(datev)
 
-# Get today's date as datetime structure
+# Get the seconds since epoch from date-time structure
+datev.timestamp()
+
+# Get the timezone - by default it's US/Eastern
+datev.astimezone().tzinfo
+
+# Create datetime object from string
+datev = datetime.strptime("23.10.2012", "%d.%m.%Y")
+print("Date and time object:", datev)
+
+# Print date and time with seconds
+datev = datetime.now()
+datev.strftime("%d.%m.%Y %H:%M:%S")
+# Print with microseconds
+print(datev)
+
+# Format datetime object into string
+datev.strftime("%Y-%m-%d")
+# Get day of week
+datev.strftime("%A")
+# Get name of month
+datev.strftime("%B")
+datev.strftime("%Y-%m-%d_%H-%M-%S.%f %z")
+
+# Extract the date from the datetime object
+datobj = datev.date()
+# Coerce the date to a string
+str(datobj)
+# Add 30 days to date
+datobj + timedelta(days=30)
+
+# Get today's date as a datetime object
 todayd = date.today()
+type(todayd)
 print(todayd)
-yesterday = (todayd - timedelta(days = 1))
-# Format datetime structures into strings
+yesterdayd = (todayd - timedelta(days = 1))
+# Format datetime objects into strings
 todayd = str(todayd)
 print(todayd)
-yesterday = str(yesterday)
+yesterdayd = str(yesterdayd)
 # Remove hyphens
-m_date = todayd.replace("-", "")
+mdate = todayd.replace("-", "")
 
-
-# Create a datetime structure from integers
-date_time = datetime(2020, 5, 17)
-print(date_time)
-# Get year
-print(date_time.year)
-
-# Create datetime structure from string
-date_time = datetime.strptime("23.10.2012", "%d.%m.%Y")
-print("Date and time object:", date_time)
-
-# Format datetime structure into string
-date_time.strftime("%Y-%m-%d")
-# Get day of week
-date_time.strftime("%A")
-# Get name of month
-date_time.strftime("%B")
-
-# Get current date and time as datetime structure
-date_time = datetime.now()
-# Print with seconds
-date_time.strftime("%d.%m.%Y %H:%M:%S")
-# Print with microseconds
-print(date_time)
-
-
-# Get date from datetime structure
-dat_e = date_time.date()
-
-# Add 30 days to date
-dat_e + timedelta(days=30)
 
 # Add 1 month to date 2020-01-31 (use proper calendar)
-date_time = datetime.strptime("2020-01-31", "%Y-%m-%d")
-dat_e = date_time.date()
+datev = datetime.strptime("2020-01-31", "%Y-%m-%d")
+datev = datev.date()
 from dateutil.relativedelta import relativedelta
-dat_e + relativedelta(months=1)
+datev + relativedelta(months=1)
+
+
+## Import zoneinfo for time zones
+from zoneinfo import ZoneInfo, available_timezones
+# Don't use pytz because it's deprecated - use zoneinfo instead
+# from pytz import timezone
+
+# Local clock time without the time zone
+datev = datetime.now()
+print(datev)
+print(datev.utcoffset())
+# Get the timezone - by default it's US/Eastern
+print(datev.astimezone().tzinfo)
+
+# Define the Pacific time zone
+tzone = ZoneInfo("US/Pacific")
+# Clock time in the Pacific zone, at the same moment of time as now
+# The timezone object is passed to datetime.now()
+datev = datetime.now(tz=tzone)
+print(datev)
+# Get the timezone - returns EDT, not PT
+datev.astimezone().tzinfo
+datev = datev.isoformat(timespec="seconds")
+print(f"Pacific time {datev}")
+
+# Print the available time zones
+available_timezones()
+# Define the Pacific time zone
+tzone = ZoneInfo("US/Pacific")
+str(tzone)
+# Clock time in the Pacific zone, at the same moment of time as now
+datev = datetime.now()
+print(datev)
+datep = datev.astimezone(tzone)
+print(datep)
+datep.tzname()
+datep.utcoffset()
+
+# Change the time zone but keep the same clock time, at a different moment of time
+# "Seemingly simple but I cannot get it to work."
+# https://stackoverflow.com/questions/64390568/set-timezone-without-changing-time-python
+# Define the Eastern time zone
+tzone = ZoneInfo("US/Eastern")
+# Add the time zone to the clock time
+# datev = datev.astimezone(tzone)
+datev = datev.replace(tzinfo=tzone)
+print(datev)
+# Define the Pacific time zone
+tzone = ZoneInfo("US/Pacific")
+# Change the time zone but keep the same clock time, at a different moment of time
+datep = datev.replace(tzinfo=tzone)
+print(datep)
+
+
+# Get the UTC time as a datetime object
+datutc = datetime.utcnow()
+# Get the seconds since epoch (UTC)
+secutc = datutc.timestamp()
+# Get the datetime object from the seconds since epoch
+datev = datetime.fromtimestamp(secutc)
+datev == datutc
+
+# pytz is deprecated
+# Local clock time with timezone object passed to datetime.now()
+# tzone = timezone("US/Pacific")
+# datev = datetime.now(tz=tzone)
+# Get the timezone - returns EDT, not PT
+# datev.astimezone().tzinfo
 

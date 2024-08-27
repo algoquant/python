@@ -24,7 +24,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 ## Removing outliers using zscores
-https://stackoverflow.com/questions/69735372/futurewarning-automatic-reindexing-on-dataframe-vs-series-comparisons-is-deprec
+# https://stackoverflow.com/questions/69735372/futurewarning-automatic-reindexing-on-dataframe-vs-series-comparisons-is-deprec
 
 numerical_cols=df.select_dtypes(['int64','float64'])
 for col in numerical_cols:

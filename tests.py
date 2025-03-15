@@ -40,3 +40,10 @@ b = ("Jenny", "Christy", "Monica")
 
 x = zip(a, b)
 list(x)
+
+# Get list of parameters of a function
+# https://www.geeksforgeeks.org/how-to-get-list-of-parameters-name-from-a-function-in-python/
+import inspect 
+print(inspect.signature(datetime.now)) 
+
+

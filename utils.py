@@ -16,12 +16,6 @@ for packv in packlist:
   print(f"{packv.key}=={packv.version}")
 
 
-# Get list of parameters of a function
-# https://www.geeksforgeeks.org/how-to-get-list-of-parameters-name-from-a-function-in-python/
-import inspect 
-print(inspect.signature(datetime.now)) 
-
-
 ## Lag a numpy array and pad with zeros
 def lagit(xs, n):
     e = np.empty_like(xs)

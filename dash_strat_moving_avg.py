@@ -17,6 +17,10 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+# Suppress package info messages - doesn't work
+# import logging
+# logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
 # import datetime
 import pandas as pd
 import numpy as np
@@ -33,24 +37,23 @@ from utils import get_symbol, calc_sharpe
 from strategies import strat_movavg
 
 # Define marks for sliders
-marklb = {i: {"label": str(i), "style": {"fontSize": "24px"}} for i in range(10, 120, 10)}
-marklag = {i: {"label": str(i), "style": {"fontSize": "24px"}} for i in range(1, 7, 1)}
+marklb = {i: {"label": str(i), "style": {"fontSize": "24px"}} for i in range(5, 300, 20)}
+marklag = {i: {"label": str(i), "style": {"fontSize": "24px"}} for i in range(1, 8, 1)}
 # marklag = {i: {"label": str(i), "style": {"transform": "scale(2.0)"}} for i in range(1, 7, 1)}
 
 
-# Define parameters
-symbol = "SPY"
-range = "daily"
-# range = "minute"
-
 # Load OHLC stock prices from CSV file
-filename = "/Users/jerzy/Develop/data/" + symbol + "_" + range + ".csv"
+# Define stock symbol
+symboln = "SPY"
+rangen = "daily"
+# rangen = "minute"
+filename = "/Users/jerzy/Develop/data/" + symboln + "_" + rangen + ".csv"
 ohlc = pd.read_csv(filename)
 
 # Download OHLC stock prices from Polygon for the symbol
 # startd = datetime.date(2000, 1, 1)
 # endd = datetime.date.today()
-# ohlc = get_symbol(symbol=symbol, startd=startd, endd=endd, range=range)
+# ohlc = get_symbol(symbol=symboln, startd=startd, endd=endd, range=rangen)
 
 # Calculate log stock prices
 # ohlc[["Open", "High", "Low", "Close"]] = np.log(ohlc[["Open", "High", "Low", "Close"]])
@@ -61,7 +64,7 @@ ohlc = pd.read_csv(filename)
 # ohlcsub = ohlc.loc["2019":"2022"]
 
 # Drop non-market data
-# if (range == "minute"):
+# if (rangen == "minute"):
 #   ohlc = ohlc.drop(ohlc.between_time("0:00", "9:00").index)
 #   ohlc = ohlc.drop(ohlc.between_time("17:00", "23:59").index)
 
@@ -69,30 +72,31 @@ ohlc = pd.read_csv(filename)
 # datev = ohlc.index
 datev = ohlc.Date
 
-# Calculate the log percentage returns
+# Calculate the log returns
 closep = ohlc.Close
-retsp = np.log(closep).diff()
-# Calculate the Sharpe ratio and cumulative returns
-retsum = retsp.cumsum()
-sharpev = round(calc_sharpe(retsp), 3)
+retp = np.log(closep).diff()
+
+# Calculate the strategy returns and Sharpe ratio
+retsum = retp.cumsum()
+sharpev = round(calc_sharpe(retp), 3)
 
 
 ## Create the Dash web app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = dbc.Container([
-  html.H1("Dash App for Moving Average Strategy"),
+  html.H1("Dash App for Moving Average Crossover Strategy"),
   html.Br(),
   dbc.Row([
     dbc.Col([
       # Create the look-back slider
-      html.H3("Select the look-back interval:", style={"color": "blue"}),
-      dcc.Slider(id="ma_slider", min=10, max=120, step=1, value=50, marks=marklb,
+      html.H3("Look-back interval (days):", style={"color": "blue"}),
+      dcc.Slider(id="ma_slider", min=5, max=300, step=1, value=150, marks=marklb,
         tooltip={"placement": "top", "always_visible": True})
     ]),
     dbc.Col([
       # Create the lag slider
-      html.H3("Select the lag amount:", style={"color": "blue"}),
+      html.H3("Lag amount (days):", style={"color": "blue"}),
       dcc.Slider(id="lag_slider", min=1, max=7, step=1, value=6, marks=marklag,
         tooltip={"placement": "top", "always_visible": True})
     ]),
@@ -114,29 +118,29 @@ app.layout = dbc.Container([
 
 def display_time_series(lookback, lagv):
     ## Calculate the strategy returns
-    retstrat = strat_movavg(closep, retsp, lookback, lagv)
+    retstrat = strat_movavg(closep, retp, lookback, lagv)
     # Calculate the strategy Sharpe ratio
     sharpestrat = calc_sharpe(retstrat)
     textv = "Strategy Sharpe = " + str(round(sharpestrat, 3)) + "<br>" + \
-      symbol + " Sharpe = " + str(sharpev) + "<br>" + \
+      symboln + " Sharpe = " + str(sharpev) + "<br>" + \
       "lookback = " + str(lookback) + "<br>" + \
       "lagv = " + str(lagv)
-    # Calculate the cumulative strategy returns
-    # retstrat = retstrat.cumsum()
+    
     ## Plot the strategy returns
+    # Create an empty plot object
     plotfig = go.Figure()
-    # Modify plot aesthetics
+    # Modify the plot aesthetics
     # https://plotly.com/python/reference/layout/
-    plotfig.update_layout(title_text="Moving Average Strategy for: " + symbol, 
+    plotfig.update_layout(title_text="Moving Average Crossover Strategy for: " + symboln, 
                           title_font_size=34, title_font_color="black", 
                           yaxis_title="Cumulative Returns", font_color="black", font_size=18,
                           xaxis_rangeslider_visible=False, width=1400, height=850)
     plotfig.add_annotation(text=textv, font=dict(family="bold", size=18), align="left",
                            showarrow=False, xref='paper', yref='paper', x=0.5, y=0.9)
-    # Add trace for symbol
+    # Add trace for the stock
     plotfig.add_trace(go.Scatter(x=datev, y=retsum,
-      name=symbol, line=dict(color="blue")))
-    # Add trace for strategy
+      name=symboln, line=dict(color="blue")))
+    # Add trace for the strategy
     plotfig.add_trace(go.Scatter(x=datev, y=retstrat.cumsum(),
       name="Strategy", line=dict(color="red")))
     # Customize legend

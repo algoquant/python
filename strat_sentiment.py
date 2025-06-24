@@ -71,7 +71,7 @@ retsum = retsp.cumsum()
 import matplotlib.pyplot as plt
 
 # Create plot objects for plotting in two panels
-fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
@@ -91,7 +91,7 @@ ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 
@@ -100,7 +100,7 @@ plt.show()
 ## Plot Sentiment and its Moving Averages
 
 # Create plot objects for plotting in two panels
-fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
@@ -121,7 +121,7 @@ ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 

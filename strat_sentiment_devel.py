@@ -109,7 +109,7 @@ retsum = retsp.cumsum()
 import matplotlib.pyplot as plt
 
 # Create plot objects for plotting in two panels
-fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
@@ -129,7 +129,7 @@ ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 
@@ -170,7 +170,7 @@ retsum = retsp.cumsum()
 import matplotlib.pyplot as plt
 
 # Create plot objects for plotting in two panels
-fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
@@ -190,7 +190,7 @@ ax2.plot(indeks, posit, label='Trading Positions')
 ax2.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 
@@ -199,7 +199,7 @@ plt.show()
 ## Plot Sentiment and its Moving Averages
 
 # Create plot objects for plotting in two panels
-fig_ure, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Plot strategy cumulative returns
@@ -220,7 +220,7 @@ ax2.plot(indeks, indic, label='Trading Positions')
 ax2.set_ylabel('Indicator', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 
@@ -246,11 +246,11 @@ indeks = pd.to_datetime(tseries.date)
 ## Plot SPY and Sentiment - first method
 
 # Create plot window with subplots
-fig_ure, (ax1, ax3) = plt.subplots(2, 1, figsize=(16, 18), 
+plotfig, (ax1, ax3) = plt.subplots(2, 1, figsize=(16, 18), 
                                    gridspec_kw={'height_ratios': [3, 1]})
 
 # Create x-values
-# x_val = np.arange(len(tseries))
+# xvar = np.arange(len(tseries))
 
 # Plot the first series
 color = 'tab:red'
@@ -284,7 +284,7 @@ ax3.plot(indeks, posit, label='Trading Positions')
 ax3.set_ylabel('Positions', size=12)
 
 # Set tight plot layout
-fig_ure.tight_layout()
+plotfig.tight_layout()
 # Render the plot
 plt.show()
 
@@ -292,11 +292,11 @@ plt.show()
 ## Alternative plot method - not as nice legend
 
 # Create plot window
-fig_ure = plt.figure(figsize=(12, 7))
+plotfig = plt.figure(figsize=(12, 7))
 
 # Plot the first series
 color = 'tab:red'
-ax1 = fig_ure.add_subplot(111)
+ax1 = plotfig.add_subplot(111)
 ax1.set_ylabel('SPY', color=color, size=12)
 ax1.plot(indeks, tseries.spy, label='SPY', color=color)
 # Change color of ticks
@@ -311,7 +311,7 @@ ax2.plot(indeks, tseries.sent_roll, label='Sentiment', color=color)
 ax2.tick_params(axis='y', labelcolor=color)
 
 # Add legend with both lines
-legendo = fig_ure.legend(loc="upper left")
+legendo = plotfig.legend(loc="upper left")
 # Make legend lines wider
 for line in legendo.get_lines():
     line.set_linewidth(10)

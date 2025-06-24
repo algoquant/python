@@ -13,7 +13,7 @@ import pkg_resources
 
 packlist = pkg_resources.working_set
 for packv in packlist:
-  print(f"{packv.key}=={packv.version}")
+  print(f'{packv.key}=={packv.version}')
 
 
 ## Lag a numpy array and pad with zeros
@@ -59,7 +59,7 @@ def calc_sharpe(retsp, raterf=0.0):
 # ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
 
 def read_csv(filename):
-    print("Loading data from: ", filename)
+    print('Loading data from: ', filename)
     ohlc = pd.read_csv(filename)
     ohlc.set_index('Date', inplace=True)
     ohlc.index = pd.to_datetime(ohlc.index, utc=True)
@@ -70,7 +70,7 @@ def read_csv(filename):
 ## Download OHLC time series from Polygon
 
 # Set Polygon key - angry_hoover
-polygon_key = "SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r"
+polygon_key = 'SDpnrBpiRzONMJdl48r6dOo0_mjmCu6r'
 
 ## Define exception handler function
 def CatchException():
@@ -80,12 +80,12 @@ def CatchException():
     filename = f_err.f_code.co_filename
     linecache.checkcache(filename)
     line = linecache.getline(filename, lineno, f_err.f_globals)
-    print ('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+    print ('EXCEPTION IN ({}, LINE {} '{}'): {}'.format(filename, lineno, line.strip(), exc_obj))
 
 
 ## get_symbol() downloads data from Polygon and returns an OHLC data frame
 def get_symbol(symbol, startd, endd, range='day', polygon_key=polygon_key):
-    print("Downloading", symbol)
+    print('Downloading', symbol)
     getstring = f'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/{range}/{startd}/{endd}?adjusted=true&sort=asc&limit=50000&apiKey={polygon_key}'
     # Download the data from url
     response = requests.get(getstring)
@@ -109,7 +109,7 @@ def get_symbol(symbol, startd, endd, range='day', polygon_key=polygon_key):
     if queryCount > 1:
         ohlc = pd.DataFrame(bardata)
         # Create Date column equal to datetime - Polygon timestamp is in milliseconds
-        ohlc["Date"] = pd.to_datetime(ohlc.t, unit='ms', utc=True)
+        ohlc['Date'] = pd.to_datetime(ohlc.t, unit='ms', utc=True)
         # Coerce column of type datetime to type date
         if (range == 'day'):
           ohlc.Date = ohlc.Date.dt.date

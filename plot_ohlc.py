@@ -319,7 +319,7 @@ mpf.plot(ohlc.loc["2014":"2015"], type="candle", style="charles", title=symbol,
             mav=(3, 6, 9), 
             savefig="test-mplfiance.png")
 
-# ema_15 = ohlc["2020"]["Close"].ewm(span=15, adjust=False).mean()
+# ema15 = ohlc["2020"]["Close"].ewm(span=15, adjust=False).mean()
 # fig, ax = plt.subplots(figsize = (12,6))
 
 

@@ -18,35 +18,44 @@ import matplotlib.pyplot as plt
 ## Load OHLC data from csv file and format the time index
 
 # ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="index")
-symbol = "SPY"
-ohlc = pd.read_csv("/Users/jerzy/Develop/data/SPY_minute.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
+symboln = "SPY"
+filename = "/Users/jerzy/Develop/data/etfdaily/" + symboln + "_daily" + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=["Index"])
+# ohlc = pd.read_csv(filename, parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
+# Set the time index as the data frame index
+ohlc.set_index("Index", inplace=True)
+# Log of OHLC prices
+ohlc.iloc[:, 0:4] = np.log(ohlc.iloc[:, 0:4])
+# closep = ohlc[symboln + ".Close"]
 # Rename columns
-# ohlc.columns = ["Open", "High", "Low", "Close", "Volume"]
+ohlc.columns = ["Open", "High", "Low", "Close", "Volume"]
+closep = ohlc.Close
 
 # Calculate the fast and slow-window simple moving averages
-# mafast = ohlc.Close.rolling(window=20).mean()
-# maslow = ohlc.Close.rolling(window=100).mean()
-mafast = ohlc.Close.ewm(span=30, adjust=False).mean()
-maslow = ohlc.Close.ewm(span=100, adjust=False).mean()
+# mafast = closep.rolling(window=20).mean()
+# maslow = closep.rolling(window=100).mean()
+mafast = closep.ewm(span=30, adjust=False).mean()
+maslow = closep.ewm(span=100, adjust=False).mean()
 
-startd = "2022-07-29"
-endd = "2022-08-25"
+startd = "2010-07-29"
+endd = "2026-08-25"
+datev = ohlc.loc[startd:endd].index
 
 # Create plot objects
 fig, ax = plt.subplots(figsize = (16, 9))
 
 # Add plot objects
-ax.plot(ohlc.loc[startd:endd, :].index, ohlc.loc[startd:endd, "Close"], label = symbol, linewidth = 2, color = "red")
-ax.plot(maslow.loc[startd:endd].index, maslow.loc[startd:endd], label = "100-day EWMA", linewidth = 2, color = "green")
-ax.plot(mafast.loc[startd:endd].index, mafast.loc[startd:endd], label = "30-day EWMA", linewidth = 2, color = "blue")
-ax.set_ylabel("Price in $", size = 14)
+ax.plot(datev, closep.loc[startd:endd], label = symboln, linewidth = 2, color = "red")
+ax.plot(datev, maslow.loc[startd:endd], label = "100-day EWMA", linewidth = 2, color = "green")
+ax.plot(datev, mafast.loc[startd:endd], label = "30-day EWMA", linewidth = 2, color = "blue")
+ax.set_ylabel("Log Price", size = 14)
 
 # Add legend
-legendo = ax.legend(loc="best", prop=dict(size=16))
-# legendo.get_frame().set_facecolor("grey")
+legendd = ax.legend(loc="best", prop=dict(size=16))
+# legendd.get_frame().set_facecolor("grey")
 
-for line in legendo.get_lines():
-    line.set_linewidth(10)
+# for line in legendd.get_lines():
+#     line.set_linewidth(10)
 
 # Render the plot
 plt.show()
@@ -55,7 +64,7 @@ plt.show()
 ## Simulate a Moving Average Crossover Strategy
 
 # Calculate rolling VWAP
-vwap = ohlc.Close
+vwap = closep
 volumev = ohlc.Volume
 vwap = vwap*volumev
 vwap = vwap.rolling(window=150).sum()
@@ -63,35 +72,35 @@ volumev = volumev.rolling(window=150).sum()
 vwap = vwap/volumev
 
 # Calculate differences between the prices and the VWAP timeseries
-posit = ohlc.Close - vwap
+posv = closep - vwap
 # Positions are equal to the sign of the differences
-posit = posit.apply(np.sign)
+posv = posv.apply(np.sign)
 # Lag the positions by 1 period
-posit = posit.shift(1)
+posv = posv.shift(1)
 
 # Calculate asset log returns
-retsp = np.log(ohlc.Close).diff()
+retp = closep.diff()
 
 # Calculate cumulative strategy returns
-retstrat = posit*retsp
+retstrat = posv*retp
 retsumstrat = retstrat.cumsum()
-retsum = retsp.cumsum()
+retsum = retp.cumsum()
 
 # Create plot objects for plotting in two panels
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 18))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 
 # Plot strategy cumulative returns
-ax1.plot(ohlc.index, retsum, label = symbol, linewidth = 2, color = "b")
+ax1.plot(ohlc.index, retsum, label = symboln, linewidth = 2, color = "b")
 ax1.plot(ohlc.index, retsumstrat, label = "Strategy", linewidth = 2, color = "r")
 ax1.set_ylabel("Cumulative log returns", size = 14)
 
 # Add legend
-legendo = ax1.legend(loc="best", prop=dict(size=16))
-for line in legendo.get_lines():
-    line.set_linewidth(10)
+legendd = ax1.legend(loc="best", prop=dict(size=16))
+# for line in legendd.get_lines():
+#     line.set_linewidth(10)
 
 # Plot strategy positions
-ax2.plot(ohlc.index, posit, label="Trading Positions")
+ax2.plot(ohlc.index, posv, label="Trading Positions")
 ax2.set_ylabel("Trading Positions", size = 14)
 
 # Render the plot

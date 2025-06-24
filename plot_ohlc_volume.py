@@ -8,20 +8,26 @@ a candlestick plot and volume plot in two panes.
 """
 
 # Import packages 
+import numpy as np
 import pandas as pd
 # Print pandas version
 print(pd.__version__)
 
 ## Load OHLC data from csv file and format the time index
 
-ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+symboln = "SPY"
+filename = "/Users/jerzy/Develop/data/etfdaily/" + symboln + "_daily" + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=True, index_col="Index")
 
 # Print column names
 ohlc.columns
 # Rename columns
-ohlc.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+ohlc.columns = ["Open", "High", "Low", "Close", "Volume"]
 ohlc.head()
 ohlc.tail()
+
+# Log of OHLC prices
+ohlc.iloc[:, 0:4] = np.log(ohlc.iloc[:, 0:4])
 
 # Get ohlc dimensions (without time index)
 ohlc.shape
@@ -36,7 +42,7 @@ ohlc.iloc[0:5, :]
 indeks = ohlc.index
 
 # Select series of Close prices
-closep = ohlc['Close']
+closep = ohlc["Close"]
 # Or
 # closep = ohlc.iloc[:, 3]
 type(closep)
@@ -53,18 +59,18 @@ from plotly.offline import plot
 # Import built-in time series data frame
 # dframe = px.data.stocks()
 # Create line time series of prices from data frame
-plotfig = px.line(closep['2020'])
-stuff = plotfig.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)
+plotfig = px.line(closep["2020"])
+stuff = plotfig.update_layout(title="GOOG Price", yaxis_title="Price", xaxis_rangeslider_visible=True)
 # Plot interactive plot in browser and save to html file
-plot(plotfig, filename='stock_prices.html', auto_open=True)
+plot(plotfig, filename="stock_prices.html", auto_open=True)
 # Show the plot - works only in Jupyter notebook
 # plotfig.show()
 
 # Create bar plot of volumes
-plotfig = px.bar(ohlc['Volume']['2020'])
-stuff = plotfig.update_layout(title='GOOG Volume', yaxis_title='Volume', xaxis_rangeslider_visible=False)
+plotfig = px.bar(ohlc["Volume"]["2020"])
+stuff = plotfig.update_layout(title="GOOG Volume", yaxis_title="Volume", xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
-plot(plotfig, filename='stock_volumes.html', auto_open=True)
+plot(plotfig, filename="stock_volumes.html", auto_open=True)
 
 
 ## Plotly dynamic interactive time series plots using plotly.graph_objects
@@ -72,22 +78,22 @@ plot(plotfig, filename='stock_volumes.html', auto_open=True)
 import plotly.graph_objects as go
 
 # Select time slice of data
-ohlcsub = ohlc['2019':'2020']
+ohlcsub = ohlc["2019":"2020"]
 # Create plotly graph object from data frame
-plotfig = go.Figure([go.Scatter(x=ohlcsub.index, y=ohlcsub['Close'])])
-stuff = plotfig.update_layout(title='GOOG', yaxis_title='Price', xaxis_rangeslider_visible=False)
+plotfig = go.Figure([go.Scatter(x=ohlcsub.index, y=ohlcsub["Close"])])
+stuff = plotfig.update_layout(title=symboln, yaxis_title="Price", xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
-plot(plotfig, filename='stock_prices.html', auto_open=True)
+plot(plotfig, filename="stock_prices.html", auto_open=True)
 
 
 ## Plotly simple candlestick
 
 plotfig = go.Figure(data=[go.Candlestick(x=ohlcsub.index,
                 open=ohlcsub.Open, high=ohlcsub.High, low=ohlcsub.Low, close=ohlcsub.Close, 
-                name='OHLC Prices', showlegend=False)])
-stuff = plotfig.update_layout(title='OHLC Prices', yaxis_title='Prices', xaxis_rangeslider_visible=False)
+                name="OHLC Prices", showlegend=False)])
+stuff = plotfig.update_layout(title="OHLC Prices", yaxis_title="Prices", xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
-plot(plotfig, filename='stock_candlesticks.html', auto_open=True)
+plot(plotfig, filename="stock_candlesticks.html", auto_open=True)
 
 
 ## Plotly candlestick with volumes using plotly subplots
@@ -96,29 +102,29 @@ plot(plotfig, filename='stock_candlesticks.html', auto_open=True)
 from plotly.subplots import make_subplots
 
 # Select time slice of data
-ohlcsub = ohlc['2019':'2020']
+ohlcsub = ohlc["2019":"2020"]
 # Create line of prices from data frame
-# trace_1 = go.Scatter(x=ohlcsub.index, y=ohlcsub['Close'], name='Prices', showlegend=False)
+# trace_1 = go.Scatter(x=ohlcsub.index, y=ohlcsub["Close"], name="Prices", showlegend=False)
 # Create candlestick time series from data frame
 trace_1 = go.Candlestick(x=ohlcsub.index,
                 open=ohlcsub.Open, high=ohlcsub.High, low=ohlcsub.Low, close=ohlcsub.Close, 
-                name='OHLC Prices', showlegend=False)
+                name="OHLC Prices", showlegend=False)
 # Create bar plot of volumes
-trace_2 = go.Bar(x=ohlcsub.index, y=ohlcsub['Volume'], name='Volumes', showlegend=False)
+trace_2 = go.Bar(x=ohlcsub.index, y=ohlcsub["Volume"], name="Volumes", showlegend=False)
 # Create empty plot layout
 plotfig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
-                        subplot_titles=['Price', 'Volume'], row_heights=[450, 150])
+                        subplot_titles=["Price", "Volume"], row_heights=[450, 150])
 # Add plots to layout
 stuff = plotfig.add_trace(trace_1, row=1, col=1)
 stuff = plotfig.add_trace(trace_2, row=2, col=1)
 # Add titles and reduce margins
-stuff = plotfig.update_layout(title='GOOG Price and Volume', 
-                       # yaxis_title=['Price', 'Volume'], 
+stuff = plotfig.update_layout(title="GOOG Price and Volume", 
+                       # yaxis_title=["Price", "Volume"], 
                       margin=dict(l=0, r=10, b=0, t=30), 
                       xaxis_rangeslider_visible=True)
 # stuff = plotfig.update_xaxes(automargin=TRUE)
 # Plot interactive plot in browser and save to html file
-plot(plotfig, filename='stock_ohlc_volume.html', auto_open=True)
+plot(plotfig, filename="stock_ohlc_volume.html", auto_open=True)
 
 
 ## Create a dash app with simple candlestick in browser
@@ -130,8 +136,8 @@ from dash import html
 
 plotfig = go.Figure(data=[go.Candlestick(x=ohlcsub.index,
                 open=ohlcsub.Open, high=ohlcsub.High, low=ohlcsub.Low, close=ohlcsub.Close, 
-                name='OHLC Prices', showlegend=False)])
-stuff = plotfig.update_layout(title='OHLC Prices', yaxis_title='Prices', xaxis_rangeslider_visible=False)
+                name="OHLC Prices", showlegend=False)])
+stuff = plotfig.update_layout(title="OHLC Prices", yaxis_title="Prices", xaxis_rangeslider_visible=False)
 
 app = dash.Dash()
 app.layout = html.Div([
@@ -154,20 +160,22 @@ print(mpf.__version__)
 # import matplotlib.dates as mpdates
 
 
-# plt.style.use('dark_background') 
-mpf.plot(ohlc['2014':'2020'], type='candle', style='charles', title='GOOG')
+# plt.style.use("dark_background") 
+mpf.plot(ohlc.loc["2014":"2020"], type="candle", style="charles", title=symboln)
 # Or with moving average
-mpf.plot(ohlc['2020'], type='candle', figratio=(18,10), mav=(11, 22), style='charles', title='GOOG')
+mpf.plot(ohlc.loc["2020"], type="candle", figratio=(18,10), mav=(11, 22), 
+         mavcolors=["red", "green"], 
+         style="charles", title=symboln)
 # Or with volume
-mpf.plot(ohlc['2020'], type='candle', style='charles', title='GOOG', 
-         volume=True, ylabel='Price', ylabel_lower='Volume')
+mpf.plot(ohlc.loc["2020-01":"2020-05"], type="candle", style="charles", title=symboln, 
+         volume=True, ylabel="Price", ylabel_lower="Volume")
 # Or save to file
-mpf.plot(ohlc['2014':'2020'], type='candle', style='charles', title='GOOG',
-            ylabel='Price', ylabel_lower='Shares \nTraded', volume=True, 
+mpf.plot(ohlc["2014":"2020"], type="candle", style="charles", title=symboln,
+            ylabel="Price", ylabel_lower="Shares \nTraded", volume=True, 
             mav=(3,6,9), 
-            savefig='test-mplfiance.png')
+            savefig="test-mplfiance.png")
 
-# ema_15 = ohlc['2020']['Close'].ewm(span=15).mean()
+# ema15 = ohlc.loc["2020"]["Close"].ewm(span=15).mean()
 # fig, ax = plt.subplots(figsize = (12,6))
 
 
@@ -176,21 +184,21 @@ mpf.plot(ohlc['2014':'2020'], type='candle', style='charles', title='GOOG',
   
 # Plot the data 
 # mpf.candlestick_ohlc(ax, ohlc.values, width = 0.6, 
-                 # colorup = 'green', colordown = 'red',  
+                 # colorup = "green", colordown = "red",  
                  # alpha = 0.8) 
   
 # allow grid 
 # ax.grid(True) 
 
 # Setting labels  
-# ax.set_xlabel('Date') 
-# ax.set_ylabel('Price') 
+# ax.set_xlabel("Date") 
+# ax.set_ylabel("Price") 
 
 # setting title 
-# plt.title('Prices For the Period 01-07-2020 to 15-07-2020') 
+# plt.title("Prices For the Period 01-07-2020 to 15-07-2020") 
 
 # Formatting Date 
-# date_format = mpdates.DateFormatter('%d-%m-%Y') 
+# date_format = mpdates.DateFormatter("%d-%m-%Y") 
 # ax.xaxis.set_major_formatter(date_format) 
 # fig.autofmt_xdate() 
 

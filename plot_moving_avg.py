@@ -46,7 +46,7 @@ closep = tseries['Close']
 # closep = tseries.iloc[:, 3]
 type(closep)
 
-ema_15 = closep.ewm(span=15).mean()
+ema15 = closep.ewm(span=15).mean()
 
 # Set plot style
 plt.style.use('fivethirtyeight')
@@ -54,7 +54,7 @@ plt.style.use('fivethirtyeight')
 plt.figure(figsize = (12, 6))
 # Plot price and SMA lines:
 plt.plot(closep, label='GOOG', linewidth = 2)
-plt.plot(ema_15, label='15 day rolling SMA', linewidth = 1.5)
+plt.plot(ema15, label='15 day rolling SMA', linewidth = 1.5)
 # Add title and labeles on the axes, making legend visible:
 plt.xlabel('Date')
 plt.ylabel('Adjusted closing price ($)')
@@ -69,19 +69,19 @@ plt.show()
 # Import built-in time series data frame
 # dframe = px.data.stocks()
 # Create line time series of prices from data frame
-fig_ure = px.line(closep['2020'])
-fig_ure.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)
+plotfig = px.line(closep['2020'])
+plotfig.update_layout(title='GOOG Price', yaxis_title='Price', xaxis_rangeslider_visible=True)
 # Plot interactive plot in browser and save to html file
-plot(fig_ure, filename='stock_prices.html', auto_open=True)
+plot(plotfig, filename='stock_prices.html', auto_open=True)
 # Show the plot
-# fig_ure.show()
+# plotfig.show()
 
 # Create bar plot of volumes
 volumev = tseries['Volume']
-fig_ure = px.bar(volumev['2020'])
-fig_ure.update_layout(title='GOOG Volume', yaxis_title='Volume', xaxis_rangeslider_visible=False)
+plotfig = px.bar(volumev['2020'])
+plotfig.update_layout(title='GOOG Volume', yaxis_title='Volume', xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
-plot(fig_ure, filename='stock_volumes.html', auto_open=True)
+plot(plotfig, filename='stock_volumes.html', auto_open=True)
 
 
 ## Plotly dynamic interactive time series plots using plotly.graph_objects
@@ -89,12 +89,12 @@ plot(fig_ure, filename='stock_volumes.html', auto_open=True)
 import plotly.graph_objects as go
 
 # Select time slice of data
-slic_e = tseries['2019':'2020']
+pricev = tseries['2019':'2020']
 # Create plotly graph object from data frame
-fig_ure = go.Figure([go.Scatter(x=slic_e.index, y=slic_e['Close'])])
-fig_ure.update_layout(title='GOOG', yaxis_title='Price', xaxis_rangeslider_visible=False)
+plotfig = go.Figure([go.Scatter(x=pricev.index, y=pricev['Close'])])
+plotfig.update_layout(title='GOOG', yaxis_title='Price', xaxis_rangeslider_visible=False)
 # Plot interactive plot in browser and save to html file
-plot(fig_ure, filename='stock_prices.html', auto_open=True)
+plot(plotfig, filename='stock_prices.html', auto_open=True)
 
 
 ## Plotly with prices and volumes using plotly subplots
@@ -104,28 +104,28 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Select time slice of data
-slic_e = tseries['2019':'2020']
+pricev = tseries['2019':'2020']
 # Create line of prices from data frame
-# trace_1 = go.Scatter(x=slic_e.index, y=slic_e['Close'], name='Prices', showlegend=False)
+# trace_1 = go.Scatter(x=pricev.index, y=pricev['Close'], name='Prices', showlegend=False)
 # Create candlestick time series from data frame
-trace_1 = go.Candlestick(x=slic_e.index,
-                open=slic_e.Open, high=slic_e.High, low=slic_e.Low, close=slic_e.Close, 
+trace_1 = go.Candlestick(x=pricev.index,
+                open=pricev.Open, high=pricev.High, low=pricev.Low, close=pricev.Close, 
                 name='OHLC Prices', showlegend=False)
 # Create bar plot of volumes
-trace_2 = go.Bar(x=slic_e.index, y=slic_e['Volume'], name='Volumes', showlegend=False)
+trace_2 = go.Bar(x=pricev.index, y=pricev['Volume'], name='Volumes', showlegend=False)
 # Create empty plot layout
-fig_ure = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+plotfig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
                         subplot_titles=['Price', 'Volume'], row_heights=[450, 150])
 # Add plots to layout
-fig_ure.add_trace(trace_1, row=1, col=1)
-fig_ure.add_trace(trace_2, row=2, col=1)
+plotfig.add_trace(trace_1, row=1, col=1)
+plotfig.add_trace(trace_2, row=2, col=1)
 # Add titles and reduce margins
-fig_ure.update_layout(title='GOOG Price and Volume', 
+plotfig.update_layout(title='GOOG Price and Volume', 
                        # yaxis_title=['Price', 'Volume'], 
                       margin=dict(l=0, r=10, b=0, t=30), 
                       xaxis_rangeslider_visible=True)
 # Plot interactive plot in browser and save to html file
-plot(fig_ure, filename='stock_ohlc_volume.html', auto_open=True)
+plot(plotfig, filename='stock_ohlc_volume.html', auto_open=True)
 
 
 ## Attempt at dash plot - doesn't do anything
@@ -136,7 +136,7 @@ import dash_html_components as html
 
 app = dash.Dash()
 app.layout = html.Div([
-    dcc.Graph(figure=fig_ure)
+    dcc.Graph(figure=plotfig)
 ])
 
 # Turn off reloader if inside Jupyter
@@ -148,7 +148,7 @@ app.run_server(debug=True, use_reloader=False)
 ## Matplotlib static candlestick plots
 
 # Select time slice of data
-slic_e = tseries['2019':'2020']
+pricev = tseries['2019':'2020']
 
 # Calculate the short and long-window simple moving averages
 short_rolling = tseries.rolling(window=20).mean()
@@ -168,19 +168,19 @@ ax.set_ylabel('Price in $')
 # ax.xaxis.set_major_formatter(my_year_month_fmt)
 
 
-# ema_15 = slic_e['2020']['Close'].ewm(span=15).mean()
+# ema15 = pricev['2020']['Close'].ewm(span=15).mean()
 # fig, ax = plt.subplots(figsize = (12,6))
 
 
 # plt.style.use('dark_background') 
-mpf.plot(slic_e['2014':'2020'], type='candle', style='charles', title='GOOG')
+mpf.plot(pricev['2014':'2020'], type='candle', style='charles', title='GOOG')
 # Or with moving average
-mpf.plot(slic_e['2020'], type='candle', figratio=(18,10), mav=(11, 22), style='charles', title='GOOG')
+mpf.plot(pricev['2020'], type='candle', figratio=(18,10), mav=(11, 22), style='charles', title='GOOG')
 # Or with volume
-mpf.plot(slic_e['2020'], type='candle', style='charles', title='GOOG', 
+mpf.plot(pricev['2020'], type='candle', style='charles', title='GOOG', 
          volume=True, ylabel='Price', ylabel_lower='Volume')
 # Or save to file
-mpf.plot(slic_e['2014':'2020'], type='candle', style='charles', title='GOOG',
+mpf.plot(pricev['2014':'2020'], type='candle', style='charles', title='GOOG',
             ylabel='Price', ylabel_lower='Shares \nTraded', volume=True, 
             mav=(3,6,9), 
             savefig='test-mplfiance.png')

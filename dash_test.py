@@ -19,7 +19,13 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+import os
+import sys
 
+if "__file__" in globals():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.getcwd())
+    
 from utils import read_csv, get_symbol, calc_sharpe
 from strategies import strat_movavg
 
@@ -30,12 +36,12 @@ marklag = {i: str(i) for i in range(1, 7, 1)}
 
 # Define parameters
 symbol = "SPY"
-range = "day"
+range = "daily"
 # range = "minute"
 
 # Load OHLC stock prices from CSV file
-filename = "/Users/jerzy/Develop/data/" + symbol + "_" + range + ".csv"
-ohlc = read_csv(filename)
+filename = "/Users/jerzy/Develop/data/etfdaily/" + symbol + "_" + range + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=True, date_format="%Y-%m-%d", index_col="Index")
 
 # Download OHLC stock prices from Polygon for the symbol
 # startd = datetime.date(2000, 1, 1)
@@ -59,7 +65,7 @@ if (range == "minute"):
 datev = ohlc.index
 
 # Calculate log asset returns
-closep = ohlc.Close
+closep = ohlc["SPY.Close"]
 retsp = np.log(closep).diff()
 # Calculate the Sharpe ratio and cumulative returns
 retsum = retsp.cumsum()

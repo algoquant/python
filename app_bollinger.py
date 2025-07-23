@@ -1,7 +1,4 @@
-# Created by: Jerzy Pawlowski
-# Date: 2025-06-15
-# Description:
-# A Shiny app for exponential moving average prices with Bollinger bands.
+# A Shiny app for the exponential moving average prices with Bollinger bands.
 
 # Created using the Shiny Assistant prompt: "plot brownian motion combined with EMA"
 # https://gallery.shinyapps.io/assistant/
@@ -9,7 +6,7 @@
 # Run this Shiny app in VS Code by clicking the "Run" button in the top right corner of the editor.
 #
 # Or in a terminal run:
-# shiny run --reload --launch-browser /Users/jerzy/Develop/Python/app_bollinger.py
+# shiny run --reload --launch-browser app_bollinger.py
 # Launch browser URL:
 # http://127.0.0.1:8000/
 

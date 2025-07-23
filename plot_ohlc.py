@@ -15,15 +15,21 @@ print(pd.__version__)
 import numpy as np
 
 # Load OHLC data from csv file - the time index is formatted inside read_csv()
+# import os
+# import sys
+
+# if "__file__" in globals():
+#     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+#     sys.path.insert(0, os.getcwd())
+
 # from utils import read_csv
 
 symbol = "SPY"
 # range = "minute"
-range = "day"
-filename = "/Users/jerzy/Develop/data/" + symbol + "_" + range + ".csv"
-ohlc = pd.read_csv(filename)
-
-ohlc.index = pd.to_datetime(ohlc.index)
+range = "daily"
+filename = "/Users/jerzy/Develop/data/etfdaily/" + symbol + "_" + range + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=True, date_format="%Y-%m-%d", index_col="Index")
+# ohlc.index = pd.to_datetime(ohlc.index)
 
 # Drop non-market data
 if (range == "minute"):
@@ -31,8 +37,8 @@ if (range == "minute"):
   ohlc = ohlc.drop(ohlc.between_time("17:00", "23:59").index)
 
 
-# ohlc = pd.read_csv("/Users/jerzy/Develop/data/SPY_day.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
-# ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="index")
+# ohlc = pd.read_csv("/Users/jerzy/Develop/data/SPY_day.csv", parse_dates=True, date_format=pd.to_datetime, index_col="Date")
+# ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_format=pd.to_datetime, index_col="index")
 
 # Or load raw data and parse dates by hand
 # Convert the Date column from string into datetime object 
@@ -46,9 +52,9 @@ if (range == "minute"):
 
 # Print column names
 ohlc.columns
-# Rename columns
-# ohlc.columns = ["Open", "High", "Low", "Close", "Volume"]
-# Calculate log stock prices
+# Rename the columns
+ohlc.columns = ["Open", "High", "Low", "Close", "Volume"]
+# Calculate the log stock prices
 ohlc[["Open", "High", "Low", "Close"]] = np.log(ohlc[["Open", "High", "Low", "Close"]])
 
 ohlc.head()
@@ -102,9 +108,10 @@ plotfig.show()
 # Create bar plot of volumes
 plotfig = px.bar(ohlc["Volume"]["2020"])
 plotfig = plotfig.update_layout(title=symbol+" Volume", yaxis_title="Volume", xaxis_rangeslider_visible=False)
-# Plot interactive plot in browser and save to html file
-# plot(plotfig, filename="stock_volumes.html", auto_open=True)
+# Show the plot - works only in Jupyter notebook
 plotfig.show()
+# Plot interactive plot in browser and save to html file
+mpf.plot(plotfig, filename="spy_vwap_strat.html", auto_open=True)
 
 
 ## Plotly dynamic interactive time series plots using plotly.graph_objects - doesn't use Python dictionaries?
@@ -350,4 +357,262 @@ mpf.plot(ohlc.loc["2014":"2015"], type="candle", style="charles", title=symbol,
 
 # Show the plot - works in Jupyter notebook
 # plt.show()
+
+
+## Lightweight Charts Python - Modern interactive financial charts
+# https://github.com/louisnw01/lightweight-charts-python
+
+from lightweight_charts import Chart
+
+# Create chart instance
+chart = Chart()
+
+# Set the main candlestick data
+chart.set(ohlc)
+# Render the chart
+chart.show()
+
+
+# Create data frame from OHLC data for plotting
+df = ohlc["Close"].reset_index()
+df.columns = ['time', 'close']
+# Add moving average column
+df['ma'] = df['close'].rolling(window=5).mean()
+df['time'] = df['time'].dt.strftime('%Y-%m-%d')  # Format for chart
+
+# Melt into long format for charting
+plot_df = df.melt(id_vars='time', value_vars=['close', 'ma'], var_name='series', value_name='value')
+plot_df = plot_df.dropna()
+
+chart = Chart()
+chart.set(plot_df)
+chart.show()
+
+
+
+# Prepare data for lightweight charts
+close_series = []
+ma_series = []
+
+for index, row in df.iterrows():
+    if not pd.isna(row['close']):
+        close_series.append({
+            'time': row['time'],
+            'value': float(row['close'])
+        })
+    
+    if not pd.isna(row['ma']):
+        ma_series.append({
+            'time': row['time'],
+            'value': float(row['ma'])
+        })
+
+# Initialize chart
+chart = Chart()
+
+# Plot close price as line
+close_line = chart.create_line('Close Price', color='blue', width=2)
+close_line.set(close_series)
+
+# Plot moving average
+ma_line = chart.create_line('Moving Average (5)', color='orange', width=2)
+ma_line.set(ma_series)
+
+# Show chart in browser
+chart.show()
+
+
+# Calculate moving averages for overlay
+lookback_short = 20
+lookback_long = 50
+ma_short = ohlc.Close.rolling(window=lookback_short).mean()
+ma_long = ohlc.Close.rolling(window=lookback_long).mean()
+
+# Prepare moving average data
+ma_short_data = []
+ma_long_data = []
+
+for index, value in ma_short.items():
+    if not pd.isna(value):
+        ma_short_data.append({
+            'time': index.strftime('%Y-%m-%d'),
+            'value': float(value)
+        })
+
+for index, value in ma_long.items():
+    if not pd.isna(value):
+        ma_long_data.append({
+            'time': index.strftime('%Y-%m-%d'),
+            'value': float(value)
+        })
+
+# Create line series for moving averages
+line_short = chart.create_line(f'{lookback_short}-day MA', color='rgba(255, 165, 0, 0.8)', width=2)
+line_long = chart.create_line(f'{lookback_long}-day MA', color='rgba(255, 0, 0, 0.8)', width=2)
+
+# Set data for moving averages
+line_short.set(ma_short_data)
+line_long.set(ma_long_data)
+
+# print(f"Created lightweight chart with {len(chart)} data points")
+
+# Add volume histogram (optional)
+try:
+    volume_data = []
+    for index, row in ohlc.iterrows():
+        volume_data.append({
+            'time': index.strftime('%Y-%m-%d'),
+            'value': float(row['Volume']),
+            'color': 'rgba(76, 175, 80, 0.5)' if row['Close'] > row['Open'] else 'rgba(255, 82, 82, 0.5)'
+        })
+    
+    # Create volume histogram
+    volume_hist = chart.create_histogram('Volume', price_scale_id='volume')
+    volume_hist.set(volume_data)
+    print("Added volume histogram")
+    
+except Exception as e:
+    print(f"Could not add volume histogram: {e}")
+
+# Configure chart appearance
+try:
+    chart.layout(background_color='#1e1e1e', text_color='white', font_size=12)
+    chart.candle_style(
+        up_color='#26a69a',
+        down_color='#ef5350',
+        wick_up_color='#26a69a',
+        wick_down_color='#ef5350'
+    )
+    
+    # Set chart title
+    chart.set_title(f'{symbol} Stock Price with Moving Averages and Volume')
+    print("Chart styling applied")
+    
+except Exception as e:
+    print(f"Could not apply chart styling: {e}")
+
+# Show the chart
+print(f"Displaying {symbol} chart with lightweight-charts-python...")
+chart.show(block=True)
+
+
+## Lightweight Charts with custom indicators
+# Note: This section is commented out due to the main lightweight charts setup above
+# Uncomment and modify as needed once the main section is working
+
+# # Create a new chart for technical analysis
+# chart_tech = Chart()
+# 
+# # Set the main candlestick data
+# chart_tech.set(chart_data)
+# 
+# # Calculate RSI (Relative Strength Index)
+# def calculate_rsi(prices, period=14):
+#     delta = prices.diff()
+#     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+#     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+#     rs = gain / loss
+#     rsi = 100 - (100 / (1 + rs))
+#     return rsi
+# 
+# # Calculate MACD
+# def calculate_macd(prices, fast=12, slow=26, signal=9):
+#     ema_fast = prices.ewm(span=fast).mean()
+#     ema_slow = prices.ewm(span=slow).mean()
+#     macd = ema_fast - ema_slow
+#     signal_line = macd.ewm(span=signal).mean()
+#     histogram = macd - signal_line
+#     return macd, signal_line, histogram
+# 
+# # Calculate indicators
+# close_prices = ohlc.Close
+# rsi = calculate_rsi(close_prices)
+# macd, macd_signal, macd_histogram = calculate_macd(close_prices)
+# 
+# # Rest of technical analysis code...
+# print("Technical analysis section commented out for now.")
+
+
+## Lightweight Charts with real-time updates simulation
+# Note: This section is commented out due to the main lightweight charts setup above
+# Uncomment and modify as needed once the main section is working
+
+# # Create a simple real-time simulation chart
+# chart_realtime = Chart()
+# 
+# # Start with initial data
+# initial_data = chart_data[:50]  # First 50 data points
+# chart_realtime.set(initial_data)
+# 
+# # Configure real-time chart
+# chart_realtime.layout(background_color='#1e1e1e', text_color='white', font_size=12)
+# chart_realtime.set_title(f'{symbol} Real-time Simulation')
+# 
+# print(f"Real-time simulation chart for {symbol} - this would update with new data in a real application")
+# chart_realtime.show(block=False)
+# 
+# # In a real application, you would update the chart with new data like this:
+# # chart_realtime.update(new_data_point)
+# 
+# print("Lightweight Charts examples completed!")
+
+print("Real-time simulation section commented out for now.")
+
+
+## Simple lightweight charts example for testing
+
+def create_simple_lightweight_chart():
+    """Simple example to test lightweight charts functionality"""
+    try:
+        from lightweight_charts import Chart
+        
+        # Validate that chart_data exists and is not empty
+        if 'chart_data' not in globals():
+            print("Error: chart_data not found. Please run the main script first.")
+            return
+        
+        if not chart_data or len(chart_data) == 0:
+            print("Error: chart_data is empty.")
+            return
+        
+        # Create a simple chart with sample data
+        chart = Chart()
+        
+        # Use a subset of the data for testing
+        test_data = chart_data[:100] if len(chart_data) > 100 else chart_data
+        
+        # Validate test_data format
+        if not isinstance(test_data, list):
+            print("Error: test_data should be a list")
+            return
+        
+        # Check if data has the required format
+        if len(test_data) > 0:
+            required_keys = ['time', 'open', 'high', 'low', 'close']
+            if not all(key in test_data[0] for key in required_keys):
+                print(f"Error: Data missing required keys. Expected: {required_keys}")
+                return
+        
+        print(f"Setting chart data with {len(test_data)} points...")
+        
+        # Set the data
+        chart.set(test_data)
+        
+        # Basic styling
+        chart.layout(background_color='#ffffff', text_color='#000000')
+        chart.set_title(f'{symbol} - Simple Lightweight Chart Test')
+        
+        # Show the chart
+        print("Opening simple lightweight chart...")
+        chart.show(block=True)
+        
+    except ImportError:
+        print("lightweight-charts not installed. Install with: pip install lightweight-charts")
+    except Exception as e:
+        print(f"Error creating chart: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Uncomment the line below to run the simple example
+# create_simple_lightweight_chart()
 

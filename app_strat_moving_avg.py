@@ -8,9 +8,6 @@
 
 # Run this Shiny app from the terminal as follows:
 # shiny run --reload --launch-browser /Users/jerzy/Develop/Python/app_strat_moving_avg.py
-# 
-# Or in a terminal run:
-# shiny run --reload --launch-browser /Users/jerzy/Develop/Python/app_moving_avg.py
 
 
 # Ignore FutureWarning

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Script for manipulating data in Python.
 
 
-'''
+"""
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ os.getcwd()
 # List files in the directory
 os.listtir()
 # Change working directory
-os.chdir('/Users/jerzy/Develop/python/scripts')
+os.chdir("/Users/jerzy/Develop/Python/")
 os.listtir()
 
 
@@ -68,7 +68,7 @@ any(listt)
 
 
 # Mixed list
-listt = ['abc', 34, True, 40, 'male']
+listt = ["abc", 34, True, 40, "male"]
 
 # Class of list
 type(listt)
@@ -148,6 +148,8 @@ setd[2]
 ## Dictionaries store key:value pairs
 
 dictd = {'brand': 'Ford', 'model': 'Mustang', 'year': 1964}
+# Check if dictd is a dictionary
+isinstance(dictd, dict)
 
 # Subset using keys
 dictd['brand']

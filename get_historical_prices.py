@@ -1,63 +1,74 @@
-### Get historical OHLCV stock prices using the Alpaca API.
+### Get historical TAQ stock tick prices using the Alpaca API.
 
 import pandas as pd
-from datetime import datetime, timezone, timedelta
-import pytz
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest
+from alpaca.data.requests import StockQuotesRequest, StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+from alpaca.data.enums import DataFeed
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
-load_dotenv("/Users/jerzy/Develop/Python/.env")
+
+# --------- Create the SDK clients --------
+
+# Load the API keys from .env file
+load_dotenv(".env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 
 data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 
-
-### Get historical OHLCV bars of prices
-
-# Get current NY time
-ny_timezone = pytz.timezone("America/New_York")
-current_time = datetime.now(ny_timezone)
-# Print current date and time
-print("Date and time: ", current_time.strftime("%Y-%m-%d %H:%M:%S"))
-
-# Run only between allowed hours (4 AM - 8 PM EST)
-# if current_time.hour < 4 or current_time.hour >= 20:
-#     print("Current time is outside of trading hours. Exiting script.")
-#     exit()
-                                    
-# Calculate UTC start time (10 minutes ago)
-# utc_now = datetime(2025, 6, 20, 15, 0, 0, tzinfo=timezone.utc)
-utc_now = datetime.now(timezone.utc)
-start_time = utc_now - timedelta(minutes=10)
-#start_time = (datetime.utcnow() - timedelta(minutes=20)).isoformat()
-start = start_time.strftime("%Y-%m-%d %H:%M:%S")
-# print("Start time: ", start)
-end = utc_now.strftime("%Y-%m-%d %H:%M:%S")
-# print("End time:", end)
-
 # Define the trading symbol
 symbol = "SPY"
-request_params = StockBarsRequest(
-    symbol_or_symbols=[symbol],
-    timeframe=TimeFrame.Minute,
-    start=start,
-    end=end,
-    limit=100
-) # end StockBarsRequest
+symbols = ["SPY", "AAPL", "GOOGL"]  # Example list of symbols
+# Define the time range
+# time_utc = datetime(2025, 6, 30, 15, 0, 0, tzinfo=timezone.utc)
+# Get the current UTC time
+time_utc = datetime.now(timezone.utc)
+end_time = time_utc
+start_time = end_time - timedelta(seconds=1)
+# Get the current New_York time
+time_now = time_utc.astimezone(ZoneInfo("America/New_York"))
 
-bars = data_client.get_stock_bars(request_params)
-# print(f"Fetched {len(bars['SPY'])} bars for SPY from {start} to {end}")
-# print(bars)
-price_bars = pd.DataFrame([bar.model_dump() for bar in bars[symbol]])
+# Create the request for historical quotes
+quotes_request = StockQuotesRequest(
+    symbol_or_symbols = symbols,
+    start = start_time,
+    end = end_time,
+    feed = DataFeed.SIP
+)
 
-# Save data frame to CSV
-current_time = datetime.now()
-file_name = "/Users/jerzy/Develop/MachineTrader/Internship_Summer_2025/data/price_bars_" + current_time.strftime("%Y%m%d") + ".csv"
-price_bars.to_csv(file_name, index=False)
-print("Finished getting historical OHLCV stock prices and saved to price_bars.csv")
+# Get the price quotes
+price_quotes = data_client.get_stock_quotes(quotes_request)
+# Get the trade prices
+# price_quotes = data_client.get_stock_trades(quotes_request)
+
+
+'''
+# Example: Print the first 5 quotes for SPY
+# price_quotes is a dict: {symbol: [Quote, Quote, ...]}
+spy_quotes = price_quotes.data[symbol]
+print(f"Number of quotes for {symbol}: {len(price_quotes)}")
+for q in spy_quotes[:5]:  # Print first 5 quotes
+    print(f"Bid: {q.bid_price}, Ask: {q.ask_price}, Time: {q.timestamp}")
+'''
+
+# Loop and save each symbol's price quotes to a separate CSV file
+date_short = time_now.strftime("%Y%m%d")
+if len(price_quotes.data) > 0:
+    for symbol in symbols:
+        # Check if prices were returned for the symbol
+        if price_quotes[symbol]:
+            price_df = pd.DataFrame([price.model_dump() for price in price_quotes.data[symbol]])
+            # Save data frame to CSV
+            filename = f"price_quotes_{symbol}_{date_short}.csv"
+            price_df.to_csv(filename, index=False)
+            print(f"Saved historical price quotes for {symbol} and saved to {filename}")
+        else:
+            print(f"No prices were returned for {symbol} in the requested time range.")
+    print("Finished getting historical price quotes.")
+else:
+    print(f"No prices were returned in the requested time range.")

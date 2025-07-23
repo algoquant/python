@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 
 ## Load OHLC data from csv file and format the time index
 
-# ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_parser=pd.to_datetime, index_col="index")
+# ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_format=pd.to_datetime, index_col="index")
 symboln = "SPY"
 filename = "/Users/jerzy/Develop/data/etfdaily/" + symboln + "_daily" + ".csv"
 ohlc = pd.read_csv(filename, parse_dates=["Index"])
-# ohlc = pd.read_csv(filename, parse_dates=True, date_parser=pd.to_datetime, index_col="Date")
+# ohlc = pd.read_csv(filename, parse_dates=True, date_format=pd.to_datetime, index_col="Date")
 # Set the time index as the data frame index
 ohlc.set_index("Index", inplace=True)
 # Log of OHLC prices

@@ -237,8 +237,8 @@ ohlc.head()
 ohlc.tail()
 
 # Load OHLC data from CSV file and format the time index
-# ohlc = pd.read_csv('/Users/jerzy/Develop/data/raw/SPY_second_20250610.csv', parse_dates=True, date_parser=datetime.fromtimestamp, index_col='timestamp')
-# ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_parser=pd.to_datetime, index_col='index')
+# ohlc = pd.read_csv('/Users/jerzy/Develop/data/raw/SPY_second_20250610.csv', parse_dates=True, date_format=datetime.fromtimestamp, index_col='timestamp')
+# ohlc = pd.read_csv('/Volumes/external/Develop/data/SP500_2020/GOOGL.csv', parse_dates=True, date_format=pd.to_datetime, index_col='index')
 
 # Add a time index to the data frame
 ohlc['timestamp'] = pd.to_datetime(ohlc['timestamp']/1000, unit='s')

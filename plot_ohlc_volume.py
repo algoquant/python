@@ -104,19 +104,19 @@ from plotly.subplots import make_subplots
 # Select time slice of data
 ohlcsub = ohlc["2019":"2020"]
 # Create line of prices from data frame
-# trace_1 = go.Scatter(x=ohlcsub.index, y=ohlcsub["Close"], name="Prices", showlegend=False)
+# trace1 = go.Scatter(x=ohlcsub.index, y=ohlcsub["Close"], name="Prices", showlegend=False)
 # Create candlestick time series from data frame
-trace_1 = go.Candlestick(x=ohlcsub.index,
+trace1 = go.Candlestick(x=ohlcsub.index,
                 open=ohlcsub.Open, high=ohlcsub.High, low=ohlcsub.Low, close=ohlcsub.Close, 
                 name="OHLC Prices", showlegend=False)
 # Create bar plot of volumes
-trace_2 = go.Bar(x=ohlcsub.index, y=ohlcsub["Volume"], name="Volumes", showlegend=False)
+trace2 = go.Bar(x=ohlcsub.index, y=ohlcsub["Volume"], name="Volumes", showlegend=False)
 # Create empty plot layout
 plotfig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
                         subplot_titles=["Price", "Volume"], row_heights=[450, 150])
 # Add plots to layout
-stuff = plotfig.add_trace(trace_1, row=1, col=1)
-stuff = plotfig.add_trace(trace_2, row=2, col=1)
+stuff = plotfig.add_trace(trace1, row=1, col=1)
+stuff = plotfig.add_trace(trace2, row=2, col=1)
 # Add titles and reduce margins
 stuff = plotfig.update_layout(title="GOOG Price and Volume", 
                        # yaxis_title=["Price", "Volume"], 

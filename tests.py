@@ -68,9 +68,17 @@ print(inspect.signature(datetime.now))
 import pandas as pd
 import numpy as np
 
+# Generate random data
 randv = pd.Series(np.random.randn(1000))
-alphap = 0.2
 x = randv.iloc[-2]
+
+# Define the alpha parameter for the exponential moving average
+# The alpha parameter is the smoothing factor, and must be between 0 and 1
+# The alpha parameter determines how much weight is given to the past data points
+# The value of alpha closer to 1 gives more weight to the past data points
+alphap = 0.2
+
+# Calculate the exponential moving average and variance using pandas
 emav = randv.ewm(alpha=alphap).mean()
 varv = (1-alphap)*randv.ewm(alpha=alphap).var(bias=True)
 stdv = np.sqrt(1-alphap)*randv.ewm(alpha=alphap).std(bias=True)

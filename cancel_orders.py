@@ -1,79 +1,73 @@
-### Cancel trade orders using Alpaca API.
+### Cancel the open trade orders for a symbol, using the Alpaca SDK.
+# https://alpaca.markets/sdks/python/trading.html
+
+# Cancel the open trade orders by running the script in the terminal:
+# python3 cancel_orders.py SPY
+
 
 import pandas as pd
 from datetime import date, datetime
-import pandas as pd
-import alpaca_trade_api as tradeapi
+from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import QueryOrderStatus
 from dotenv import load_dotenv
 import os
+import sys
 
-# Load environment variables from .env file
-load_dotenv("/Users/jerzy/Develop/Python/.env")
+
+# --------- Create the SDK clients --------
+
+# Load the API keys from .env file
+load_dotenv(".env")
 # Trade keys
 TRADE_KEY = os.getenv("TRADE_KEY")
 TRADE_SECRET = os.getenv("TRADE_SECRET")
 
+# Create the SDK trading client
 trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
 
-BASE_URL = "https://paper-api.alpaca.markets"
-
-# data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
-trade_api = tradeapi.REST(TRADE_KEY, TRADE_SECRET, BASE_URL, api_version="v2")
-
-
-# Get all open orders
-orders = trading_client.get_orders(filter=GetOrdersRequest(status=QueryOrderStatus.OPEN))
-# Get order_id of first open order
-# order_id = "31077c7b-67f8-4b25-a38b-0889023b2cb1"
-# order_id = orders[0].id
-# print("order_id: " + order_id)
-# Cancel the order using the order_id
-# trade_api.cancel_order(order_id)
-
-# Cancel all open orders in a loop
-if (len(orders) > 0):
-    # Create empty data frame of cancelled orders
-    cancelled_orders = pd.DataFrame(columns=["date", "timestamp", "order_id"])
-    # Cancel all open orders in a loop
-    for order in orders:
-        order_id = order.id
-        trade_api.cancel_order(order_id)
-        date_now = datetime.now()
-        time_stamp = date_now.timestamp()
-        cancelled_orders.loc[len(cancelled_orders)] = [date_now, time_stamp, order_id]
-        print(f"Cancelled order {order_id} at {date_now}")
-    # Save cancelled orders to CSV file
-    # current_time = time.localtime()
-    # file_name = "/Users/jerzy/Develop/Python/cancelled_orders_" + time.strftime("%Y%m%d", current_time) + ".csv"
-    current_time = datetime.now()
-    file_name = "/Users/jerzy/Develop/MachineTrader/Internship_Summer_2025/data/cancelled_orders_" + current_time.strftime("%Y%m%d") + ".csv"
-    cancelled_orders.to_csv(file_name, index=False)
-    print("Finished cancelling orders and saved to cancelled_orders.csv")
+# Get the symbol from the user
+if len(sys.argv) > 1:
+    symbol = sys.argv[1].strip().upper()
 else:
-    print("No open orders found. Exiting script.")
+    symbol = input("Enter symbol: ").strip().upper()
 
 
-### Alternative way to cancel an order using requests the Alpaca API
-### Example of how to cancel an order using requests the Alpaca API
-# import requests
-# # Get account details
-# account = trade_api.get_account()
-# # print("account: " + account)
-# # Extract the account ID
-# account_id = account.id
-# # print("account_id: " + account_id)
+# Create file name with today's NY date
+tzone = ZoneInfo("America/New_York")
+time_now = datetime.now(tzone)
+date_short = time_now.strftime("%Y%m%d")
+dir_name = os.getenv("data_dir_name")
+# Create file name for the canceled trade orders
+canceled_file = f"{dir_name}" + "canceled_" + f"{symbol}_{date_short}.csv"
 
-# url = "https://paper-api.alpaca.markets/v2/orders/" + order_id
-# # url = "https://paper-api.alpaca.markets/v2/orders/" + account_id + "/orders/" + order_id
-# print("url: " + url)
-# response = requests.delete(url)
 
-# # # headers = {"accept": "application/json"}
-# # # response = requests.delete(url, headers=headers)
+# Get all open orders for the symbol
+request_params = GetOrdersRequest(
+                    status=QueryOrderStatus.OPEN,
+                    symbols=[symbol],
+                )
+open_orders = trading_client.get_orders(filter=request_params)
 
-# print(response)
-# # print(response.status_code)
-# # print(response.text)
+
+# Cancel the open orders one at a time
+if not open_orders:
+    print(f"No open orders found for {symbol}.")
+else:
+    print(f"Found {len(open_orders)} open orders for {symbol}.")
+    for order in open_orders:
+        order_id = str(order.id)
+        try:
+            # Cancel the order
+            trading_client.cancel_order_by_id(order_id=order_id)
+            # Get the canceled order details
+            order = trading_client.get_order_by_id(order_id=order_id)
+            # Append the canceled order to CSV file (write header only if file does not exist)
+            canceled_frame = pd.DataFrame([order.model_dump()])
+            canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+            print(f"Cancelled order: {order_id} for {symbol}")
+        except Exception as e:
+            print(f"Error cancelling order {order.id} for {symbol}: {e}")
+    print(f"Canceled orders saved to {canceled_file}")
+

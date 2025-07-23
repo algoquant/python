@@ -1,3 +1,4 @@
+### A backtesting script for a very simple moving average strategy using stock prices from Polygon.io. 
 
 import datetime
 import pandas as pd

@@ -19,13 +19,13 @@ import os
 import sys
 import signal
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_trade#, plot_ema, calc_ema
+from utils import get_position, cancel_orders, submit_order#, plot_ema, calc_ema
 
 
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
@@ -34,7 +34,7 @@ TRADE_KEY = os.getenv("TRADE_KEY")
 TRADE_SECRET = os.getenv("TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET)
 # Create the SDK trading client
 trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
 
@@ -82,13 +82,13 @@ pnl_unreal = 0  # The unrealized PnL of the strategy
 
 
 
-# The callback trading function is called after each price bar update
+# The callback trading function is called after each price bar is received
 async def trade_bars(bar):
     # print(f"Bar price: {bar}")
     # print(f"Symbol: {bar.symbol}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Trade_count: {bar.trade_count}, VWAP: {bar.vwap}")
     close_price = bar.close
     price_ema = bar.vwap  # The EMA price is the VWAP price
-    timestamp = bar.timestamp.astimezone(ZoneInfo("America/New_York"))
+    timestamp = bar.timestamp.astimezone(tzone)
     date_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     print(f"Time: {date_time}, Symbol: {bar.symbol}, Close: {close_price}, VWAP: {price_ema}")
 
@@ -107,7 +107,7 @@ async def trade_bars(bar):
     # Calculate the z-score of the price relative to the EMA price
     zscore = (close_price - price_ema) / price_vol  # Z-score of the price relative to the EMA price
 
-    # If the absolute value of z-score is greater than 1, then submit a trade order
+    # If the absolute value of the z-score is greater than 1, then submit a trade order
     if abs(zscore) > (1): # If the price is significantly different from the EMA price
         # If the available shares is greater than or equal to the shares traded per order
         if (shares_available >= shares_per_trade):
@@ -124,15 +124,15 @@ async def trade_bars(bar):
                 # Limit price is equal to the last price minus a small adjustment
                 limit_price = round(close_price - deltap, 2)
             # Submit the trade order
-            order_data = submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
+            order_data = submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
             if order_data is None:
                 # If the order submission failed, cancel all the open orders
                 print(f"Trade order submission failed for {symbol}")
                 print(f"Cancelling all open orders for {symbol}")
                 # Cancel all open orders for the symbol
-                cancel_orders(trading_client, symbol)
+                cancel_orders(trading_client, symbol, canceled_file)
                 # Submit the trade order again
-                order_data = submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
+                order_data = submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
         else:
             print(f"Available shares {shares_available} are less than the number of shares traded per order {shares_per_trade}. No trade executed.")
     else:
@@ -161,23 +161,21 @@ async def trade_bars(bar):
 
 
 # Subscribe to quote or trade updates
-# stream_client.subscribe_quotes(handle_quote, symbol)
-# stream_client.subscribe_trades(handle_trade, symbol)
+# data_client.subscribe_quotes(handle_quote, symbol)
+# data_client.subscribe_trades(handle_trade, symbol)
 
 # Subscribe to OHLCV bar updates and pass them to the callback function
-stream_client.subscribe_bars(trade_bars, symbol)
+data_client.subscribe_bars(trade_bars, symbol)
 
-# Run the websocket stream_client stream with error handling and auto-restart
+# Run the websocket data_client stream with error handling and auto-restart
 try:
-    stream_client.run()
+    data_client.run()
 except Exception as e:
     time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
     error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
     print(error_text)
     with open(error_file, "a") as f: f.write(error_text)
     time.sleep(5)
-
-print("Stream stopped by user.")
 
 
 
@@ -186,11 +184,12 @@ print("Stream stopped by user.")
 # The code below stops the stream when the user presses Ctrl-C
 
 def signal_handler(sig, frame):
-    """Handle Ctrl-C (SIGINT) gracefully"""
-    print("\n\nCtrl-C pressed! Exiting gracefully...")
+    # Handle Ctrl-C (SIGINT) gracefully
+    print("\n\nCtrl-C pressed! Exiting...")
     # Stop the stream client before exiting
     try:
-        stream_client.stop()
+        data_client.stop()
+        print("Stream stopped by user.")
     except:
         pass
     sys.exit(0)

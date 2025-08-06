@@ -33,7 +33,7 @@ from utils import convert_to_nytzone
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
@@ -148,11 +148,11 @@ try:
     order_id = response.id
     print(f"Submitted {side} order for {shares_per_trade} shares of {symbol} with the order-id: {order_id}")
     # Append the submitted orders to a CSV file
-    order_data = response.model_dump()  # or response._raw for some SDKs
-    order_data = convert_to_nytzone(order_data)
-    order_data = pd.DataFrame([order_data])
+    order_frame = response.model_dump()  # or response._raw for some SDKs
+    order_frame = convert_to_nytzone(order_frame)
+    order_frame = pd.DataFrame([order_frame])
     # Append to CSV (write header only if file does not exist)
-    order_data.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
+    order_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
     print(f"Order appended to {submits_file}")
 except Exception as e:
     # Convert error to string and save to CSV
@@ -171,11 +171,11 @@ try:
     time.sleep(1)
     order_status = trading_client.get_order_by_id(order_id)
     print(f"Order status: {order_status.status}")
-    order_data = order_status.model_dump()  # or response._raw for some SDKs
-    order_data = convert_to_nytzone(order_data)
-    order_data = pd.DataFrame([order_data])
+    order_frame = order_status.model_dump()  # or response._raw for some SDKs
+    order_frame = convert_to_nytzone(order_frame)
+    order_frame = pd.DataFrame([order_frame])
     # Append to CSV (write header only if file does not exist)
-    order_data.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
+    order_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
     print(f"Order appended to {fills_file}")
 except Exception as e:
     # Convert error to string and save to CSV

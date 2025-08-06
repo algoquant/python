@@ -14,7 +14,7 @@ import os
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Trade keys
 TRADE_KEY = os.getenv("TRADE_KEY")
 TRADE_SECRET = os.getenv("TRADE_SECRET")

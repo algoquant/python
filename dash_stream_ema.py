@@ -119,15 +119,15 @@ def run_stream():
             try:
                 # Create a new stream client instance for this attempt
                 print(f"Connecting to Alpaca stream for {symbol} using {data_feed.value} feed...")
-                thread_stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
+                thread_data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
                 
                 # Subscribe to trades
-                thread_stream_client.subscribe_trades(update_ema, symbol)
+                thread_data_client.subscribe_trades(update_ema, symbol)
                 
                 print("Stream client configured, starting connection...")
                 
                 # Run the stream
-                await thread_stream_client._run_forever()
+                await thread_data_client._run_forever()
                     
             except ValueError as e:
                 print(f"Authentication error: {e}")
@@ -148,8 +148,8 @@ def run_stream():
                     break
             finally:
                 try:
-                    if 'thread_stream_client' in locals():
-                        await thread_stream_client.close()
+                    if 'thread_data_client' in locals():
+                        await thread_data_client.close()
                 except:
                     pass
     

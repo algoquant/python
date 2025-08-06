@@ -26,7 +26,7 @@ import signal
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
@@ -39,14 +39,14 @@ hist_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 # Create the SDK data client for live stock prices
 # Use SIP for comprehensive data, or IEX for free data.
 data_feed = DataFeed.SIP
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
 # Create the SDK trading client
 # trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
 
 
 # --------- Get the trading parameters from the command line arguments --------
 
-# Get the stock symbol
+# Get the stock symbol from the command line
 # symbol = "SPY"
 if len(sys.argv) > 1:
     symbol = sys.argv[1].strip().upper()
@@ -72,6 +72,10 @@ trade_size = last_trade.size
 print(f"Latest trade price for {symbol}: Price = {new_price}, Size = {trade_size}")
 
 
+"""
+# --------- Get the latest 1-minute bar prices from SDK --------
+# To initialize the variance - not needed now
+
 # Get the latest 1-minute bar prices from SDK
 # print(f"Getting latest 1-minute bar prices")
 request_params = StockLatestBarRequest(
@@ -83,6 +87,7 @@ bar_prices = bar_prices[symbol]
 bar_prices = bar_prices.model_dump()
 # Parse the bar prices
 print(f"Latest bar prices: {bar_prices['open']}, High: {bar_prices['high']}, Low: {bar_prices['low']}, Close: {bar_prices['close']}, Volume: {bar_prices['volume']}, VWAP: {bar_prices['vwap']}\n")
+"""
 
 
 # --------- Create the file names --------
@@ -323,7 +328,7 @@ def calc_bar(new_price, trade_size, time_stamp, bar_frame):
 # End of function calc_bar
 
 
-# --------- Create the callback function --------
+# --------- Define the callback function --------
 
 print("The live price bars:\n")
 
@@ -383,15 +388,15 @@ async def handle_prices(last_trade):
 # --------- Run the websocket stream --------
 
 # Subscribe to quote or trade updates
-# stream_client.subscribe_quotes(handle_quote, symbol)
-stream_client.subscribe_trades(handle_prices, symbol)
+# data_client.subscribe_quotes(handle_quote, symbol)
+data_client.subscribe_trades(handle_prices, symbol)
 
 # Subscribe to OHLCV bar updates and pass them to the callback function
-# stream_client.subscribe_bars(handle_prices, symbol)
+# data_client.subscribe_bars(handle_prices, symbol)
 
 # Run the stream with error handling and auto-restart
 try:
-    stream_client.run()
+    data_client.run()
 except Exception as e:
     time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
     error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
@@ -407,11 +412,12 @@ print("Stream stopped by user.")
 # The code below stops the stream when the user presses Ctrl-C
 
 def signal_handler(sig, frame):
-    """Handle Ctrl-C (SIGINT) gracefully"""
-    print("\n\nCtrl-C pressed! Exiting gracefully...")
+    # Handle Ctrl-C (SIGINT) gracefully
+    print("\n\nCtrl-C pressed! Exiting...")
     # Stop the stream client before exiting
     try:
-        stream_client.stop()
+        data_client.stop()
+        print("Stream stopped by user.")
     except:
         pass
     sys.exit(0)

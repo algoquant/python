@@ -13,8 +13,8 @@ import requests
 from dotenv import load_dotenv
 import os
 
-# Load API keys from .env file
-load_dotenv("/Users/jerzy/Develop/Python/.env")
+# Load API keys from /Users/jerzy/Develop/Python/.env file
+load_dotenv("/Users/jerzy/Develop/Python//Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")

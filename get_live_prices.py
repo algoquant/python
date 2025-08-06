@@ -14,8 +14,8 @@ import os
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
-# Get API keys from environment
+load_dotenv("/Users/jerzy/Develop/Python/.env")
+# Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 

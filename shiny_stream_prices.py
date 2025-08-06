@@ -21,14 +21,13 @@ import numpy as np
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
-# Get API keys from environment
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 
 # Validate credentials
 if not DATA_KEY or not DATA_SECRET:
-    raise ValueError("Missing DATA_KEY or DATA_SECRET in environment variables")
+    raise ValueError("Missing DATA_KEY or DATA_SECRET in/Users/jerzy/Develop/Python/.environment variables")
 
 print(f"Using API key: {DATA_KEY[:8]}...")
 
@@ -102,11 +101,11 @@ def run_stream():
         while stream_running:
             try:
                 print(f"Connecting to Alpaca stream for {symbol} using SIP feed...")
-                stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
-                stream_client.subscribe_trades(handle_trade, symbol)
+                data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
+                data_client.subscribe_trades(handle_trade, symbol)
                 
                 print("Stream client connected, starting data flow...")
-                await stream_client._run_forever()
+                await data_client._run_forever()
                 
             except ValueError as e:
                 print(f"Authentication error: {e}")

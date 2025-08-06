@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Script for market data wrangling in Python.
+Script for data wrangling in Python.
 Mostly pandas and numpy data frames and time series.
 
 https://towardsdatascience.com/a-checklist-for-data-wrangling-8f106c093fef
@@ -21,6 +21,36 @@ import pandas as pd
 # Ignore FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
+## List all the installed packages and their versions
+import pkg_resources
+packlist = pkg_resources.working_set
+for packv in packlist:
+  print(f'{packv.key}=={packv.version}')
+
+
+## Directory and file names
+
+# Get the current working directory
+os.getcwd()
+# Change the current working directory
+os.chdir("/Users/jerzy/Develop/Python")
+
+# List files in the data directory
+dirname = "/Users/jerzy/Develop/data/etfdaily/"
+filev = os.listdir(dirname)
+# Extract symbols from the file names
+symbolv = [(lambda x: ((x.split("."))[0].split("_")[0]))(x) for x in filev]
+
+# Load SPY stock prices from CSV file
+symboln = "SPY"
+filename = dirname + symboln + "_daily" + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=["Index"])
+# Convert Date column from datetime64[ns] to date type
+ohlc.Index = ohlc.Index.dt.date
+# Set the time index as the data frame index
+ohlc.set_index("Index", inplace=True)
 
 
 ## Load data frame from CSV file

@@ -77,7 +77,7 @@ closep = ohlc.Close
 type(closep)
 
 # Extract time index
-datev = ohlc.Date
+datev = ohlc.index
 
 
 ## Plotly dynamic interactive time series plots using plotly.express - a simplified plotly

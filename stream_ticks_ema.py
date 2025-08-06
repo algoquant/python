@@ -20,8 +20,8 @@ from dotenv import load_dotenv
 
 # --------- Create the SDK clients --------
 
-# Load API keys from .env file
-load_dotenv(".env")
+# Load the API keys from .env file
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
@@ -34,14 +34,14 @@ hist_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 # Create the SDK data client for live stock prices
 # Use SIP for comprehensive data, or IEX for free data.
 data_feed = DataFeed.SIP
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
 # Create the SDK trading client
 # trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
 
 
 # --------- Load the initial stock prices --------
 
-# Get the stock symbol
+# Get the stock symbol from the command line
 # symbol = "SPY"
 if len(sys.argv) > 1:
     symbol = sys.argv[1].strip().upper()
@@ -290,7 +290,7 @@ def calc_ema(new_price, trade_size, time_stamp, price_frame):
 
 
 
-# --------- Create the callback function --------
+# --------- Define the callback function --------
 
 print("The live and EMA prices:\n")
 
@@ -349,15 +349,15 @@ async def handle_prices(last_trade):
 # --------- Run the websocket stream --------
 
 # Subscribe to quote or trade updates
-# stream_client.subscribe_quotes(handle_quote, symbol)
-stream_client.subscribe_trades(handle_prices, symbol)
+# data_client.subscribe_quotes(handle_quote, symbol)
+data_client.subscribe_trades(handle_prices, symbol)
 
 # Subscribe to OHLCV bar updates and pass them to the callback function
-# stream_client.subscribe_bars(handle_prices, symbol)
+# data_client.subscribe_bars(handle_prices, symbol)
 
 # Run the stream with error handling and auto-restart
 try:
-    stream_client.run()
+    data_client.run()
 except Exception as e:
     time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
     error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
@@ -377,7 +377,7 @@ def signal_handler(sig, frame):
     print("\n\nCtrl-C pressed! Exiting gracefully...")
     # Stop the stream client before exiting
     try:
-        stream_client.stop()
+        data_client.stop()
     except:
         pass
     sys.exit(0)

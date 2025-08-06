@@ -19,13 +19,13 @@ from dotenv import load_dotenv
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 
 # Create the SDK data client for live stock prices
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 
 
 # --------- Get the trading symbol from the command line arguments --------
@@ -51,7 +51,7 @@ file_name = f"{dir_name}price_bars_{symbol}_{date_short}.csv"
 
 
 
-# --------- Create the callback function --------
+# --------- Define the callback function --------
 
 # Define the price bar handler callback function
 async def handle_bar(bar):
@@ -80,25 +80,25 @@ async def handle_bar(bar):
 # --------- Run the websocket stream --------
 
 # Subscribe to the websocket price bar updates
-stream_client.subscribe_bars(handle_bar, symbol)
+data_client.subscribe_bars(handle_bar, symbol)
 
 
 # Define the price quote handler callback function
 # async def handle_quote(quote):
 #     print(f"Quote: {quote}")
 # Subscribe to the quote updates
-# stream_client.subscribe_quotes(handle_quote, symbol)
+# data_client.subscribe_quotes(handle_quote, symbol)
 
 # Define the price trade handler callback function
 # async def handle_trade(trade):
 #     print(f"Trade: {trade}")
 # Subscribe to the trade updates
-# stream_client.subscribe_trades(handle_trade, symbol)
+# data_client.subscribe_trades(handle_trade, symbol)
 
 
 # Run the stream with error handling and auto-restart
 try:
-    stream_client.run()
+    data_client.run()
 except Exception as e:
     time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
     error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
@@ -116,7 +116,7 @@ def signal_handler(sig, frame):
     print("\n\nCtrl-C pressed! Exiting gracefully...")
     # Stop the stream client before exiting
     try:
-        stream_client.stop()
+        data_client.stop()
     except:
         pass
     sys.exit(0)

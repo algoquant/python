@@ -3,6 +3,7 @@
 
 import os
 import sys
+import io
 import linecache
 import math
 import numpy as np
@@ -14,17 +15,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest, LimitOrderRequest, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
 from dotenv import load_dotenv
-
 # Package for download
 import requests
-
-
-## List all installed packages and their versions
-import pkg_resources
-
-packlist = pkg_resources.working_set
-for packv in packlist:
-  print(f'{packv.key}=={packv.version}')
 
 
 ## Lag a numpy array and pad with zeros
@@ -80,8 +72,8 @@ def read_csv(filename):
 
 ## Download OHLC time series from Polygon
 
-# Load the API keys from .env file
-load_dotenv(".env")
+# Load the API keys from /Users/jerzy/Develop/Python/.env file
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Get the Polygon key
 POLYGON_KEY = os.getenv("POLYGON_KEY")
 
@@ -150,7 +142,8 @@ def get_position(trading_client, symbol):
     try:
         position = trading_client.get_open_position(symbol)
     except Exception as e:
-        print(f"Error getting open position for {symbol}: {e}")
+        pass # Do nothing
+        # print(f"Error getting open position for {symbol}: {e}")
     if position:
         print(f"Open position for {symbol}: {position.qty} shares at {position.avg_entry_price}")
     else:
@@ -193,9 +186,9 @@ def cancel_orders(trading_client, symbol, canceled_file):
 # End of cancel_orders
 
 
-# The function submit_trade submits a trade order using the Alpaca TradingClient
-def submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_price, submits_file):
-    
+# The function submit_order submits a trade order using the Alpaca TradingClient
+def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, submits_file, error_file):
+
     tzone = ZoneInfo("America/New_York")
     time_now = datetime.now(tzone)
 
@@ -218,31 +211,32 @@ def submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_pri
             qty = shares_per_trade,
             side = side,
             type = type,
+            limit_price = limit_price,
+            extended_hours = True,
             time_in_force = TimeInForce.DAY,
-            limit_price = limit_price
         )
 
     # Submit the order
     # Print the order ID and status if successful, or the error if failed
     try:
-        response = trading_client.submit_order(order_params)
-        print(f"Order submitted for: Symbol={response.symbol}, Type={response.type}, Side={response.side}, shares_per_trade={response.qty}")
+        order_response = trading_client.submit_order(order_data = order_params)
+        print(f"Order submitted for: Symbol={order_response.symbol}, Type={order_response.type}, Side={order_response.side}, shares_per_trade={order_response.qty}")
         # Save the submit information to a CSV file
-        order_data = response.model_dump()  # or response._raw for some SDKs
-        order_data = pd.DataFrame([order_data])
+        order_frame = order_response.model_dump()  # or order_response._raw for some SDKs
+        order_frame = pd.DataFrame([order_frame])
         # Append to CSV (write header only if file does not exist)
-        order_data.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
+        order_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
         print(f"Order appended to {submits_file}")
-        return order_data
+        return order_frame
     except Exception as e:
         # Convert error to string and save to CSV
         error_msg = pd.DataFrame([{"error": "error", "timestamp: ": time_now, "symbol: ": symbol, "side: ": side, "msg: ": str(e)}])
-        error_msg.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
+        error_msg.to_csv(error_file, mode="a", header=not os.path.exists(error_file), index=False)
         print(f"Trade order rejected: {e}")
         print(f"Order submission failed: {e}")
         return None
 
-# End of submit_trade
+# End of submit_order
 
 
 
@@ -345,7 +339,7 @@ class EMACalculator:
 # End of function calc_ema
 
 
-# Convert all datetime objects to NY timezone
+# Convert all the nested datetime objects to NY timezone
 def convert_to_nytzone(obj):
     tzone = ZoneInfo("America/New_York")
     if isinstance(obj, dict):
@@ -372,16 +366,16 @@ def convert_to_nytzone(obj):
 # End of convert_to_nytzone function
 
 
-# Disconnect any existing websocket connections
-# Run the function disconnect_existing_websockets before subscribing to the price bars
-def disconnect_existing_websockets():
+# Disconnect any existing data_client websocket connections
+# Run the function disconnect_data_client before subscribing to the price bars
+def disconnect_data_client():
     try:
         # Check if stream client exists and has an active connection
-        if hasattr(stream_client, '_ws') and stream_client._ws:
-            if hasattr(stream_client._ws, 'is_running') and stream_client._ws.is_running:
+        if hasattr(data_client, '_ws') and data_client._ws:
+            if hasattr(data_client._ws, 'is_running') and data_client._ws.is_running:
                 print("Disconnecting existing websocket connections...")
-                stream_client.stop()
-                stream_client._ws = None
+                data_client.stop()
+                data_client._ws = None
                 time.sleep(1)  # Give time for connection to fully close
                 print("Successfully disconnected existing websockets")
             else:
@@ -389,8 +383,34 @@ def disconnect_existing_websockets():
     except Exception as e:
         print(f"Error disconnecting websockets: {e}")
         # Ensure the websocket is cleared even if there's an error
-        if hasattr(stream_client, '_ws'):
-            stream_client._ws = None
+        if hasattr(data_client, '_ws'):
+            data_client._ws = None
 
-# End of disconnect_existing_websockets function
+# End of disconnect_data_client function
+
+
+
+### Handle Ctrl-C interrupt
+
+# Stop the stream when the user presses Ctrl-C
+def ctrlc_handler(websocket):
+
+    import signal
+    def signal_handler(sig, frame):
+        # Handle Ctrl-C (SIGINT) gracefully
+        print("\n\nCtrl-C pressed! Exiting...")
+        # Stop the stream client before exiting
+        try:
+            websocket.stop()
+            print("Stream stopped by user.")
+        except:
+            pass
+        sys.exit(0)
+
+    # Set up signal handler for Ctrl-C
+    print("Press Ctrl-C to stop the stream... \n")
+    signal.signal(signal.SIGINT, signal_handler)
+
+
+
 

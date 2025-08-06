@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Script for VWAP Moving Average Crossover Strategy
+Simulate a VWAP moving average crossover strategy.
 https://www.learndatasci.com/tutorials/python-finance-part-yahoo-finance-api-pandas-matplotlib/
 https://www.learndatasci.com/tutorials/python-finance-part-2-intro-quantitative-trading-strategies/
 https://www.learndatasci.com/tutorials/python-finance-part-3-moving-average-trading-strategy/

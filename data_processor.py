@@ -14,8 +14,9 @@ from queue import Queue
 import signal
 import sys
 
-# Load environment variables
+# Load the API keys from .env file
 load_dotenv("/Users/jerzy/Develop/Python/.env")
+# Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 
@@ -41,28 +42,28 @@ prev_price = None
 prev_spike = False
 num_ticks = 0
 data_queue = Queue()
-stream_client = None  # Make stream_client global to manage connections
+data_client = None  # Make data_client global to manage connections
 
 # Initialize clients
 hist_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 
-def create_stream_client():
+def create_data_client():
     """Create a new stream client with proper error handling"""
-    global stream_client
+    global data_client
     
     # Force close any existing connection
-    if stream_client is not None:
+    if data_client is not None:
         try:
-            stream_client.stop()
+            data_client.stop()
             time.sleep(1)  # Give time for cleanup
         except:
             pass
-        stream_client = None
+        data_client = None
     
     # Try SIP first, fallback to IEX if authentication fails
     try:
         data_feed = DataFeed.SIP
-        stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
+        data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
         print("Attempting SIP data feed (premium)")
         # Test connection by creating a simple request
         return data_feed
@@ -71,7 +72,7 @@ def create_stream_client():
         try:
             print("Falling back to IEX data feed (free)")
             data_feed = DataFeed.IEX
-            stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
+            data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
             return data_feed
         except Exception as e2:
             print(f"IEX data feed also failed: {e2}")
@@ -97,13 +98,13 @@ class EMARealTimeProcessor:
         # Check if API credentials are loaded
         if not DATA_KEY or not DATA_SECRET:
             print("ERROR: Alpaca API credentials not found!")
-            print("Please check your .env file and ensure DATA_KEY and DATA_SECRET are set")
+            print("Please check your /Users/jerzy/Develop/Python/.env file and ensure DATA_KEY and DATA_SECRET are set")
             return
         
         print(f"Using API Key: {DATA_KEY[:8]}...")
         
         # Create data feed for this instance
-        self.data_feed = create_stream_client()
+        self.data_feed = create_data_client()
         
         try:
             # Get the latest trade price and size
@@ -249,28 +250,28 @@ class EMARealTimeProcessor:
     
     def stop_stream(self):
         """Stop the streaming"""
-        global stream_client
+        global data_client
         self.running = False
         if self.stream_thread:
             try:
-                if stream_client:
-                    stream_client.stop()
-                    stream_client = None
+                if data_client:
+                    data_client.stop()
+                    data_client = None
             except Exception as e:
                 print(f"Error stopping stream: {e}")
             print(f"Stopped streaming for {self.symbol}")
     
     def _run_stream(self):
         """Run the stream in async context"""
-        global stream_client
+        global data_client
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         try:
-            if stream_client:
+            if data_client:
                 # Subscribe to trades
-                stream_client.subscribe_trades(self.handle_prices, self.symbol)
-                loop.run_until_complete(stream_client.run())
+                data_client.subscribe_trades(self.handle_prices, self.symbol)
+                loop.run_until_complete(data_client.run())
         except Exception as e:
             time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
             error_text = f"{time_stamp} WebSocket error: {e}"
@@ -334,16 +335,16 @@ def generate_random_data():
 
 def cleanup():
     """Clean up resources"""
-    global processor, stream_client
+    global processor, data_client
     if processor:
         processor.stop_stream()
         processor = None
-    if stream_client:
+    if data_client:
         try:
-            stream_client.stop()
+            data_client.stop()
         except:
             pass
-        stream_client = None
+        data_client = None
 
 # Signal handler for graceful shutdown
 def signal_handler(sig, frame):

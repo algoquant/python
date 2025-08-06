@@ -16,14 +16,13 @@ import sys
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
-# Get API keys from environment
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 
 # Create the SDK data client for live stock prices
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 
 # Get the trading symbol
 if len(sys.argv) > 1:
@@ -39,6 +38,8 @@ date_short = time_now.strftime("%Y%m%d")
 dir_name = os.getenv("data_dir_name")
 file_name = f"{dir_name}price_trades_{symbol}_{date_short}.csv"
 
+
+# --------- Define the callback function --------
 
 # The callback EMA function is called after each trade price update
 async def handle_trade(latest_price):
@@ -65,29 +66,50 @@ async def handle_trade(latest_price):
 
 
 # Subscribe to the websocket trade price updates
-stream_client.subscribe_trades(handle_trade, symbol)
+data_client.subscribe_trades(handle_trade, symbol)
 
 
 # Define the price quote handler callback function
 # async def handle_quote(quote):
 #     print(f"Quote: {quote}")
 # Subscribe to the quote updates
-# stream_client.subscribe_quotes(handle_quote, symbol)
+# data_client.subscribe_quotes(handle_quote, symbol)
 
 # Define the price trade handler callback function
 # async def handle_trade(trade):
 #     print(f"Trade: {trade}")
 # Subscribe to the trade updates
-# stream_client.subscribe_trades(handle_trade, symbol)
+# data_client.subscribe_trades(handle_trade, symbol)
 
 
 # Run the stream with error handling and auto-restart
 try:
-    stream_client.run()
+    data_client.run()
 except Exception as e:
     time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
     error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
     print(error_text)
     with open(file_name, "a") as f: f.write(error_text)
     time.sleep(5)
+
+
+# --------- Handle Ctrl-C interrupt --------
+
+# The code below stops the stream when the user presses Ctrl-C
+
+def signal_handler(sig, frame):
+    # Handle Ctrl-C (SIGINT) gracefully
+    print("\n\nCtrl-C pressed! Exiting...")
+    # Stop the stream client before exiting
+    try:
+        data_client.stop()
+        print("Stream stopped by user.")
+    except:
+        pass
+    sys.exit(0)
+
+# Set up signal handler for Ctrl-C
+print("Press Ctrl-C to stop the stream... \n")
+signal.signal(signal.SIGINT, signal_handler)
+
 

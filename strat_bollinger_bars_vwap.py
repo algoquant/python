@@ -1,18 +1,24 @@
-# Strategy trades a single stock using the streaming real-time stock price bars from the Alpaca API.
+### Strategy trades a single stock using the streaming real-time stock price bars from the Alpaca API.
 # The strategy is based on the z-score, equal to the difference between the stock's closing price minus its Moving Average Price (EMA), divided by the volatility.
+# The proxy for the EMA is the 1-minute VWAP from Alpaca.
+# 
+# The strategy uses streaming bar prices and streaming confirms via the Alpaca websocket API.
+# 
+# The strategy uses the Bollinger Bands concept, where the z-score indicates how far the price is from the EMA.
+# If the z-score is between -1 and 1, then it does not trade.
 # If the z-score is below -1, then it buys the stock.
 # If the z-score is above 1, then it sells the stock.
-# It uses the VWAP as the EMA price for simplicity.
+# It submits a limit or market orders when the z-score is above 1 or below -1.
 
 # You can submit a trade order by running this script in the terminal:
-# python3 strat_bollinger_bars_vwap.py symbol, type, side, num_shares, delta
+# python3 strat_bollinger_bars_vwap.py symbol, type, num_shares, delta
 #
 # The delta is the adjustment to the limit price, compared to the ask or bid price.
 # For example, if the ask price is $100, and the delta is $0.5,
 # the limit price will be set to $99.5 for a buy order, or $100.5 for a sell order.
 # 
 # Example:
-# python3 strat_bollinger_bars_vwap.py SPY limit buy 1 0.5
+# python3 strat_bollinger_bars_vwap.py SPY limit 1 0.5
 
 # This is only an illustration how to use the streaming real-time data, using the Alpaca websocket. 
 # This is only for illustration purposes, and not a real trading strategy.
@@ -21,6 +27,7 @@
 
 import os
 import sys
+import asyncio
 import signal
 import time
 from datetime import datetime
@@ -29,16 +36,18 @@ import pandas as pd
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest, GetOrdersRequest
 from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
+from alpaca.trading.stream import TradingStream
+from alpaca.data.enums import DataFeed
 from alpaca.data.live.stock import StockDataStream
 from dotenv import load_dotenv
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_trade
+from utils import get_position, cancel_orders, submit_order, convert_to_nytzone
 
 
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
@@ -47,29 +56,33 @@ TRADE_KEY = os.getenv("TRADE_KEY")
 TRADE_SECRET = os.getenv("TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
-stream_client = StockDataStream(DATA_KEY, DATA_SECRET)
+data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 # Create the SDK trading client
 trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+# Create the SDK trade update and confirmation client
+confirm_stream = TradingStream(TRADE_KEY, TRADE_SECRET)
 
 
 # --------- Get the trading parameters from the command line arguments --------
 
 # Get the symbol, type, side, shares_per_trade, and delta from the command line arguments
-if len(sys.argv) > 5:
+if len(sys.argv) > 4:
     symbol = sys.argv[1].strip().upper()
     type = sys.argv[2].strip().lower()
-    side_input = sys.argv[3].strip().lower()
-    shares_per_trade = float(sys.argv[4])
-    delta = float(sys.argv[5])
+    # side_input = sys.argv[3].strip().lower()
+    shares_per_trade = float(sys.argv[3])
+    delta = float(sys.argv[4])
 else:
     # If not provided, prompt the user for input
     symbol = input("Enter symbol: ").strip().upper()
     type = input("Enter order type (market/limit): ").strip().lower()
-    side_input = input("Enter side (buy/sell): ").strip().lower()
+    # side_input = input("Enter side (buy/sell): ").strip().lower()
     shares_input = input("Enter number of shares to trade (default 1): ").strip()
     shares_per_trade = float(shares_input) if shares_input else 1
     delta_input = input("Enter price adjustment (default 0.5): ").strip()
     delta = float(delta_input) if delta_input else 0.5
+
+print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, limit delta={delta}\n")
 
 
 # --------- Specify the strategy parameters --------
@@ -79,7 +92,6 @@ else:
 strategy_name = "StratBoll001"
 # Specify the trading parameters
 # shares_per_trade = 1  # Number of shares to trade per each order
-shares_owned = 0  # Number of shares currently owned
 # type = "market"
 # type = "limit"
 # side = OrderSide.BUY  # Set to BUY or SELL as needed
@@ -89,10 +101,14 @@ vol_floor = 0.05  # The volatility floor
 price_vol = vol_floor  # The price volatility, used to calculate the z-score
 
 # Initialize the strategy state variables
-position = 0  # The current position - the number of shares owned
+position_shares = 0  # The number of shares currently owned
+position_broker = None  # The number of shares owned according to the broker
 shares_available = 0  # The number of available shares to trade, according to the broker
 pnl_real = 0  # The realized PnL of the strategy
 pnl_unreal = 0  # The unrealized PnL of the strategy
+# Initialize the order response variable
+order_response = None
+order_id = None  # Initialize order_id variable
 
 
 # --------- Create the file names --------
@@ -106,6 +122,8 @@ dir_name = os.getenv("data_dir_name")
 state_file = f"{dir_name}" + "state_" + f"{strategy_name}_{symbol}_{date_short}.csv"
 # Create file name for the submitted trade orders
 submits_file = f"{dir_name}" + "submits_" + f"{strategy_name}_{symbol}_{date_short}.csv"
+# Create file name for the filled trade orders
+fills_file = f"{dir_name}" + "fills_" + f"{strategy_name}_{symbol}_{date_short}.csv"
 # Create file name for the canceled trade orders
 canceled_file = f"{dir_name}" + "canceled_" + f"{strategy_name}_{symbol}_{date_short}.csv"
 # Create file name for the websocket errors
@@ -113,69 +131,90 @@ error_file = f"{dir_name}" + "error_" + f"{strategy_name}_{symbol}_{date_short}.
 
 
 
-# --------- Create the callback function --------
+# --------- Define the callback trading function --------
+# The trading function receives the price bars and submits the trade orders
 
-# The callback trading function is called after each price bar update
 async def trade_bars(bar):
+
+    global order_response, order_id, position_shares, shares_available, position_broker
     # print(f"Bar price: {bar}")
     # print(f"Symbol: {bar.symbol}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Trade_count: {bar.trade_count}, VWAP: {bar.vwap}")
-    close_price = bar.close
+    price_last = bar.close
     price_ema = bar.vwap  # The EMA price is the VWAP price
-    timestamp = bar.timestamp.astimezone(ZoneInfo("America/New_York"))
+    timestamp = bar.timestamp.astimezone(tzone)
     date_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Time: {date_time}, Symbol: {bar.symbol}, Close: {close_price}, VWAP: {price_ema}")
+    print(f"Time: {date_time}, Symbol: {bar.symbol}, Price: {price_last}, EMA: {price_ema}")
 
-    # Get the current position and the number of available shares to trade for the symbol
-    position = get_position(trading_client, symbol)
-    if position is None:
+    # Get the current position from the broker and the number of available shares to trade for the symbol
+    position_broker = get_position(trading_client, symbol)
+    if position_broker is None:
         # There is no open position - set the available shares to the number of shares traded per each order
         shares_available = shares_per_trade
-        shares_owned = 0
+        position_shares = 0
     else:
         # Get the number of available shares to trade from the broker
-        shares_available = float(position.qty_available)
-        shares_owned = float(position.qty)
-
+        shares_available = float(position_broker.qty_available)
+        position_broker = float(position_broker.qty)
 
     # Calculate the z-score of the price relative to the EMA price
-    zscore = (close_price - price_ema) / price_vol  # Z-score of the price relative to the EMA price
+    zscore = (price_last - price_ema) / price_vol  # Z-score of the price relative to the EMA price
+    print(f"Z-score: {round(zscore, 2)}, Last price: {round(price_last, 2)}, EMA: {round(price_ema, 2)}, Vol: {round(price_vol, 4)} - no trade executed for {symbol}")
     # Initialize the side variable
     side = None
 
-    # If the absolute value of z-score is greater than 1, then submit a trade order
+    # If the absolute value of the z-score is greater than 1, then submit a trade order
     if abs(zscore) > (1): # If the price is significantly different from the EMA price
-        # If the available shares is greater than or equal to the shares traded per order
-        if (shares_available >= shares_per_trade):
-            # Define the order parameters
-            if zscore > 1:
-                # Submit a sell order
-                side = OrderSide.SELL
-                # Limit price is equal to the last price plus a small adjustment
-                limit_price = round(close_price + delta, 2)
-            elif zscore < (-1):
-                # If the price is significantly below the EMA price
-                # Submit a buy order
-                side = OrderSide.BUY
-                # Limit price is equal to the last price minus a small adjustment
-                limit_price = round(close_price - delta, 2)
-            # Submit the trade order
-            order_data = submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_price, submits_file)
-            if order_data is None:
-                # If the order submission failed, cancel all the open orders
+
+        # Check if there are enough available shares
+        if (shares_available == 0):
+            print(f"No shares available to trade for {symbol}: available={shares_available} but requested {shares_per_trade} shares.")
+        elif (zscore < (-1)) and (shares_available < 0):
+            # Submit a buy order if the price is significantly below the EMA price
+            side = OrderSide.BUY
+            # The number of shares available is negative, because of a short position
+            shares_available = min(abs(shares_available), shares_per_trade)
+            # Limit price is equal to the last price minus a small adjustment
+            limit_price = round(price_last - delta, 2)
+        elif (zscore < (-1)) and (shares_available > 0):
+            # Submit a buy order if the price is significantly below the EMA price
+            side = OrderSide.BUY
+            # The number of shares available is positive, because of a long position
+            # The number of shares available is not limited by the broker
+            shares_available = shares_per_trade
+            # Limit price is equal to the last price minus a small adjustment
+            limit_price = round(price_last - delta, 2)
+        elif (zscore > 1) and (shares_available > 0):
+            # Submit a sell order if the price is significantly above the EMA price
+            side = OrderSide.SELL
+            # The number of shares sell is positive, because of a long position
+            shares_available = min(abs(shares_available), shares_per_trade)
+            # Limit price is equal to the last price plus a small adjustment
+            limit_price = round(price_last + delta, 2)
+        elif (zscore > 1) and (shares_available < 0):
+            # Submit a sell order if the price is significantly above the EMA price
+            side = OrderSide.SELL
+            # The number of shares sell is negative, because of a short position
+            # The number of shares sell is not limited by the broker
+            shares_available = shares_per_trade
+            # Limit price is equal to the last price plus a small adjustment
+            limit_price = round(price_last + delta, 2)
+    
+        # Submit the trade order if there are available shares
+        if side is not None:
+            print(f"Z-score: {zscore}, Side: {side}, Limit price: {limit_price}, Shares available: {shares_available}")
+            order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
+            if order_response is None:
+                # If the order submission failed, cancel all the open orders for the symbol
                 print(f"Trade order submission failed for {symbol}")
                 print(f"Cancelling all open orders for {symbol}")
-                # Cancel all open orders for the symbol
-                cancel_orders(trading_client, symbol)
+                cancel_orders(trading_client, symbol, canceled_file)
                 # Submit the trade order again
-                order_data = submit_trade(trading_client, symbol, shares_per_trade, side, type, limit_price, submits_file)
-        else:
-            print(f"Available shares {shares_available} are less than the number of shares traded per order {shares_per_trade}. No trade executed.")
+                order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
+            order_id = str(order_response.id)
     else:
-        print(f"Last price {close_price} is too close to the EMA price {price_ema} - no trade executed for {symbol}")
-        side = None
+        side = None # No trade executed, side remains None
 
-
-    # Save the strategy state to a CSV file
+    # Save the strategy state to the CSV file
     state_data = {
         "date_time": date_time,
         "symbol": bar.symbol,
@@ -183,7 +222,7 @@ async def trade_bars(bar):
         "volatility": (bar.high - bar.low),
         "zscore": zscore,
         "order": side,
-        "shares_owned": shares_owned,
+        "position_shares": position_shares,
         "pnlReal": 0,
         "pnlUnreal": 0,
     }
@@ -195,41 +234,122 @@ async def trade_bars(bar):
 
 
 
-# --------- Run the websocket stream --------
+# --------- Define the callback function to handle the trade updates and trade confirms --------
 
-# Subscribe to OHLCV bar updates and pass them to the callback function
-stream_client.subscribe_bars(trade_bars, symbol)
+async def handle_trade_update(event_data):
 
-# Run the websocket stream_client stream with error handling and auto-restart
-try:
-    stream_client.run()
-except Exception as e:
-    time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
-    error_text = f"{time_stamp} WebSocket error: {e}. Restarting connection in 5 seconds..."
-    print(error_text)
-    with open(error_file, "a") as f: f.write(error_text)
-    time.sleep(5)
+    global position_shares
+    if (order_response is not None) and str(event_data.order.id) == order_id:
+        event_dict = event_data.model_dump()  # Convert to dictionary
+        event_dict = convert_to_nytzone(event_dict)
+        event_name = str(event_dict["event"]).lower()  # Get the event name
+        time_stamp = event_dict["timestamp"]
+        orderinfo = event_dict["order"]
+        # Remove the "order" key from the event_dict
+        event_dict.pop("order", None)
+        symbol = orderinfo["symbol"]
+        type = orderinfo["order_type"]
+        side = orderinfo["side"]
+        qty_filled = float(orderinfo["qty"])
+        price = orderinfo.get("filled_avg_price", 0)
+        # event_dict = event_dict | orderinfo  # Combine dictionaries
+        event_dict.update(orderinfo)  # This adds order fields to event_dict while preserving the "order" key
+        time_now = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
+        # Process the event data based on the event type
+        if (event_name == "fill") or (event_name == "partial_fill"):
+            print(f"Order {order_id} filled at {time_now} at price {price}")
+            # Unpack the event_data into a dictionary
+            # Process the fill data FIRST before stopping
+            print(f"{time_stamp} Filled {type} {side} order for {qty_filled} shares of {symbol} at {price}")
+            # Update position_shares after the trade is filled
+            if side == "buy":
+                position_shares += qty_filled
+            elif side == "sell":
+                position_shares -= qty_filled
+            position_fill = event_dict.get("position_qty", 0)
+            print(f"Position from broker after the fill: {position_fill} shares of {symbol}")
+            # Save fill data to CSV
+            event_frame = pd.DataFrame([event_dict])
+            event_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
+            print(f"Fill appended to {fills_file}")
+            # STOP the stream AFTER processing the fill
+            print("Stopping WebSocket stream after fill...")
+            await confirm_stream.stop_ws()
+        elif (event_name == "pending_new") or (event_name == "new") or (event_name == "accepted"):
+            # Do nothing on pending_new or new events
+            # pass # Will implement later
+            print(f"Event {event_name} received for order {order_id} at {time_now}")
+            # print("New order event received")
+            # event_frame = pd.DataFrame([event_dict])
+            # event_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
+            # print(f"{time_stamp} New {type} {side} order for {qty_filled} shares of {symbol}")
+            # print(f"New trade appended to {submits_file}")
+        elif event_name == "canceled":
+            # print(f"Cancel event: {event_dict}")
+            print(f"Order {order_id} canceled at {time_now}")
+            # Append to CSV (write header only if file does not exist)
+            event_frame = pd.DataFrame([event_dict])
+            event_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+            print(f"Canceled order appended to {canceled_file}")
+            # await confirm_stream.stop_ws()  # Stop on cancel too
+        elif event_name == "replaced":
+            print(f"Replace event: {event_dict}")
+        else:
+            print(f"Unknown event: {event_name}")
+        print(f"Finished processing the {event_name} update for order {order_id} at {time_now}")
 
-print("Stream stopped by user.")
+# End of handle_trade_update function
 
 
 
-# --------- Handle Ctrl-C interrupt --------
+# --------- Run the WebSocket to handle trade updates and confirmations, and exceptions and Ctrl-C interrupt --------
+# --------- Run the data WebSocket stream --------
 
-# The code below stops the stream when the user presses Ctrl-C
+# Define the main function to run the WebSockets
+async def main():
 
-def signal_handler(sig, frame):
-    """Handle Ctrl-C (SIGINT) gracefully"""
-    print("\n\nCtrl-C pressed! Exiting gracefully...")
-    # Stop the stream client before exiting
     try:
-        stream_client.stop()
-    except:
-        pass
-    sys.exit(0)
+        # Subscribe to the price bar updates and pass them to the callback function
+        data_client.subscribe_bars(trade_bars, symbol)
+        # Subscribe to the trade updates and confirms, and handle them using handle_trade_update()
+        confirm_stream.subscribe_trade_updates(handle_trade_update)
+        # Run both WebSocket streams concurrently
+        print("\nStarting the data WebSocket connection...")
+        print("\nStarting the trade updates and confirmations WebSocket connection...")
+        await asyncio.gather(
+            data_client._run_forever(),
+            confirm_stream._run_forever()
+        )
+    except Exception as e:
+        pass  # Handle exceptions here if needed
+        # print(f"WebSocket error: {e}")
+    finally:
+        print("\nClosing the trade updates and confirmations WebSocket connection...")
+        try:
+            await data_client.close()
+            await confirm_stream.close()
+        except:
+            pass  # Ignore errors when closing
 
-# Set up signal handler for Ctrl-C
-print("Press Ctrl-C to stop the stream... \n")
-signal.signal(signal.SIGINT, signal_handler)
 
+# Check whether the script is being run directly or is imported as a module
+if __name__ == "__main__":
+    # Perform simplified event loop handling
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "Cannot be called from a running event loop" in str(e):
+            print("Running in existing event loop/Users/jerzy/Develop/Python/.environment...")
+            # Create a task in the existing loop
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(main())
+            # You might need to await this task manually in Jupyter
+        else:
+            # Suppress traceback for other RuntimeErrors
+            print(f"Runtime error: {str(e)}")
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user")
+    except Exception as e:
+        # Suppress full traceback, just show error message
+        print(f"Error occurred: {str(e)}")
 

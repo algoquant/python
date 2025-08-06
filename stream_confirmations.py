@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
-load_dotenv(".env")
+load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Trade keys
 TRADE_KEY = os.getenv("TRADE_KEY")
 TRADE_SECRET = os.getenv("TRADE_SECRET")
@@ -104,7 +104,7 @@ if __name__ == "__main__":
             asyncio.run(main())
         except RuntimeError as e:
             if "cannot be called from a running event loop" in str(e):
-                # If we're in Jupyter or similar environment with existing loop
+                # If we're in Jupyter or similar/Users/jerzy/Develop/Python/.environment with existing loop
                 import nest_asyncio
                 nest_asyncio.apply()
                 asyncio.run(main())

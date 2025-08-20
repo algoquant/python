@@ -19,7 +19,7 @@ import os
 import sys
 import signal
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_order#, plot_ema, calc_ema
+from utils import get_position, cancel_orders, submit_order
 
 
 # --------- Create the SDK clients --------

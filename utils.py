@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 # Package for download
 import requests
 
+# Broker name
+BROKER_NAME = "Alpaca"
 
 ## Lag a numpy array and pad with zeros
 def lagit(xs, n):
@@ -145,45 +147,82 @@ def get_position(trading_client, symbol):
         pass # Do nothing
         # print(f"Error getting open position for {symbol}: {e}")
     if position:
-        print(f"Open position for {symbol}: {position.qty} shares at {position.avg_entry_price}")
+        print(f"({BROKER_NAME}) Open position for {symbol}: {position.qty} shares at {position.avg_entry_price}")
     else:
-        print(f"No open position for {symbol}.")
+        print(f"({BROKER_NAME}) No open position for {symbol}.")
     return position
 # End of get_position
 
 
-# Cancel all open orders for the symbol
-def cancel_orders(trading_client, symbol, canceled_file):
+# Cancel all open orders in the list open_orders for the symbol
+def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
 
-    # Get all open orders for the symbol
-    request_params = GetOrdersRequest(
-                        status=QueryOrderStatus.OPEN,
-                        symbols=[symbol],
-                    )
-    open_orders = trading_client.get_orders(filter=request_params)
-
-    # Cancel the open orders one at a time
-    if not open_orders:
-        print(f"No open orders found for {symbol}.")
-    else:
+    # Case when open_orders is None
+    # Cancel all the open orders for the symbol because open_orders is None
+    if open_orders is None:
+        # Get all the open orders for the symbol
+        request_params = GetOrdersRequest(
+                            status=QueryOrderStatus.OPEN,
+                            symbols=[symbol],
+                        )
+        open_orders = trading_client.get_orders(filter=request_params)
+        # Cancel the open orders one at a time
         print(f"Found {len(open_orders)} open orders for {symbol}.")
-        for order in open_orders:
-            order_id = str(order.id)
+        for open_order in open_orders:
+            # If it's not a string, then extract the order ID as a string
+            order_id = open_order
+            if not isinstance(order_id, str):
+                order_id = str(order_id.id)
             # print(f"Cancelling order: {order_id} for {symbol}")
             try:
                 # Cancel the order
                 trading_client.cancel_order_by_id(order_id=order_id)
-                # Get the canceled order details
-                order = trading_client.get_order_by_id(order_id=order_id)
-                # Append the canceled order to CSV file (write header only if file does not exist)
-                canceled_frame = pd.DataFrame([order.model_dump()])
+                # Get the canceled order status
+                order_status = trading_client.get_order_by_id(order_id=order_id)
+                # Append the canceled order status to CSV file (write header only if file does not exist)
+                canceled_frame = pd.DataFrame([order_status.model_dump()])
                 canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
                 print(f"Cancelled order: {order_id} for {symbol}")
+                # Remove the canceled order ID from the open orders list
+                open_orders.remove(open_order)
+                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
             except Exception as e:
-                print(f"Error cancelling order {order.id} for {symbol}: {e}")
+                print(f"Error cancelling order {order_id} for {symbol}: {e}")
         print(f"Canceled orders saved to {canceled_file}")
+        return open_orders
+
+    # Case when open_orders is not None
+    # Cancel the open orders from the list open_orders one at a time
+    if not open_orders:
+        print(f"No open orders found for {symbol}.")
+        return [] # Return an empty list if no open orders
+    else:
+        print(f"Found {len(open_orders)} open orders for {symbol}.")
+        for order_id in open_orders:
+            # If it's not a string, then extract the order ID as a string
+            if not isinstance(order_id, str):
+                order_id = str(order_id.id)
+            # print(f"Cancelling order: {order_id} for {symbol}")
+            try:
+                # Remove the canceled order ID from the open orders list
+                # Remove it first because it may have expired from previous day
+                open_orders.remove(order_id)
+                # Cancel the order
+                trading_client.cancel_order_by_id(order_id=order_id)
+                # Get the canceled order status
+                order_status = trading_client.get_order_by_id(order_id=order_id)
+                # Append the canceled order status to CSV file (write header only if file does not exist)
+                canceled_frame = pd.DataFrame([order_status.model_dump()])
+                canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+                print(f"Cancelled order: {order_id} for {symbol}")
+                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
+            except Exception as e:
+                print(f"Error cancelling order {order_id} for {symbol}: {e}")
+        print(f"Canceled orders saved to {canceled_file}")
+        return open_orders
 
 # End of cancel_orders
+
 
 
 # The function submit_order submits a trade order using the Alpaca TradingClient
@@ -201,7 +240,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
             qty = shares_per_trade,
             side = side,
             type = type,
-            time_in_force = TimeInForce.DAY
+            time_in_force = TimeInForce.GTC
         )
     elif type == "limit":
         # Create limit order parameters
@@ -213,7 +252,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
             type = type,
             limit_price = limit_price,
             extended_hours = True,
-            time_in_force = TimeInForce.DAY,
+            time_in_force = TimeInForce.GTC,
         )
 
     # Submit the order
@@ -227,7 +266,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
         # Append to CSV (write header only if file does not exist)
         order_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
         print(f"Order appended to {submits_file}")
-        return order_frame
+        return order_response
     except Exception as e:
         # Convert error to string and save to CSV
         error_msg = pd.DataFrame([{"error": "error", "timestamp: ": time_now, "symbol: ": symbol, "side: ": side, "msg: ": str(e)}])
@@ -243,7 +282,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
 
 # Plot function to plot the EMA price and Bollinger Bands
 def plot_ema(price_frame):
-    
+
     global symbol, alpha_param, date_pretty, bollinger_width
     # Convert the timestamp to datetime
     price_frame["timestamp"] = pd.to_datetime(price_frame["timestamp"])
@@ -275,72 +314,186 @@ def plot_ema(price_frame):
 
 
 
+# --------- Calculate the total stock position and the unrealized P&L --------
+
+# Calculate the unrealized P&L and the stock positions
+def calc_unrealized_pnl(position_list, current_price):
+    """
+    The position_list is a list of prices paid or received for each stock position.
+    Negative prices indicate long positions, and positive prices indicate short positions.
+    Because when we buy a stock we pay for it, which is a negative cash flow, and when we sell it, we receive the market price, which is a positive cash flow.
+    """
+
+    if not position_list:
+        position_shares = 0
+        unrealized_pnl = 0.0
+    else:
+        # Calculate the number of shares owned
+        num_shares = len(position_list)
+        # Calculate the amount of shares owned (positive for long positions, negative for short positions)
+        position_shares = -math.copysign(1, position_list[0]) * num_shares
+        cost_basis = sum(position_list)  # Calculate the total cost basis
+        # Calculate the unrealized P&L
+        unrealized_pnl = (cost_basis + position_shares * current_price)
+
+    return position_shares, unrealized_pnl
+
+# End of calc_unrealized_pnl
+
+
+
+# --------- EMA class for calculating the Exponential Moving Average --------
+
+"""
+EMACalculator: Calculate the Exponential Moving Average EMA with persistent state.
+
+Methods:
+    calc_ema(current_price, alpha): Calculate and update EMA
+    calc_zscore(current_price, alpha, vol_floor): Calculate z-score with persistent state
+    calc_zscorew(current_price, alpha, volume, vol_floor): Calculate z-score with EMA weighted by volumes
+    reset(): Reset the EMA state
+
+Args:
+    current_price (float): The latest price value
+    alpha (float): Smoothing factor (0 < alpha <= 1)
+    volume (float): Trading volume for the current price
+    vol_floor (float): Minimum volatility to avoid division by zero
+
+Returns:
+    float: Updated EMA value
+
+Updating formulas:
+EMA = α × EMA + (1-α) × current_price
+Weighted EMA: EMAw = α × EMAw + (1-α) × volume × current_price
+EMA volume: EMAvolume = α × EMAvolume + (1-α) × volume
+EMA scaled: EMA = EMAw / EMAvolume
+
+"""
+
+
 class EMACalculator:
-    def __init__(self, alpha_param):
-        self.alpha_param = alpha_param
-        self.alpha1 = 1 - alpha_param
-        self.alpha_squared = alpha_param ** 2
-        self.alpha2 = 1 - alpha_param
-        self.symbol = symbol
-        self.price_ema = price_ema
-        self.volume_ema = volume_ema
-        self.price_var = price_var
-        self.price_vol = price_vol
-        self.price_frame = pd.DataFrame(columns=["timestamp", "symbol", "price", "volume", "ema_price", "volatility"])
-        self.max_frame_size = 1000
 
-    def calc_ema(self, trade_price, trade_size, time_stamp):
-        # Use self.alpha_param, self.alpha1, etc.
-        # ...existing code...
-        # Update the EMA price using the latest trade price
-        # global price_emav
-        # price_emav = alpha_param * price_emav + alpha1 * trade_size * trade_price
-        # Update the EMA volume using the latest trade size
-        # global volume_ema
-        # volume_ema = alpha_param * volume_ema + alpha1 * trade_size
-        # The EMA price is the price-volume divided by the EMA volume
-        global symbol, alpha_param, alpha1, alpha_squared, alpha2
-        global price_ema, date_pretty, price_var
-        global data_file, error_file, plot_file
-        global price_frame, max_frame_size
-        # price_ema = price_emav / volume_ema
-        price_ema = alpha_param * price_ema + alpha1 * trade_price
-        # Update the price variance using the latest prices
-        # global price_varv
-        # price_varv = alpha_squared * price_varv + alpha2 * trade_size * (trade_price - price_ema) ** 2
-        # price_var = price_varv / volume_ema
-        global price_var
-        price_var = alpha_squared * price_var + alpha2 * (trade_price - price_ema) ** 2
-        # Print the updated EMA price and volume
-        # time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
-        price_vol = np.sqrt(price_var) # The price volatility is the square root of the price variance
-        print(f"{time_stamp} {symbol} Price: {round(trade_price, ndigits=2)}, Size: {trade_size}, EMA price: {round(price_ema, ndigits=2)}, Volatility: {round(price_vol, ndigits=4)}")
+    def __init__(self):
+        self.ema_price = None
+        self.alpha1 = None
+        self.price_var = None
+        self.alpha_squared = None
+        self.alpha2 = None
+    
+    def reset(self):
+        """Reset the EMA state"""
+        self.ema_price = None
+        self.alpha1 = None
+        self.price_var = None
+        self.alpha_squared = None
+        self.alpha2 = None
 
-        # Append the price data to the CSV file
-        price_dict = {
-            "timestamp": time_stamp,
-            "symbol": symbol,
-            "price": trade_price,
-            "volume": trade_size,
-            "ema_price": price_ema,
-            "volatility": price_vol,
-        }
-        single_frame = pd.DataFrame([price_dict])
-        # Append single_frame to data_file
-        single_frame.to_csv(data_file, mode="a", header=not os.path.exists(data_file), index=False)
-        # Append single_frame to price_frame
-        global price_frame
-        price_frame = pd.concat([price_frame, single_frame], ignore_index=True)
-        # Keep only last max_frame_size records to limit memory usage
-        if len(price_frame) > max_frame_size:
-            price_frame = price_frame.tail(max_frame_size).reset_index(drop=True)
-        return price_frame
 
-# End of function calc_ema
+    """
+    Calculate the EMA price using a persistent state.
+    Returns: (ema_price)
+    """
+    def calc_ema(self, current_price, alpha):
+
+        if self.ema_price is None:
+            # Initialize EMA with first price
+            self.ema_price = current_price
+            self.alpha1 = 1 - alpha  # Store for efficiency
+        else:
+            # Update the EMA: EMA = alpha * previous_EMA + (1 - alpha) * current_price
+            self.ema_price = alpha * self.ema_price + self.alpha1 * current_price
+        
+        return self.ema_price
+
+    # end of calc_ema method
+
+
+    """
+    Calculate the Z-score from the EMA price and variance.
+    Returns: (zscore, ema_price, price_vol)
+    """
+    def calc_zscore(self, current_price, alpha, vol_floor=0.01):
+
+        if self.ema_price is None:
+            # Initialize on first call
+            self.ema_price = current_price  # Start with current price
+            self.price_var = vol_floor  # Start with floor variance
+            self.alpha1 = 1 - alpha
+            self.alpha_squared = alpha * alpha
+            self.alpha2 = 1 - self.alpha_squared
+            # First call returns zero z-score
+            return 0.0, self.ema_price, vol_floor
+
+        else:
+            # Calculate the price deviation from the current EMA
+            price_deviation = current_price - self.ema_price
+            
+            # Calculate the volatility as the square root of variance with vol_floor
+            price_vol = max(self.price_var ** 0.5, vol_floor)
+            
+            # Calculate the Z-score
+            zscore = price_deviation / price_vol
+
+            # Update the EMA variance
+            self.price_var = self.alpha_squared * self.price_var + self.alpha2 * (price_deviation * price_deviation)
+
+            # Update the EMA price
+            self.ema_price = alpha * self.ema_price + self.alpha1 * current_price
+            
+            return zscore, self.ema_price, price_vol
+
+    # end of calc_zscore method
+
+
+    """
+    Calculate the Z-score from the EMA price and variance weighted by the trading volumes.
+    Returns: (zscore, ema_price, price_vol)
+    """
+    def calc_zscorew(self, current_price, volume, alpha, vol_floor=0.01):
+
+        if self.ema_price is None:
+            # Initialize on first call
+            self.ema_price = volume * current_price  # Start with current price times volume
+            self.price_var = volume * vol_floor * vol_floor  # Start with floor variance times volume
+            self.alpha1 = 1 - alpha
+            self.alpha_squared = alpha * alpha
+            self.alpha2 = 1 - self.alpha_squared
+            self.volume = volume  # Initialize the volume to avoid division by zero
+            # First call returns zero z-score
+            return 0.0, self.ema_price / self.volume, vol_floor
+
+        else:
+            # Calculate the price deviation from the current EMA
+            price_deviation = current_price - self.ema_price / self.volume
+
+            # Calculate the volatility as the square root of variance with vol_floor
+            price_vol = max((self.price_var / self.volume) ** 0.5, vol_floor)  # Normalize by volume
+
+            # Calculate the Z-score
+            zscore = price_deviation / price_vol
+
+            # Update the EMA volume
+            self.volume = alpha * self.volume + self.alpha1 * volume
+
+            # Update the EMA variance
+            self.price_var = self.alpha_squared * self.price_var + self.alpha2 * volume * (price_deviation * price_deviation)
+
+            # Update the EMA price
+            self.ema_price = alpha * self.ema_price + self.alpha1 * volume * current_price
+            ema_price = self.ema_price / self.volume  # Normalize by volume
+
+            return zscore, ema_price, price_vol
+
+    # end of calc_zscorew method
+
+
+# end of EMACalculator class
+
 
 
 # Convert all the nested datetime objects to NY timezone
 def convert_to_nytzone(obj):
+
     tzone = ZoneInfo("America/New_York")
     if isinstance(obj, dict):
         return {k: convert_to_nytzone(v) for k, v in obj.items()}

@@ -13,6 +13,8 @@
 # Both produce the same results, but the one from alpaca.data is the newer version?
 
 
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 import requests
@@ -21,8 +23,6 @@ from alpaca.data import StockHistoricalDataClient
 from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest, StockLatestBarRequest
 from alpaca.data.enums import DataFeed
 from alpaca.data.timeframe import TimeFrame
-from dotenv import load_dotenv
-import os
 
 
 # --------- Create the SDK clients --------

@@ -109,6 +109,70 @@ pnl_unreal = 0  # The unrealized PnL of the strategy
 # Initialize the order response variable
 order_response = None
 order_id = None  # Initialize order_id variable
+# Initialize last limit price tracking for staggered orders
+last_limit_buy_price = None  # Track the last buy limit price submitted
+last_limit_sell_price = None  # Track the last sell limit price submitted
+# Initialize list to track pending order IDs
+pending_order_ids = []  # List to track all pending limit order IDs
+# Initialize persistent EMA and variance state variables
+ema_price = None  # Persistent EMA price between calls
+price_var = None  # Persistent price variance between calls
+alpha1 = None  # Persistent alpha coefficient (1 - alpha)
+alpha_squared = None  # Persistent alpha squared
+alpha2 = None  # Persistent alpha2 coefficient for variance calculation
+
+
+# --------- Define persistent Z-score calculation function --------
+
+def calc_zscore(price, alpha):
+    """
+    Calculate the z-score of the current price relative to the EMA price with persistent state.
+    
+    Args:
+        price (float): Current price to incorporate into EMA
+        alpha (float): Decay parameter (0 < alpha <= 1)
+                      Higher alpha = more weight to recent prices
+                      Lower alpha = more smoothing (more weight to past prices)
+    
+    Returns:
+        float: Z-score of current price relative to EMA
+    """
+    global ema_price, price_var, alpha1, alpha_squared, alpha2
+    
+    # Initialize persistent coefficients on first call
+    if alpha1 is None:
+        alpha1 = 1 - alpha
+        alpha_squared = alpha * alpha
+        alpha2 = alpha * alpha1  # alpha * (1 - alpha)
+        print(f"Initialized persistent coefficients: alpha={alpha}, alpha1={alpha1}, alpha_squared={alpha_squared}, alpha2={alpha2}")
+    
+    if ema_price is None:
+        # Initialize EMA and variance with first price
+        ema_price = price
+        price_var = vol_floor * vol_floor  # Initialize variance with vol_floor squared
+        print(f"Initialized EMA with first price: {ema_price:.2f}, initial variance: {price_var:.6f}")
+        zscore = 0.0  # First price has zero z-score
+    else:
+        # Update EMA: EMA = alpha * previous_EMA + (1 - alpha) * current_price
+        ema_price = alpha * ema_price + alpha1 * price
+        
+        # Calculate price deviation from EMA
+        price_deviation = price - ema_price
+        
+        # Update variance using exponential smoothing
+        # Var = alpha^2 * previous_Var + alpha * (1 - alpha) * (price - EMA)^2
+        price_var = alpha_squared * price_var + alpha2 * (price_deviation * price_deviation)
+        
+        # Ensure variance doesn't fall below vol_floor squared
+        price_var = max(price_var, vol_floor * vol_floor)
+        
+        # Calculate z-score using current deviation and smoothed volatility
+        price_vol_current = (price_var ** 0.5)  # Standard deviation from variance
+        zscore = price_deviation / price_vol_current
+    
+    return zscore, ema_price, price_vol_current if 'price_vol_current' in locals() else vol_floor
+
+# End of calc_zscore function
 
 
 # --------- Create the file names --------
@@ -136,29 +200,31 @@ error_file = f"{dir_name}" + "error_" + f"{strategy_name}_{symbol}_{date_short}.
 
 async def trade_bars(bar):
 
-    global order_response, order_id, position_shares, shares_available, position_broker
+    global order_response, order_id, position_shares, shares_available, position_broker, last_limit_buy_price, last_limit_sell_price, pending_order_ids
     # print(f"Bar price: {bar}")
     # print(f"Symbol: {bar.symbol}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Trade_count: {bar.trade_count}, VWAP: {bar.vwap}")
     price_last = bar.close
-    price_ema = bar.vwap  # The EMA price is the VWAP price
     timestamp = bar.timestamp.astimezone(tzone)
     date_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Time: {date_time}, Symbol: {bar.symbol}, Price: {price_last}, EMA: {price_ema}")
+    
+    # Calculate z-score, EMA, and current volatility using persistent function
+    zscore, price_ema, price_vol_current = calc_zscore(price_last, alpha)
+    
+    print(f"Time: {date_time}, Symbol: {bar.symbol}, Price: {price_last}, EMA: {price_ema:.2f}, Vol: {price_vol_current:.4f}, Z-score: {zscore:.2f}, position: {position_shares}")
 
     # Get the current position from the broker and the number of available shares to trade for the symbol
     position_broker = get_position(trading_client, symbol)
     if position_broker is None:
         # There is no open position - set the available shares to the number of shares traded per each order
         shares_available = shares_per_trade
-        position_shares = 0
+        # position_shares = 0
     else:
         # Get the number of available shares to trade from the broker
         shares_available = float(position_broker.qty_available)
         position_broker = float(position_broker.qty)
 
-    # Calculate the z-score of the price relative to the EMA price
-    zscore = (price_last - price_ema) / price_vol  # Z-score of the price relative to the EMA price
-    print(f"Z-score: {round(zscore, 2)}, Last price: {round(price_last, 2)}, EMA: {round(price_ema, 2)}, Vol: {round(price_vol, 4)} - no trade executed for {symbol}")
+    # Print additional z-score information
+    print(f"Z-score: {round(zscore, 2)}, Last price: {round(price_last, 2)}, EMA: {round(price_ema, 2)}, Vol: {round(price_vol_current, 4)} - no trade executed for {symbol}")
     # Initialize the side variable
     side = None
 
@@ -168,49 +234,66 @@ async def trade_bars(bar):
         # Check if there are enough available shares
         if (shares_available == 0):
             print(f"No shares available to trade for {symbol}: available={shares_available} but requested {shares_per_trade} shares.")
+
         elif (zscore < (-1)) and (shares_available < 0):
             # Submit a buy order if the price is significantly below the EMA price
             side = OrderSide.BUY
             # The number of shares available is negative, because of a short position
             shares_available = min(abs(shares_available), shares_per_trade)
-            # Limit price is equal to the last price minus a small adjustment
-            limit_price = round(price_last - delta, 2)
+            # Limit price is equal to the last buy price minus the delta adjustment
+            limit_price = round(min(price_last, last_limit_buy_price) - delta, 2)
+            last_limit_buy_price = limit_price
+
         elif (zscore < (-1)) and (shares_available > 0):
             # Submit a buy order if the price is significantly below the EMA price
             side = OrderSide.BUY
             # The number of shares available is positive, because of a long position
             # The number of shares available is not limited by the broker
             shares_available = shares_per_trade
-            # Limit price is equal to the last price minus a small adjustment
-            limit_price = round(price_last - delta, 2)
+            # Limit price is equal to the last buy price minus the delta adjustment
+            limit_price = round(min(price_last, last_limit_buy_price) - delta, 2)
+            last_limit_buy_price = limit_price
+
         elif (zscore > 1) and (shares_available > 0):
             # Submit a sell order if the price is significantly above the EMA price
             side = OrderSide.SELL
             # The number of shares sell is positive, because of a long position
             shares_available = min(abs(shares_available), shares_per_trade)
-            # Limit price is equal to the last price plus a small adjustment
-            limit_price = round(price_last + delta, 2)
+            # Limit price is equal to the last sell price plus the delta adjustment
+            limit_price = round(max(price_last, last_limit_sell_price) + delta, 2)
+            last_limit_sell_price = limit_price
+
         elif (zscore > 1) and (shares_available < 0):
             # Submit a sell order if the price is significantly above the EMA price
             side = OrderSide.SELL
             # The number of shares sell is negative, because of a short position
             # The number of shares sell is not limited by the broker
             shares_available = shares_per_trade
-            # Limit price is equal to the last price plus a small adjustment
-            limit_price = round(price_last + delta, 2)
-    
+            # Limit price is equal to the last sell price plus the delta adjustment
+            limit_price = round(max(price_last, last_limit_sell_price) + delta, 2)
+            last_limit_sell_price = limit_price
+
         # Submit the trade order if there are available shares
         if side is not None:
+
             print(f"Z-score: {zscore}, Side: {side}, Limit price: {limit_price}, Shares available: {shares_available}")
             order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
+
+            # If the order submission failed, cancel all the open limit orders for the symbol
             if order_response is None:
-                # If the order submission failed, cancel all the open orders for the symbol
                 print(f"Trade order submission failed for {symbol}")
                 print(f"Cancelling all open orders for {symbol}")
                 cancel_orders(trading_client, symbol, canceled_file)
                 # Submit the trade order again
                 order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
-            order_id = str(order_response.id)
+            
+            # Add the order ID to the pending orders list
+            if order_response is not None:
+                order_id = str(order_response.id)
+                pending_order_ids.append(order_id)
+                print(f"Added order ID {order_id} to pending list. Total pending orders: {len(pending_order_ids)}")
+            else:
+                print("Failed to submit order after retry")
     else:
         side = None # No trade executed, side remains None
 
@@ -238,8 +321,11 @@ async def trade_bars(bar):
 
 async def handle_trade_update(event_data):
 
-    global position_shares
-    if (order_response is not None) and str(event_data.order.id) == order_id:
+    global position_shares, pending_order_ids
+    filled_order_id = str(event_data.order.id)
+    
+    # Check if this order ID is in our pending list
+    if filled_order_id in pending_order_ids:
         event_dict = event_data.model_dump()  # Convert to dictionary
         event_dict = convert_to_nytzone(event_dict)
         event_name = str(event_dict["event"]).lower()  # Get the event name
@@ -257,7 +343,7 @@ async def handle_trade_update(event_data):
         time_now = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
         # Process the event data based on the event type
         if (event_name == "fill") or (event_name == "partial_fill"):
-            print(f"Order {order_id} filled at {time_now} at price {price}")
+            print(f"Order {filled_order_id} filled at {time_now} at price {price}")
             # Unpack the event_data into a dictionary
             # Process the fill data FIRST before stopping
             print(f"{time_stamp} Filled {type} {side} order for {qty_filled} shares of {symbol} at {price}")
@@ -266,15 +352,25 @@ async def handle_trade_update(event_data):
                 position_shares += qty_filled
             elif side == "sell":
                 position_shares -= qty_filled
+
+            # Remove the filled order ID from pending list
+            pending_order_ids.remove(filled_order_id)
+            print(f"Removed order ID {filled_order_id} from pending list. Remaining pending orders: {len(pending_order_ids)}")
+            
             position_fill = event_dict.get("position_qty", 0)
             print(f"Position from broker after the fill: {position_fill} shares of {symbol}")
             # Save fill data to CSV
             event_frame = pd.DataFrame([event_dict])
             event_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
             print(f"Fill appended to {fills_file}")
-            # STOP the stream AFTER processing the fill
-            print("Stopping WebSocket stream after fill...")
-            await confirm_stream.stop_ws()
+
+            # Only stop the stream if no more pending orders (optional - you may want to keep running)
+            if len(pending_order_ids) == 0:
+                print("No more pending orders. Stopping WebSocket stream...")
+                await confirm_stream.stop_ws()
+            else:
+                print(f"Still waiting for {len(pending_order_ids)} pending orders to fill...")
+
         elif (event_name == "pending_new") or (event_name == "new") or (event_name == "accepted"):
             # Do nothing on pending_new or new events
             # pass # Will implement later
@@ -284,19 +380,27 @@ async def handle_trade_update(event_data):
             # event_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
             # print(f"{time_stamp} New {type} {side} order for {qty_filled} shares of {symbol}")
             # print(f"New trade appended to {submits_file}")
+
         elif event_name == "canceled":
             # print(f"Cancel event: {event_dict}")
-            print(f"Order {order_id} canceled at {time_now}")
+            print(f"Order {filled_order_id} canceled at {time_now}")
+            # Remove the canceled order ID from pending list
+            pending_order_ids.remove(filled_order_id)
+            print(f"Removed canceled order ID {filled_order_id} from pending list. Remaining pending orders: {len(pending_order_ids)}")
             # Append to CSV (write header only if file does not exist)
             event_frame = pd.DataFrame([event_dict])
             event_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
             print(f"Canceled order appended to {canceled_file}")
             # await confirm_stream.stop_ws()  # Stop on cancel too
+
         elif event_name == "replaced":
             print(f"Replace event: {event_dict}")
         else:
             print(f"Unknown event: {event_name}")
-        print(f"Finished processing the {event_name} update for order {order_id} at {time_now}")
+        print(f"Finished processing the {event_name} update for order {filled_order_id} at {time_now}")
+    else:
+        # Order ID not in pending list - ignore or log
+        print(f"Received update for order {filled_order_id} which is not in pending list")
 
 # End of handle_trade_update function
 

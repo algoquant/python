@@ -12,7 +12,6 @@
 # Example:
 # python3 submit_callback.py SPY limit buy 1 0.5
 
-
 import os
 import sys
 import io
@@ -31,6 +30,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from dotenv import load_dotenv
+# os.chdir("/Users/jerzy/Develop/Python")
 from utils import convert_to_nytzone, get_position
 
 
@@ -93,45 +93,44 @@ print(f"Trading parameters: symbol={symbol}, type={type}, side={side}, shares_pe
 # side = OrderSide.BUY  # Set to BUY or SELL as needed
 # side = OrderSide.SELL
 # Adjustment to the limit price to make it below the ask or above the bid
-# delta = 0.1
+# delta = 0.5
 
 
 # --------- Check if there are available shares to trade for the symbol --------
 
-position_broker = 0  # The number of shares owned according to the broker
 # Get the current position from the broker and the number of available shares to trade for the symbol
 position_broker = get_position(trading_client, symbol)
 if position_broker is None:
     # There is no open position - set the available shares to the number of shares traded per each order
     shares_available = shares_per_trade
-    position_broker = 0
 else:
     # Get the number of available shares to trade from the broker
     shares_available = float(position_broker.qty_available)
     position_broker = float(position_broker.qty)
 
 
+if (shares_available == 0):
+    print(f"No shares available to trade for {symbol}: available={shares_available} but requested {shares_per_trade} shares.")
+    exit(1)  # Exit if no shares are available
+
+
 print(f"The shares available to trade for {symbol}: available={shares_available} but requested {shares_per_trade} shares.")
 # Calculate the shares available to trade based on the side of the order
 if (side == OrderSide.BUY) and (shares_available < 0):
     # The number of shares available is negative, because of a short position
-    shares_available = min(abs(shares_available), shares_per_trade)
+    shares_to_trade = min(abs(shares_available), shares_per_trade)
 elif (side == OrderSide.BUY) and (shares_available > 0):
     # The number of shares available is positive, because of a long position
     # The number of shares available is not limited by the broker
-    shares_available = shares_per_trade
+    shares_to_trade = shares_per_trade
 elif (side == OrderSide.SELL) and (shares_available > 0):
     # The number of shares sell is positive, because of a long position
-    shares_available = min(abs(shares_available), shares_per_trade)
+    shares_to_trade = min(abs(shares_available), shares_per_trade)
 elif (side == OrderSide.SELL) and (shares_available < 0):
     # The number of shares sell is negative, because of a short position
     # The number of shares sell is not limited by the broker
-    shares_available = shares_per_trade
+    shares_to_trade = shares_per_trade
 
-
-if (shares_available == 0):
-    print(f"No shares available to trade for {symbol}: available={shares_available} but requested {shares_per_trade} shares.")
-    exit(1)  # Exit if no shares are available
 
 
 # --------- Create the file names --------
@@ -159,24 +158,34 @@ if type == "market":
     # Submit market order
     order_params = MarketOrderRequest(
         symbol = symbol,
-        qty = shares_available,
+        qty = shares_to_trade,
         side = side,
         type = type,
         time_in_force = TimeInForce.DAY
     ) # end order_params
-    print(f"Submitting a {type} {side} order for {shares_available} shares of {symbol}")
+    print(f"Submitting a {type} {side} order for {shares_to_trade} shares of {symbol}")
 elif type == "limit":
     # Get the limit order price based on the latest bid/ask prices
     # Create the SDK data client for live and historical stock data
     data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
     # Create the request parameters for live stock prices - SIP for comprehensive data, or IEX for free data.
-    quote_params = StockLatestQuoteRequest(symbol_or_symbols=symbol, feed=DataFeed.SIP)
+    request_params = StockLatestQuoteRequest(symbol_or_symbols=symbol, feed=DataFeed.SIP)
     # Get the latest bid/ask price quotes - as a dictionary
-    latest_quotes = data_client.get_stock_latest_quote(quote_params)
-    price_quotes = latest_quotes[symbol]
-    ask_price = price_quotes.ask_price
-    bid_price = price_quotes.bid_price
-    print(f"Latest quotes for {symbol}: Ask = {price_quotes.ask_price}, Bid = {price_quotes.bid_price}")
+    try:
+        latest_quotes = data_client.get_stock_latest_quote(request_params)
+        price_quotes = latest_quotes[symbol]
+        ask_price = price_quotes.ask_price
+        bid_price = price_quotes.bid_price
+        print(f"Latest quotes for {symbol}: Ask = {price_quotes.ask_price}, Bid = {price_quotes.bid_price}")
+    except Exception as e:
+        print(f"Failed to get stock quotes for {symbol}: {e}")
+        # Convert error to string and save to CSV
+        error_msg = pd.DataFrame([{"timestamp: ": time_now, "symbol: ": symbol, "side: ": side, "error: ": str(e)}])
+        error_msg = convert_to_nytzone(error_msg)
+        error_msg.to_csv(error_file, mode="a", header=not os.path.exists(error_file), index=False)
+        print("Exiting due to quote data failure...")
+        exit(1)
+    
     if side == OrderSide.BUY:
         # Submit a limit order to buy at the current ask price minus a small adjustment
         limit_price = round(ask_price - delta, 2)
@@ -186,14 +195,14 @@ elif type == "limit":
     # Define the limit order parameters
     order_params = LimitOrderRequest(
         symbol = symbol,
-        qty = shares_available,
+        qty = shares_to_trade,
         side = side,
         type = type,
         limit_price = limit_price,
         extended_hours = True,
         time_in_force = TimeInForce.DAY
     ) # end order_params
-    print(f"Submitting a {type} {side} order for {shares_available} shares of {symbol} at {limit_price}")
+    print(f"Submitting a {type} {side} order for {shares_to_trade} shares of {symbol} at {limit_price}")
 
 
 
@@ -206,8 +215,8 @@ try:
     order_response = trading_client.submit_order(order_data = order_params)
     # Remember the order ID to get the order status later
     order_id = str(order_response.id)
-    # print(f"Submitted limit order {order_id} for {shares_available} {symbol} at {limit_price}")
-    print(f"Submitted {side} order for {shares_available} shares of {symbol} with the order-id: {order_id}")
+    # print(f"Submitted limit order {order_id} for {shares_to_trade} {symbol} at {limit_price}")
+    print(f"Submitted {side} order for {shares_to_trade} shares of {symbol} with the order-id: {order_id}")
     # Append the submitted orders to a CSV file
     order_frame = order_response.model_dump()  # or order_response._raw for some SDKs
     order_frame = convert_to_nytzone(order_frame)
@@ -228,7 +237,7 @@ except Exception as e:
 # --------- Define the callback function to handle the trade updates and trade confirms --------
 
 async def handle_trade_update(event_data):
-    if order_response and str(event_data.order.id) == order_id:
+    if (order_response is not None) and (order_id == str(event_data.order.id)):
         event_dict = event_data.model_dump()  # Convert to dictionary
         event_dict = convert_to_nytzone(event_dict)
         event_name = str(event_dict["event"]).lower()  # Get the event name
@@ -240,16 +249,16 @@ async def handle_trade_update(event_data):
         type = orderinfo["order_type"]
         side = orderinfo["side"]
         qty_filled = orderinfo["qty"]
-        price = orderinfo.get("filled_avg_price", 0)
+        fill_price = orderinfo.get("filled_avg_price", 0)
         # event_dict = event_dict | orderinfo  # Combine dictionaries
         event_dict.update(orderinfo)  # This adds order fields to event_dict while preserving the "order" key
         time_now = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
         # Process the event data based on the event type
         if (event_name == "fill") or (event_name == "partial_fill"):
-            print(f"Order {order_id} filled at {time_now} at price {price}")
+            print(f"Order {order_id} filled at {time_now} at fill_price {fill_price}")
             # Unpack the event_data into a dictionary
             # Process the fill data FIRST before stopping
-            print(f"{time_stamp} Filled {type} {side} order for {qty_filled} shares of {symbol} at {price}")
+            print(f"{time_stamp} Filled {type} {side} order for {qty_filled} shares of {symbol} at {fill_price}")
             position_fill = event_dict.get("position_qty", 0)
             print(f"Position from broker after the fill: {position_fill} shares of {symbol}")
             # Append to CSV (write header only if file does not exist)
@@ -276,7 +285,11 @@ async def handle_trade_update(event_data):
             print(f"Canceled order appended to {canceled_file}")
             await confirm_stream.stop_ws()  # Stop on cancel too
         elif event_name == "replaced":
-            print(f"Replace event: {event_dict}")
+            print(f"Replaced event: {event_dict}")
+            await confirm_stream.stop_ws()
+        elif event_name == "expired":
+            print(f"Expired event: {event_dict}")
+            await confirm_stream.stop_ws()
         else:
             print(f"Unknown event: {event_name}")
         print(f"Finished processing the {event_name} update for order {order_id} at {time_now}")
@@ -308,7 +321,7 @@ async def main():
 
 # Check whether the script is being run directly or is imported as a module
 if __name__ == "__main__":
-    if order_response:  # Only run if order was successfully submitted
+    if (order_response is not None):  # Only run if order was successfully submitted
         print("Starting WebSocket stream to listen for trade updates...")
         
         # Simplified event loop handling

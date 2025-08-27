@@ -52,15 +52,15 @@ load_dotenv("/Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
 data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 # Create the SDK trading client
-trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 # Create the SDK trade update and confirmation client
-confirm_stream = TradingStream(TRADE_KEY, TRADE_SECRET)
+confirm_stream = TradingStream(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 
 
 # --------- Get the trading parameters from the command line arguments --------
@@ -181,7 +181,7 @@ def calc_zscore(price, alpha):
 tzone = ZoneInfo("America/New_York")
 time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y%m%d")
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 # Create file name for the state variables
 state_file = f"{dir_name}" + "state_" + f"{strategy_name}_{symbol}_{date_short}.csv"
 # Create file name for the submitted trade orders

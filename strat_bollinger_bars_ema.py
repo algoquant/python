@@ -1,39 +1,61 @@
-### Strategy trades a single stock using the streaming real-time stock price bars from the Alpaca API.
-# The strategy is based on the Z-score, equal to the difference between the stock's price minus its Moving Average Price (EMA), divided by the volatility.
-#
-#   Z-score = (price - EMA) / volatility
-#
-# The strategy uses streaming bar prices and streaming confirms via the Alpaca websocket API.
-#
-# The strategy either takes profit if the unrealized P&L is above a certain threshold, or it executes the contrarian rule based on the Z-score.
-#
-# The strategy uses the contrarian rule based on the Bollinger Bands concept, where the Z-score indicates if the stock is cheap or rich (expensive).
-# If the Z-score is between -1 and 1, then it does not trade.
-# If the Z-score is below -1, then it buys the stock.
-# If the Z-score is above 1, then it sells the stock.
-# It submits a limit or market orders when the Z-score is above 1 or below -1.
+"""
+Strategy trades a single stock using the streaming real-time stock price bars from the Alpaca API.
+The strategy is based on the Z-score, equal to the difference between the stock's price minus its Moving Average Price (EMA), divided by the volatility.
 
-# You can run the strategy by executing this script with the appropriate parameters in the terminal:
-# python3 strat_bollinger_bars_vwap.py symbol type num_shares alpha delta vol_floor take_profit_level
-# Example:
-# python3 strat_bollinger_bars_ema.py SPY limit 1 0.2 0.3 2.0 0.1
-#
-# The delta is the adjustment to the limit price, compared to the ask or bid price.
-# For example, if the ask price is $100, and the delta is $0.5, then the limit price is set to $99.5 for a buy order, or $100.5 for a sell order.
-#
-# The alpha parameter is the EMA decay parameter (0 < alpha <= 1).
-# It's used to calculate the Exponential Moving Average (EMA) of the stock price.
-# Larger alpha values apply more weight to past prices, with more smoothing, and a slower response to new prices.
-# Smaller alpha values provide less smoothing and a faster response to new prices.
-#
-# The vol_floor is the minimum value of the dollar volatility used in the Z-score calculations.
-# This prevents division by very small numbers when the price volatility is low.
-# Typical values range from 0.01 to 0.2 depending on the asset and the time horizon.
+    Z-score = (price - EMA) / volatility
 
-# NOTE:
-# This script is only for illustration purposes, and not a real trading strategy.
-# This is only an illustration how to use the streaming real-time data from the Alpaca websocket. 
+The strategy uses streaming bar prices and streaming confirms via the Alpaca websocket API.
 
+The strategy either takes profit if the unrealized P&L is above a certain threshold, or it executes the contrarian rule based on the Z-score.
+
+The strategy uses the contrarian rule based on the Bollinger Bands concept, where the Z-score indicates if the stock is cheap or rich (expensive).
+
+You can run the strategy by executing this script with the appropriate parameters in the terminal:
+    python3 strat_bollinger_bars_vwap.py symbol num_shares type alpha vol_floor risk_premium take_profit_factor
+Example:
+    python3 strat_bollinger_bars_ema.py SPY 1 limit 0.3 0.1 2.0 20.0
+
+The num_shares parameter specifies the number of shares for each trade.
+
+The type parameter specifies the order type, either "market" or "limit".
+
+The alpha parameter is the EMA decay parameter (0 < alpha <= 1).
+It's used to calculate the Exponential Moving Average (EMA) of the stock price.
+Larger alpha values apply more weight to past prices, with more smoothing, and a slower response to new prices.
+Smaller alpha values provide less smoothing and a faster response to new prices.
+
+The vol_floor is the minimum value of the dollar volatility used in the Z-score calculations.
+This prevents division by very small numbers when the price volatility is low.
+Typical values range from 0.01 to 0.2 depending on the asset and the time horizon.
+
+The risk_premium parameter serves two purposes:
+1. It adjusts the limit price for limit orders.
+2. It serves as the threshold for the Z-score.
+
+The risk_premium parameter is used to determine the limit price, compared to the ask or bid price.
+The limit price adjustment pa is equal to the risk_premium parameter times the volatility.
+For example, if the risk_premium is 2.0 and the volatility is $0.1, then the price adjustment pa is $0.2.
+If the ask price is $100, then the limit buy price is set to $99.8.
+If the bid price is $99, then the limit sell price is set to $99.2.
+The subsequent limit order prices are spread apart by the price adjustment pa, to avoid submitting multiple limit orders at the same price.
+If another limit order is submitted, then its price is set based on the previous limit order price and the risk_premium parameter.
+For example, the next limit buy price after $99.8 would be set to $99.6.
+This is to avoid submitting multiple limit orders at the same price.
+
+The risk_premium serves as the threshold level for the Z-score.
+If the Z-score is between -risk_premium and risk_premium, then the strategy does not trade.
+If the Z-score is below -risk_premium, then it buys the stock.
+If the Z-score is above +risk_premium, then it sells the stock.
+It submits either limit or market orders when the Z-score is above +risk_premium or below -risk_premium.
+
+The take_profit_factor is used to determine the take profit level for the strategy.
+It is a multiplier applied to the average cost basis of the position.
+For example, if the take_profit_factor is 2.0 and the average cost basis is $100, then the take profit level is set to $102.
+
+NOTE:
+This script is only for illustration purposes, and not a real trading strategy.
+This is only an illustration how to use the streaming real-time data from the Alpaca websocket. 
+"""
 
 
 import os
@@ -64,72 +86,68 @@ load_dotenv("/Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
 data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 # Create the SDK trading client
-trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 # Create the SDK trade update and confirmation client
-confirm_stream = TradingStream(TRADE_KEY, TRADE_SECRET)
+confirm_stream = TradingStream(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 
 
 # --------- Get the trading parameters from the command line arguments --------
 
-# Get the symbol, type, shares_per_trade, delta, alpha, and vol_floor from the command line arguments
+# Get the symbol, type, shares_per_trade, risk_premium, alpha, and vol_floor from the command line arguments
 if len(sys.argv) > 7:
     symbol = sys.argv[1].strip().upper()  # Symbol to trade
-    type = sys.argv[2].strip().lower()  # Order type (market/limit)
-    # trade_side = sys.argv[3].strip().lower()
-    shares_per_trade = float(sys.argv[3])  # Number of shares to trade
-    alpha = float(sys.argv[5])  # EMA alpha parameter
-    delta = float(sys.argv[4])  # Limit price adjustment
-    vol_floor = float(sys.argv[7])  # Volatility floor
-    take_profit_level = float(sys.argv[6])  # Take profit level
+    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
+    type = sys.argv[3].strip().lower()  # Order type (market/limit)
+    alpha = float(sys.argv[4])  # EMA alpha parameter
+    vol_floor = float(sys.argv[5])  # Volatility floor
+    risk_premium = float(sys.argv[6])  # Limit price adjustment
+    take_profit_factor = float(sys.argv[7])  # Take profit level
 elif len(sys.argv) > 6:
     symbol = sys.argv[1].strip().upper()
-    type = sys.argv[2].strip().lower()
-    # trade_side = sys.argv[3].strip().lower()
-    shares_per_trade = float(sys.argv[3])
-    alpha = float(sys.argv[5])
-    delta = float(sys.argv[4])
-    vol_floor = float(sys.argv[7])  # Volatility floor
-    take_profit_level = 2.0  # Default take profit level
+    shares_per_trade = float(sys.argv[2])
+    type = sys.argv[3].strip().lower()
+    alpha = float(sys.argv[4])
+    vol_floor = float(sys.argv[5])  # Volatility floor
+    risk_premium = float(sys.argv[6])  # Limit price adjustment
+    take_profit_factor = 20.0  # Default take profit level
 elif len(sys.argv) > 5:
     symbol = sys.argv[1].strip().upper()
-    type = sys.argv[2].strip().lower()
-    # trade_side = sys.argv[3].strip().lower()
-    shares_per_trade = float(sys.argv[3])
-    alpha = float(sys.argv[5])
-    delta = float(sys.argv[4])
-    vol_floor = 0.1  # Default vol_floor value
-    take_profit_level = 2.0  # Default take profit level
+    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
+    type = sys.argv[3].strip().lower()  # Order type (market/limit)
+    alpha = float(sys.argv[4])
+    vol_floor = float(sys.argv[5])  # Volatility floor
+    risk_premium = 2.0  # Default risk_premium value
+    take_profit_factor = 20.0  # Default take profit level
 elif len(sys.argv) > 4:
     symbol = sys.argv[1].strip().upper()
-    type = sys.argv[2].strip().lower()
-    shares_per_trade = float(sys.argv[3])
-    alpha = float(sys.argv[5])
-    delta = 2.0  # Default delta value
+    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
+    type = sys.argv[3].strip().lower()  # Order type (market/limit)
+    alpha = float(sys.argv[4])
     vol_floor = 0.1  # Default vol_floor value
-    take_profit_level = 2.0  # Default take profit level
+    risk_premium = 2.0  # Default risk_premium value
+    take_profit_factor = 20.0  # Default take profit level
 else:
     # If not provided, prompt the user for input
     symbol = input("Enter symbol: ").strip().upper()
-    type = input("Enter order type (market/limit): ").strip().lower()
-    # trade_side = input("Enter side (buy/sell): ").strip().lower()
     shares_input = input("Enter number of shares to trade (default 1): ").strip()
     shares_per_trade = float(shares_input) if shares_input else 1
+    type = input("Enter order type (market/limit): ").strip().lower()
     alpha_input = input("Enter EMA alpha parameter (default 0.1): ").strip()
     alpha = float(alpha_input) if alpha_input else 0.1
-    delta_input = input("Enter price adjustment (default 0.5): ").strip()
-    delta = float(delta_input) if delta_input else 0.5
+    risk_premium_input = input("Enter price adjustment (default 0.5): ").strip()
+    risk_premium = float(risk_premium_input) if risk_premium_input else 0.5
     vol_floor_input = input("Enter volatility floor (default 0.05): ").strip()
     vol_floor = float(vol_floor_input) if vol_floor_input else 0.05
     take_profit_input = input("Enter take profit level (default 2.0): ").strip()
-    take_profit_level = float(take_profit_input) if take_profit_input else 2.0
+    take_profit_factor = float(take_profit_input) if take_profit_input else 2.0
 
-print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, delta={delta}, vol_floor={vol_floor}, take_profit_level={take_profit_level}\n")
+print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, risk_premium={risk_premium}, vol_floor={vol_floor}, take_profit_factor={take_profit_factor}\n")
 
 
 # --------- Specify the strategy parameters --------
@@ -138,14 +156,14 @@ print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shar
 # Specify the strategy name
 # Add to the strategy name its parameters.
 # For example: "StratBoll001_SPY_limit_1_0.5_0.9_0.05"
-strategy_name = f"StratBoll_{symbol}_{type}_ns{shares_per_trade}al{alpha}del{delta}vf{vol_floor}tp{take_profit_level}"
+strategy_name = f"StratBoll_{symbol}_ns{shares_per_trade}_{type}al{alpha}rp{risk_premium}vf{vol_floor}tp{take_profit_factor}"
 # Specify the trading parameters
 # shares_per_trade = 1  # Number of shares to trade per each order
 # type = "market"
 # type = "limit"
 # trade_side = OrderSide.BUY  # Set to BUY or SELL as needed
-# Adjustment to the limit price to make it below the ask or above the bid
-# delta = 0.1  # The delta price adjustment for the limit order
+# The risk_premium parameter, for the Z-score threshold and for setting the limit price
+# risk_premium = 2.0  # The risk_premium parameter
 
 # Initialize the strategy state variables
 # The position_list is a list of prices paid or received for each stock position.
@@ -171,7 +189,12 @@ last_sell_price = None  # Track the last sell limit price submitted
 open_orders = []  # List of pending limit order IDs
 # Initialize the cumulative realized P&L
 total_realized_pnl = 0.0  # The cumulative realized P&L from closed positions
-unrealized_pnl = 0.0  # The unrealized P&L from open positions
+unrealized_pnl = 0.0  # The unrealized PnL from open positions
+price_vol = vol_floor  # The price volatility
+# The price adjustment for limit orders
+price_adjustment = risk_premium * price_vol
+# The take profit level
+take_profit_level = take_profit_factor * price_vol
 
 # Create an instance of the EMACalculator for calculating the EMA prices and Z-scores
 EMAC = EMACalculator()
@@ -183,7 +206,7 @@ EMAC = EMACalculator()
 tzone = ZoneInfo("America/New_York")
 time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y%m%d")
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 # Create file name for the state variables
 state_file = f"{dir_name}" + "state_" + f"{strategy_name}_{symbol}_{date_short}.csv"
 # Create file name for the submitted trade orders
@@ -202,7 +225,7 @@ error_file = f"{dir_name}" + "error_" + f"{strategy_name}_{symbol}_{date_short}.
 
 # Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
 # Returns trade_side = None if no trade is to be made.
-def take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, delta):
+def take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, price_adjustment):
 
     # Initialize the trade buy/sell side variable and the limit price
     trade_side = None
@@ -212,21 +235,21 @@ def take_profit(position_shares, price_last, shares_per_trade, shares_available,
     if position_shares > 0:
         # If the position is long stock - submit a sell trade order
         trade_side = OrderSide.SELL
-        # The limit price is equal to the last sell price plus the delta adjustment
+        # The limit price is equal to the last sell price plus the price_adjustment adjustment
         if last_sell_price is None:
-            limit_price = round(price_last + delta, 2)
+            limit_price = round(price_last + price_adjustment, 2)
         else:
-            limit_price = round(max(price_last, last_sell_price) + delta, 2)
+            limit_price = round(max(price_last, last_sell_price) + price_adjustment, 2)
         last_sell_price = limit_price
 
     else: # position_shares < 0
         # The position is short stock - submit a buy trade order
         trade_side = OrderSide.BUY
-        # The limit price is equal to the last buy price minus the delta adjustment
+        # The limit price is equal to the last buy price minus the price_adjustment adjustment
         if last_buy_price is None:
-            limit_price = round(price_last - delta, 2)
+            limit_price = round(price_last - price_adjustment, 2)
         else:
-            limit_price = round(min(price_last, last_buy_price) - delta, 2)
+            limit_price = round(min(price_last, last_buy_price) - price_adjustment, 2)
         last_buy_price = limit_price
 
     # The number of shares to trade is limited by the shares_available
@@ -242,7 +265,7 @@ def take_profit(position_shares, price_last, shares_per_trade, shares_available,
 
 # Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
 # Returns trade_side = None if no trade is to be made.
-def calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, delta):
+def calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, risk_premium, price_adjustment):
 
     # Initialize the trade buy/sell side variable and the limit price
     trade_side = None
@@ -257,44 +280,44 @@ def calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available,
     # In that case, the strategy can only sell the shares it owns.
     # But it can buy more shares without limitation.
 
-    # If the absolute value of the Z-score is greater than 1, then submit a trade order
-    if abs(zscore) > 1: # If the price is significantly different from the EMA price
+    # If the Z-score is greater than the risk_premium, then submit a sell order
+    # If the price is significantly different from the EMA price
+    if zscore > risk_premium:
+        # Submit a sell order if the price is significantly above the EMA price
+        trade_side = OrderSide.SELL
+        # The limit price is equal to the last sell price plus the price_adjustment adjustment
+        if last_sell_price is None:
+            limit_price = round(price_last + price_adjustment, 2)
+        else:
+            limit_price = round(max(price_last, last_sell_price) + price_adjustment, 2)
+        last_sell_price = limit_price
+        if shares_available > 0:
+            # The number of shares to trade is limited by the shares_available
+            shares_to_trade = min(abs(shares_available), shares_per_trade)
+        else:
+            # The number of shares to trade is equal to the shares_per_trade
+            shares_to_trade = shares_per_trade
 
-        if zscore > 1:
-            # Submit a sell order if the price is significantly above the EMA price
-            trade_side = OrderSide.SELL
-            # The limit price is equal to the last sell price plus the delta adjustment
-            if last_sell_price is None:
-                limit_price = round(price_last + delta, 2)
-            else:
-                limit_price = round(max(price_last, last_sell_price) + delta, 2)
-            last_sell_price = limit_price
-            if shares_available > 0:
-                # The number of shares to trade is limited by the shares_available
-                shares_to_trade = min(abs(shares_available), shares_per_trade)
-            else:
-              # The number of shares to trade is equal to the shares_per_trade
-              shares_to_trade = shares_per_trade
-
-        elif zscore < (-1):
-            # Submit a buy order if the price is significantly below the EMA price
-            trade_side = OrderSide.BUY
-            # The limit price is equal to the last buy price minus the delta adjustment
-            if last_buy_price is None:
-                limit_price = round(price_last - delta, 2)
-            else:
-                limit_price = round(min(price_last, last_buy_price) - delta, 2)
-            last_buy_price = limit_price
-            if shares_available < 0:
-                # The number of shares to trade is limited by the shares_available
-                shares_to_trade = min(abs(shares_available), shares_per_trade)
-            else:
-                # The number of shares to trade is equal to the shares_per_trade
-                shares_to_trade = shares_per_trade
+    # If the Z-score is less than minus the risk_premium, then submit a buy order
+    elif zscore < (-risk_premium):
+        # Submit a buy order if the price is significantly below the EMA price
+        trade_side = OrderSide.BUY
+        # The limit price is equal to the last buy price minus the price_adjustment adjustment
+        if last_buy_price is None:
+            limit_price = round(price_last - price_adjustment, 2)
+        else:
+            limit_price = round(min(price_last, last_buy_price) - price_adjustment, 2)
+        last_buy_price = limit_price
+        if shares_available < 0:
+            # The number of shares to trade is limited by the shares_available
+            shares_to_trade = min(abs(shares_available), shares_per_trade)
+        else:
+            # The number of shares to trade is equal to the shares_per_trade
+            shares_to_trade = shares_per_trade
 
     else:
         # If the Z-score is not significant, do not trade
-        print(f"No trade for {symbol} - the Z-score = {zscore:.2f} is not significant")
+        print(f"No trade for {symbol} - the Z-score = {zscore:.2f} is not significant compared to the risk premium = {risk_premium}")
         shares_to_trade = 0
 
     return trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price
@@ -318,8 +341,11 @@ async def trade_bars(bar):
     timestamp = bar.timestamp.astimezone(tzone)
     date_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
+
     ### Calculate the Z-score, EMA price, and price volatility
     zscore, ema_price, price_vol = EMAC.calc_zscorew(price_last, volume_last, alpha, vol_floor)
+    # The price adjustment for limit orders
+    price_adjustment = risk_premium * price_vol
 
     ### Calculate the unrealized P&L and update the stock positions
     position_shares, unrealized_pnl = calc_unrealized_pnl(position_list, price_last)
@@ -347,15 +373,16 @@ async def trade_bars(bar):
     ### Cancel all the open limit orders if there are no available shares for the symbol
     if (shares_available == 0):  # No shares available
         # Cancel all the open limit orders
-        print(f"\nNo shares available for {symbol} - Canceling all open limit orders")
-        open_orders = cancel_orders(trading_client, symbol, canceled_file, open_orders)
-        last_sell_price = None  # Reset the last sell limit price
-        last_buy_price = None  # Reset the last buy limit price
+        print(f"\nNo shares available for {symbol}")
+        # print(f"\nNo shares available for {symbol} - Canceling all open limit orders")
+        # open_orders = cancel_orders(trading_client, symbol, canceled_file, open_orders)
+        # last_sell_price = None  # Reset the last sell limit price
+        # last_buy_price = None  # Reset the last buy limit price
 
 
     ### Cancel all the open limit orders if the limit prices are too far apart
     if (last_buy_price is not None) and (last_sell_price is not None):
-        if (last_sell_price - last_buy_price) > (20 * delta):
+        if (last_sell_price - last_buy_price) > (10 * price_adjustment):
             # Cancel all the open limit orders
             print(f"\nThe limit prices are too far apart for {symbol} - Canceling all open limit orders")
             open_orders = cancel_orders(trading_client, symbol, canceled_file, open_orders)
@@ -365,22 +392,30 @@ async def trade_bars(bar):
 
     ### Either take profit on the unrealized P&L or execute the contrarian rule based on the Z-score
     # If the position is long and the price is above the EMA price by the take profit level, then sell the position
-    if (unrealized_pnl > take_profit_level):
-        # Apply the take-profit rule
-        print(f"\nTake profit triggered for {symbol} - Selling the position")
-        trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, delta)
 
+    # Initialize the trade side
+    trade_side = None
+    # Update the take profit level
+    take_profit_level = take_profit_factor * price_vol
+
+    # Apply the take-profit rule
+    if unrealized_pnl > take_profit_level:
+        print(f"\nTake profit triggered for {symbol}: Selling the position\n")
+        print(f"Unrealized PnL = {unrealized_pnl} and Take profit level = {take_profit_level}\n")
+        trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, price_adjustment)
+
+    # Apply the contrarian rule based on the Z-score
     else:
-        # Apply the contrarian rule based on the Z-score
-        print(f"\nTake profit not triggered for {symbol} - Applying contrarian rule")
+        print(f"\nTake profit not triggered for {symbol} - Applying contrarian rule\n")
         # Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
-        trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, delta)
+        trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, risk_premium, price_adjustment)
 
 
     ### Submit the trade order if the trade side is not None
     if trade_side is not None:
 
         print(f"Z-score: {zscore:.2f}, Side: {trade_side}, Limit price: {limit_price}, Shares to trade: {shares_to_trade}")
+        order_response = None
         order_response = submit_order(trading_client, symbol, shares_to_trade, trade_side, type, limit_price, submits_file, error_file)
 
         # If the order submission failed, cancel all the open limit orders for the symbol and submit the order again
@@ -403,7 +438,7 @@ async def trade_bars(bar):
             # Print the current pending order IDs
             # print(f"Current pending order IDs: {open_orders}")
         else:
-            print("Failed to submit order after retry")
+            print("Failed to submit order after retry\n")
     else:
         trade_side = None # No trade executed, side remains None
 
@@ -417,8 +452,8 @@ async def trade_bars(bar):
         "zscore": zscore,
         "order": trade_side,
         "position_shares": position_shares,
-        "pnlReal": 0,
-        "pnlUnreal": 0,
+        "pnlReal": total_realized_pnl,
+        "pnlUnreal": unrealized_pnl,
     }
     state_data = pd.DataFrame([state_data])
     state_data.to_csv(state_file, mode="a", header=not os.path.exists(state_file), index=False)
@@ -544,9 +579,9 @@ async def handle_trade_update(event_data):
             # print(f"{time_stamp} New {type} {trade_side} order for {qty_filled} shares of {symbol}")
             # print(f"New trade appended to {submits_file}")
 
-        elif event_name == "canceled":
+        elif (event_name == "canceled") or (event_name == "expired") or (event_name == "rejected"):
             # print(f"Cancel event: {event_dict}")
-            print(f"Order {order_id} canceled at {time_now}")
+            print(f"Order {order_id} canceled or expired at {time_now}")
             # Remove the canceled order ID from pending list
             open_orders.remove(order_id)
             print(f"Removed canceled order ID {order_id} from pending list. Remaining pending orders: {len(open_orders)}")

@@ -173,7 +173,7 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
             order_id = open_order
             if not isinstance(order_id, str):
                 order_id = str(order_id.id)
-            # print(f"Cancelling order: {order_id} for {symbol}")
+            # print(f"Canceling order: {order_id} for {symbol}")
             try:
                 # Cancel the order
                 trading_client.cancel_order_by_id(order_id=order_id)
@@ -187,7 +187,7 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
                 open_orders.remove(open_order)
                 print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
             except Exception as e:
-                print(f"Error cancelling order {order_id} for {symbol}: {e}")
+                print(f"Error canceling order {order_id} for {symbol}: {e}")
         print(f"Canceled orders saved to {canceled_file}")
         return open_orders
 
@@ -202,11 +202,9 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
             # If it's not a string, then extract the order ID as a string
             if not isinstance(order_id, str):
                 order_id = str(order_id.id)
-            # print(f"Cancelling order: {order_id} for {symbol}")
+            # print(f"Canceling order: {order_id} for {symbol}")
             try:
                 # Remove the canceled order ID from the open orders list
-                # Remove it first because it may have expired from previous day
-                open_orders.remove(order_id)
                 # Cancel the order
                 trading_client.cancel_order_by_id(order_id=order_id)
                 # Get the canceled order status
@@ -214,10 +212,12 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
                 # Append the canceled order status to CSV file (write header only if file does not exist)
                 canceled_frame = pd.DataFrame([order_status.model_dump()])
                 canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+                # Remove the canceled order ID from the open orders list
+                open_orders.remove(order_id)
                 print(f"Cancelled order: {order_id} for {symbol}")
                 print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
             except Exception as e:
-                print(f"Error cancelling order {order_id} for {symbol}: {e}")
+                print(f"Error canceling order {order_id} for {symbol}: {e}")
         print(f"Canceled orders saved to {canceled_file}")
         return open_orders
 
@@ -240,7 +240,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
             qty = shares_per_trade,
             side = side,
             type = type,
-            time_in_force = TimeInForce.GTC
+            time_in_force = TimeInForce.DAY
         )
     elif type == "limit":
         # Create limit order parameters
@@ -252,7 +252,7 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
             type = type,
             limit_price = limit_price,
             extended_hours = True,
-            time_in_force = TimeInForce.GTC,
+            time_in_force = TimeInForce.DAY,
         )
 
     # Submit the order
@@ -276,7 +276,6 @@ def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_pri
         return None
 
 # End of submit_order
-
 
 
 

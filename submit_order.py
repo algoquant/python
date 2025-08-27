@@ -38,11 +38,11 @@ load_dotenv("/Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK trading client
-trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 # Create the SDK data client for live and historical stock data
 data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 
@@ -92,7 +92,7 @@ tzone = ZoneInfo("America/New_York")
 time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y%m%d")
 time_now = time_now.strftime("%Y-%m-%d %H:%M:%S")
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 submits_file = f"{dir_name}submits_{date_short}.csv"
 fills_file = f"{dir_name}fills_{symbol}_{date_short}.csv"
 

@@ -50,7 +50,7 @@ time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y%m%d")
 
 # Create a dictionary with file names for each symbol
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 file_dict = {
     symbol: f"{dir_name}price_bars_{symbol}_{date_short}.csv"
     for symbol in symbols

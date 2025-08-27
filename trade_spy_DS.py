@@ -19,16 +19,16 @@ load_dotenv("/Users/jerzy/Develop/Python//Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 BASE_URL = "https://paper-api.alpaca.markets"
 
 data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
-trade_api = tradeapi.REST(TRADE_KEY, TRADE_SECRET, BASE_URL, api_version="v2")
+trade_api = tradeapi.REST(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET, BASE_URL, api_version="v2")
 
 from alpaca.trading.client import TradingClient
-trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 
 # Define the trading symbol
 symbol = "SPY"

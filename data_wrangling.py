@@ -33,6 +33,7 @@ for packv in packlist:
 ## Directory and file names
 
 # Get the current working directory
+import os
 os.getcwd()
 # Change the current working directory
 os.chdir("/Users/jerzy/Develop/Python")
@@ -255,13 +256,53 @@ plt.show()
 
 ## Load OHLC prices from CSV file
 
-# Load OHLC data from CSV file - the time index is formatted inside read_csv()
+## Load intraday OHLCV prices from CSV file and format the time index
+
+filename = "/Users/jerzy/Develop/data/minutes/SPY/2025-07-02.csv"
+ohlc = pd.read_csv(filename, parse_dates=["Index"])
+ohlc.set_index("Index", inplace=True)
+ohlc.columns = ["Open", "High", "Low", "Close", "Volume", "VWAP"]
+closep = ohlc.Close
+# Calculate the intraday return volatility
+ohlc['Return'] = ohlc['Close'].diff()
+ohlc['Return'].std()
+# Calculate the intraday true range volatility
+ohlc['Range'] = ohlc['High'] - ohlc['Low']
+ohlc['Range'].mean()
+
+
+## Load daily OHLCV prices from CSV file and format the time index
+
+# ohlc = pd.read_csv("/Volumes/external/Develop/data/SP500_2020/GOOGL.csv", parse_dates=True, date_format=pd.to_datetime, index_col="index")
+symboln = "SPY"
+filename = "/Users/jerzy/Develop/data/etfdaily/" + symboln + "_daily" + ".csv"
+ohlc = pd.read_csv(filename, parse_dates=["Index"])
+# ohlc = pd.read_csv(filename, parse_dates=True, date_format=pd.to_datetime, index_col="Date")
+# Set the time index as the data frame index
+ohlc.set_index("Index", inplace=True)
+# Calculate the log of OHLC prices
+ohlc.iloc[:, 0:4] = np.log(ohlc.iloc[:, 0:4])
+# closep = ohlc[symboln + ".Close"]
+# Rename columns
+ohlc.columns = ["Open", "High", "Low", "Close", "Volume", "VWAP"]
+closep = ohlc.Close
+
+# Calculate the daily returns as diff
+ohlc['Return'] = ohlc['Close'].diff()
+# Calculate the daily volatility
+ohlc['Return'].std()
+# Calculate the average of the daily range of prices
+ohlc['Range'] = ohlc['High'] - ohlc['Low']
+ohlc['Range'].mean()
+
+
+# Load daily OHLC prices from CSV file - the time index is formatted inside read_csv()
 symboln = 'SPY'
 ohlc = pd.read_csv('/Users/jerzy/Develop/lecture_slides/data/SPY_daily.csv')
 ohlc.set_index('Index', inplace=True)
 # Rename columns
 ohlc.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-# Log of Open, High, Low, Close prices
+# Calculate the log of Open, High, Low, Close prices
 ohlc.iloc[:,0:4] = np.log(ohlc.iloc[:,0:4])
 ohlc.head()
 ohlc.tail()

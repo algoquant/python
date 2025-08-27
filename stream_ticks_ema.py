@@ -26,8 +26,8 @@ load_dotenv("/Users/jerzy/Develop/Python/.env")
 DATA_KEY = os.getenv("DATA_KEY")
 DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-# TRADE_KEY = os.getenv("TRADE_KEY")
-# TRADE_SECRET = os.getenv("TRADE_SECRET")
+# ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+# ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK data client for live and historical stock data
 hist_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
@@ -36,7 +36,7 @@ hist_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
 data_feed = DataFeed.SIP
 data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=data_feed)
 # Create the SDK trading client
-# trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+# trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 
 
 # --------- Load the initial stock prices --------
@@ -83,7 +83,7 @@ print(f"Latest bar prices: {bar_prices['open']}, High: {bar_prices['high']}, Low
 time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y-%m-%d")
 date_short = time_now.strftime("%Y%m%d")
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 # Create file name for the state variables
 data_file = f"{dir_name}prices_EMA_{symbol}_{date_short}.csv"
 # Create file name for the websocket errors

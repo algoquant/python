@@ -35,7 +35,7 @@ else:
 tzone = ZoneInfo("America/New_York")
 time_now = datetime.now(tzone)
 date_short = time_now.strftime("%Y%m%d")
-dir_name = os.getenv("data_dir_name")
+dir_name = os.getenv("DATA_DIR_NAME")
 file_name = f"{dir_name}price_trades_{symbol}_{date_short}.csv"
 
 

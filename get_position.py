@@ -18,11 +18,11 @@ load_dotenv("/Users/jerzy/Develop/Python/.env")
 # DATA_KEY = os.getenv("DATA_KEY")
 # DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK trading client
-trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)
+trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 
 # Get the open position for the symbol
 def get_position(trading_client, symbol):

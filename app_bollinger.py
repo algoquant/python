@@ -9,6 +9,12 @@
 # shiny run --reload --launch-browser app_bollinger.py
 # Launch browser URL:
 # http://127.0.0.1:8000/
+#
+# Find what processes are using port 8000
+# lsof -ti:8000
+# 
+# Kill the process (replace PID with the number from above)
+# kill -9 $(lsof -ti:8000)
 
 
 import os

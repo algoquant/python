@@ -154,21 +154,21 @@ def get_position(trading_client, symbol):
 # End of get_position
 
 
-# Cancel all open orders in the list open_orders for the symbol
-def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
+# Cancel all open orders in the list orders_list for the symbol
+def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
 
-    # Case when open_orders is None
-    # Cancel all the open orders for the symbol because open_orders is None
-    if open_orders is None:
+    # Case when orders_list is None
+    # Cancel all the open orders for the symbol because orders_list is None
+    if orders_list is None:
         # Get all the open orders for the symbol
         request_params = GetOrdersRequest(
                             status=QueryOrderStatus.OPEN,
                             symbols=[symbol],
                         )
-        open_orders = trading_client.get_orders(filter=request_params)
+        orders_list = trading_client.get_orders(filter=request_params)
         # Cancel the open orders one at a time
-        print(f"Found {len(open_orders)} open orders for {symbol}.")
-        for open_order in open_orders:
+        print(f"Found {len(orders_list)} open orders for {symbol}.")
+        for open_order in orders_list:
             # If it's not a string, then extract the order ID as a string
             order_id = open_order
             if not isinstance(order_id, str):
@@ -184,21 +184,21 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
                 canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
                 print(f"Cancelled order: {order_id} for {symbol}")
                 # Remove the canceled order ID from the open orders list
-                open_orders.remove(open_order)
-                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
+                orders_list.remove(open_order)
+                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(orders_list)}")
             except Exception as e:
                 print(f"Error canceling order {order_id} for {symbol}: {e}")
         print(f"Canceled orders saved to {canceled_file}")
-        return open_orders
+        return orders_list
 
-    # Case when open_orders is not None
-    # Cancel the open orders from the list open_orders one at a time
-    if not open_orders:
+    # Case when orders_list is not None
+    # Cancel the open orders from the list orders_list one at a time
+    if not orders_list: # Check if the list orders_list is empty
         print(f"No open orders found for {symbol}.")
-        return [] # Return an empty list if no open orders
+        return [] # Return an empty list if orders_list is an empty list
     else:
-        print(f"Found {len(open_orders)} open orders for {symbol}.")
-        for order_id in open_orders:
+        print(f"Found {len(orders_list)} open orders for {symbol}.")
+        for order_id in orders_list:
             # If it's not a string, then extract the order ID as a string
             if not isinstance(order_id, str):
                 order_id = str(order_id.id)
@@ -213,13 +213,16 @@ def cancel_orders(trading_client, symbol, canceled_file, open_orders=None):
                 canceled_frame = pd.DataFrame([order_status.model_dump()])
                 canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
                 # Remove the canceled order ID from the open orders list
-                open_orders.remove(order_id)
+                orders_list.remove(order_id)
                 print(f"Cancelled order: {order_id} for {symbol}")
-                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(open_orders)}")
+                print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(orders_list)}")
             except Exception as e:
                 print(f"Error canceling order {order_id} for {symbol}: {e}")
+                # Remove the order ID from the open orders list anyway
+                orders_list.remove(order_id)
+                print(f"Removed order ID {order_id} from the open orders list after the error. Remaining number of open orders: {len(orders_list)}")
         print(f"Canceled orders saved to {canceled_file}")
-        return open_orders
+        return orders_list
 
 # End of cancel_orders
 

@@ -15,8 +15,8 @@ import os
 # Load the API keys from .env file
 load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Trade keys
-TRADE_KEY = os.getenv("TRADE_KEY")
-TRADE_SECRET = os.getenv("TRADE_SECRET")
+TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
+TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK trading client
 trading_client = TradingClient(TRADE_KEY, TRADE_SECRET)

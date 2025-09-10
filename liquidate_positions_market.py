@@ -43,6 +43,8 @@ trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 symbols = []
 if len(sys.argv) > 1:
     symbols = [arg.strip().upper() for arg in sys.argv[1:]]
+else:
+    print("No symbols provided. Liquidating all positions.")
 
 
 # --------- Get all the open positions and their symbols --------

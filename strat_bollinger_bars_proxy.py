@@ -1,22 +1,12 @@
 """
-Strategy trades a single stock using the streaming real-time stock price bars from the Alpaca API.
+Strategy trades a single stock using the streaming real-time stock price bars from the proxy server - not directly the Alpaca API.
 The strategy is based on the Z-score, equal to the difference between the stock's price minus its Moving Average Price (EMA), divided by the volatility.
 
     Z-score = (price - EMA) / volatility
 
-The strategy uses streaming bar prices and streaming confirms via the Alpaca websocket API.
+The strategy uses streaming bar prices and streaming confirms via the proxy server.
 
-The strategy either takes profit if the unrealized P&L     if trade_side is not None:
-
-        print(f"📈 Z-score: {zscore:.2f}, Side: {trade_side}, Limit price: {limit_price}, Shares to trade: {shares_to_trade}")
-        
-        # Apply delay before order submission if specified
-        if delay > 0:
-            print(f"⏱️ Delaying order submission by {delay} seconds...")
-            time.sleep(delay)
-        
-        order_response = None
-        order_response = submit_order(trading_client, symbol, shares_to_trade, trade_side, type, limit_price, submits_file, error_file)certain threshold, or it executes the contrarian rule based on the Z-score.
+The strategy either takes profit if the unrealized P&L is above a certain threshold, or it executes the contrarian rule based on the Z-score.
 
 The strategy uses the contrarian rule based on the Bollinger Bands concept, where the Z-score indicates if the stock is cheap or rich (expensive).
 
@@ -24,7 +14,7 @@ To run the strategy, first change the path to the .env file.
 Then run the strategy by executing this script with the appropriate parameters in the terminal:
     python3 strat_bollinger_bars_vwap.py symbol num_shares type alpha vol_floor risk_premium take_profit_factor delay
 For example:
-    python3 strat_bollinger_bars_ema.py SPY 1 limit 0.3 0.1 2.0 20.0 5.0
+    python3 strat_bollinger_bars_proxy.py SPY 1 limit 0.3 0.1 2.0 20.0 5.0
 
 The num_shares parameter specifies the number of shares for each trade.
 
@@ -70,14 +60,16 @@ A delay of 0.0 means no delay (immediate order submission).
 
 NOTE:
 This script is only for illustration purposes, and not a real trading strategy.
-This is only an illustration how to use the streaming real-time data from the Alpaca websocket. 
+This is only an illustration how to use the streaming real-time data from the proxy server.
 """
 
 
 import os
 import sys
 import asyncio
+import json
 import signal
+import websockets
 import time
 import math
 from datetime import datetime
@@ -94,19 +86,47 @@ from alpaca.data.live.stock import StockDataStream
 from utils import get_position, cancel_orders, submit_order, convert_to_nytzone, calc_unrealized_pnl, EMACalculator
 
 
+# Bar class for representing a single price bar, same as the bar data produced by Alpaca function subscribe_bars
+class Bar:
+    def __init__(self, data_dict):
+        # Convert dictionary data to bar object attributes
+        self.symbol = data_dict.get("symbol") or data_dict.get("S")
+        self.open = data_dict.get("open") or data_dict.get("o")
+        self.high = data_dict.get("high") or data_dict.get("h") 
+        self.low = data_dict.get("low") or data_dict.get("l")
+        self.close = data_dict.get("close") or data_dict.get("c")
+        self.volume = data_dict.get("volume") or data_dict.get("v")
+        self.trade_count = data_dict.get("trade_count") or data_dict.get("n")
+        self.vwap = data_dict.get("vwap") or data_dict.get("vw")
+        
+        # Handle timestamp conversion
+        timestamp_raw = data_dict.get("timestamp") or data_dict.get("t")
+        if timestamp_raw:
+            try:
+                if isinstance(timestamp_raw, str):
+                    # Parse ISO format timestamp
+                    self.timestamp = datetime.fromisoformat(timestamp_raw.replace("Z", "+00:00"))
+                else:
+                    self.timestamp = timestamp_raw
+            except Exception:
+                self.timestamp = datetime.now(ZoneInfo("UTC"))
+        else:
+            self.timestamp = datetime.now(ZoneInfo("UTC"))
+
+
 # --------- Create the SDK clients --------
 
 # Load the API keys from .env file
 load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Data keys
-DATA_KEY = os.getenv("DATA_KEY")
-DATA_SECRET = os.getenv("DATA_SECRET")
+# DATA_KEY = os.getenv("DATA_KEY")
+# DATA_SECRET = os.getenv("DATA_SECRET")
 # Trade keys
 ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
 ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
-data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
+# data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
 # Create the SDK trading client
 trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
 # Create the SDK trade update and confirmation client
@@ -175,7 +195,7 @@ else:
     vol_floor = float(vol_floor_input) if vol_floor_input else 0.05
     take_profit_input = input("Enter take profit level (default 2.0): ").strip()
     take_profit_factor = float(take_profit_input) if take_profit_input else 2.0
-    delay_input = input("Enter delay before order submission in seconds (default 0.0): ").strip()
+    delay_input = input("Enter order submission delay in seconds (default 0.0): ").strip()
     delay = float(delay_input) if delay_input else 0.0
 
 print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, risk_premium={risk_premium}, vol_floor={vol_floor}, take_profit_factor={take_profit_factor}, delay={delay}\n")
@@ -456,7 +476,7 @@ async def trade_bars(bar):
     ### Submit the trade order if the trade side is not None
     if trade_side is not None:
 
-        print(f"Z-score: {zscore:.2f}, Side: {trade_side}, Limit price: {limit_price}, Shares to trade: {shares_to_trade}")
+        print(f"📈 Z-score: {zscore:.2f}, Side: {trade_side}, Limit price: {limit_price}, Shares to trade: {shares_to_trade}")
         
         # Apply delay before order submission if specified
         if delay > 0:
@@ -515,6 +535,90 @@ async def trade_bars(bar):
     print("✨ Done\n")
 
 # End of callback function trade_bars
+
+
+
+# --------- Define the callback function for handling price bars --------
+
+# The price bar handler converts the JSON to a dictionary and then to a DataFrame, and saves it to a CSV file
+async def handle_bar(bar):
+
+
+    # bar is a dict from JSON, convert timestamp and extract fields
+    time_stamp = bar.get("t")
+    if time_stamp:
+        # If timestamp is in ISO format, parse it
+        try:
+            dt = datetime.fromisoformat(time_stamp.replace("Z", "+00:00")).astimezone(tzone)
+            time_stamp = dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+    else:
+        time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
+
+    symbol = bar.get("S")
+    open = bar.get("o")
+    high = bar.get("h")
+    low = bar.get("l")
+    close = bar.get("c")
+    volume = bar.get("v")
+    trade_count = bar.get("n")
+    vwap = bar.get("vw")
+    print(f"Time: {time_stamp}, Symbol: {symbol}, Open: {open}, High: {high}, Low: {low}, Close: {close}, Volume: {volume}, Trade_count: {trade_count}, VWAP: {vwap}")
+
+    # Prepare a dict with the price bar data from JSON fields
+    bar_dict = {
+        "timestamp": time_stamp,
+        "symbol": symbol,
+        "open": open,
+        "high": high,
+        "low": low,
+        "close": close,
+        "volume": volume,
+        "trade_count": trade_count,
+        "vwap": vwap
+    }
+
+    # Create a Bar object from the dictionary
+    bar_object = Bar(bar_dict)
+
+    # Call the trade_bars function with the bar object (not dictionary)
+    await trade_bars(bar_object)
+
+# End handle_bar callback
+
+
+
+# --------- Define the callback function for streaming price bars --------
+
+async def stream_bars():
+
+    # Connect to the WebSocket proxy URL
+    proxy_url = "ws://localhost:8765"
+    reconnect_delay = 5
+    while True:
+        try:
+            async with websockets.connect(proxy_url) as ws:
+                print(f"Connected to WebSocket proxy at {proxy_url}")
+                async for message in ws:
+                    try:
+                        data = json.loads(message)
+                        # Alpaca sends a list of events, each is a dict
+                        if isinstance(data, list):
+                            for event in data:
+                                # Only handle bar events for our symbol
+                                if event.get("T") == "b" and event.get("S") == symbol:
+                                    await handle_bar(event)
+                        elif isinstance(data, dict):
+                            if data.get("T") == "b" and data.get("S") == symbol:
+                                await handle_bar(data)
+                    except Exception as e:
+                        print(f"Error processing message: {e}")
+        except Exception as e:
+            print(f"WebSocket error: {e}. Reconnecting in {reconnect_delay} seconds...")
+            time.sleep(reconnect_delay)
+
+# End stream_bars
 
 
 
@@ -661,7 +765,6 @@ async def handle_trade_update(event_data):
 # End of handle_trade_update function
 
 
-
 # --------- Run the WebSocket to handle trade updates and confirmations, and exceptions and Ctrl-C interrupt --------
 # --------- Run the data WebSocket stream --------
 
@@ -670,14 +773,14 @@ async def main():
 
     try:
         # Subscribe to the price bar updates and pass them to the callback function
-        data_client.subscribe_bars(trade_bars, symbol)
+        # data_client.subscribe_bars(trade_bars, symbol)
         # Subscribe to the trade updates and confirms, and handle them using handle_trade_update()
         confirm_stream.subscribe_trade_updates(handle_trade_update)
         # Run both WebSocket streams concurrently
         print("\nStarting the data WebSocket connection...")
         print("\nStarting the trade updates and confirmations WebSocket connection...")
         await asyncio.gather(
-            data_client._run_forever(),
+            stream_bars(),
             confirm_stream._run_forever()
         )
     except Exception as e:
@@ -686,7 +789,7 @@ async def main():
     finally:
         print("\nClosing the trade updates and confirmations WebSocket connection...")
         try:
-            await data_client.close()
+            # await data_client.close()
             await confirm_stream.close()
         except:
             pass  # Ignore errors when closing

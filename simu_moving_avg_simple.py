@@ -4,7 +4,8 @@ import datetime
 import pandas as pd
 import numpy as np
 
-from utils import get_symbol, calc_rollsum, calc_sharpe
+from utils import get_symbol, calc_rollsum
+from TechIndic import calc_sharpe
 from strategies import strat_movavg
 
 

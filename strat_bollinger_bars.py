@@ -19,7 +19,7 @@ import os
 import sys
 import signal
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_order
+from AlpacaSDK import AlpacaSDK
 
 
 # --------- Create the SDK clients --------
@@ -33,10 +33,14 @@ DATA_SECRET = os.getenv("DATA_SECRET")
 ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
 ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
+# Create AlpacaSDK instance and initialize clients
+alpaca_sdk = AlpacaSDK()
+alpaca_sdk.create_trade_clients()
+
 # Create the SDK data client for live stock prices
 data_client = StockDataStream(DATA_KEY, DATA_SECRET)
-# Create the SDK trading client
-trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
+# Get the trading client from SDK
+trading_client = alpaca_sdk.get_trading_client()
 
 
 # Create the strategy name
@@ -93,7 +97,7 @@ async def trade_bars(bar):
     print(f"Time: {date_time}, Symbol: {bar.symbol}, Close: {close_price}, VWAP: {price_ema}")
 
     # Get the current position and the number of available shares to trade for the symbol
-    position = get_position(trading_client, symbol)
+    position = alpaca_sdk.get_position(symbol)
     if position is None:
         # There is no open position - set the available shares to the number of shares traded per each order
         shares_available = shares_per_trade
@@ -124,15 +128,15 @@ async def trade_bars(bar):
                 # Limit price is equal to the last price minus a small adjustment
                 limit_price = round(close_price - deltap, 2)
             # Submit the trade order
-            order_data = submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
+            order_data = alpaca_sdk.submit_order(symbol, shares_per_trade, side, type, limit_price, orders_file, error_file)
             if order_data is None:
                 # If the order submission failed, cancel all the open orders
                 print(f"Trade order submission failed for {symbol}")
                 print(f"Cancelling all open orders for {symbol}")
                 # Cancel all open orders for the symbol
-                cancel_orders(trading_client, symbol, canceled_file)
+                alpaca_sdk.cancel_orders(symbol, None, canceled_file)
                 # Submit the trade order again
-                order_data = submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, orders_file)
+                order_data = alpaca_sdk.submit_order(symbol, shares_per_trade, side, type, limit_price, orders_file, error_file)
         else:
             print(f"Available shares {shares_available} are less than the number of shares traded per order {shares_per_trade}. No trade executed.")
     else:

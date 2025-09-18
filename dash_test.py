@@ -26,7 +26,8 @@ if "__file__" in globals():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, os.getcwd())
     
-from utils import read_csv, get_symbol, calc_sharpe
+from utils import read_csv, get_symbol
+from TechIndic import calc_sharpe
 from strategies import strat_movavg
 
 # Define marks for sliders

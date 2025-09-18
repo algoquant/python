@@ -41,7 +41,8 @@ from alpaca.data.enums import DataFeed
 from alpaca.data.live.stock import StockDataStream
 from dotenv import load_dotenv
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_order, convert_to_nytzone
+from utils import convert_to_nytzone
+from AlpacaSDK import AlpacaSDK
 
 
 # --------- Create the SDK clients --------
@@ -56,11 +57,14 @@ ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
 ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
 
 # Create the SDK data client for live stock prices
+# Create AlpacaSDK instance and initialize clients
+alpaca_sdk = AlpacaSDK()
+alpaca_sdk.create_trade_clients()
+
 data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
-# Create the SDK trading client
-trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
-# Create the SDK trade update and confirmation client
-confirm_stream = TradingStream(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
+# Get clients from SDK
+trading_client = alpaca_sdk.get_trading_client()
+confirm_stream = alpaca_sdk.get_confirm_stream()
 
 
 # --------- Get the trading parameters from the command line arguments --------
@@ -178,8 +182,8 @@ def calc_zscore(price, alpha):
 # --------- Create the file names --------
 
 # Create file names with today's NY date
-tzone = ZoneInfo("America/New_York")
-time_now = datetime.now(tzone)
+timezone = ZoneInfo("America/New_York")
+time_now = datetime.now(timezone)
 date_short = time_now.strftime("%Y%m%d")
 dir_name = os.getenv("DATA_DIR_NAME")
 # Create file name for the state variables
@@ -204,7 +208,7 @@ async def trade_bars(bar):
     # print(f"Bar price: {bar}")
     # print(f"Symbol: {bar.symbol}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Trade_count: {bar.trade_count}, VWAP: {bar.vwap}")
     price_last = bar.close
-    timestamp = bar.timestamp.astimezone(tzone)
+    timestamp = bar.timestamp.astimezone(timezone)
     date_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     
     # Calculate z-score, EMA, and current volatility using persistent function
@@ -213,7 +217,7 @@ async def trade_bars(bar):
     print(f"Time: {date_time}, Symbol: {bar.symbol}, Price: {price_last}, EMA: {price_ema:.2f}, Vol: {price_vol_current:.4f}, Z-score: {zscore:.2f}, position: {position_shares}")
 
     # Get the current position from the broker and the number of available shares to trade for the symbol
-    position_broker = get_position(trading_client, symbol)
+    position_broker = alpaca_sdk.get_position(symbol)
     if position_broker is None:
         # There is no open position - set the available shares to the number of shares traded per each order
         shares_available = shares_per_trade
@@ -277,15 +281,15 @@ async def trade_bars(bar):
         if side is not None:
 
             print(f"Z-score: {zscore}, Side: {side}, Limit price: {limit_price}, Shares available: {shares_available}")
-            order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
+            order_response = alpaca_sdk.submit_order(symbol, shares_available, side, type, limit_price, submits_file, error_file)
 
             # If the order submission failed, cancel all the open limit orders for the symbol
             if order_response is None:
                 print(f"Trade order submission failed for {symbol}")
                 print(f"Cancelling all open orders for {symbol}")
-                cancel_orders(trading_client, symbol, canceled_file)
+                alpaca_sdk.cancel_orders(symbol, None, canceled_file)
                 # Submit the trade order again
-                order_response = submit_order(trading_client, symbol, shares_available, side, type, limit_price, submits_file, error_file)
+                order_response = alpaca_sdk.submit_order(symbol, shares_available, side, type, limit_price, submits_file, error_file)
             
             # Add the order ID to the pending orders list
             if order_response is not None:
@@ -340,7 +344,7 @@ async def handle_trade_update(event_data):
         price = orderinfo.get("filled_avg_price", 0)
         # event_dict = event_dict | orderinfo  # Combine dictionaries
         event_dict.update(orderinfo)  # This adds order fields to event_dict while preserving the "order" key
-        time_now = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
+        time_now = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
         # Process the event data based on the event type
         if (event_name == "fill") or (event_name == "partial_fill"):
             print(f"Order {filled_order_id} filled at {time_now} at price {price}")

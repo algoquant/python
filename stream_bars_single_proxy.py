@@ -20,6 +20,7 @@ import json
 import asyncio
 import signal
 import websockets
+from MachineTrader import Bar
 
 # --------- Get the trading symbol from the command line arguments --------
 if len(sys.argv) > 1:
@@ -29,8 +30,8 @@ else:
 
 
 # --------- Create the file names --------
-tzone = ZoneInfo("America/New_York")
-time_now = datetime.now(tzone)
+timezone = ZoneInfo("America/New_York")
+time_now = datetime.now(timezone)
 date_short = time_now.strftime("%Y%m%d")
 # Load from the .env file
 load_dotenv("/Users/jerzy/Develop/Python/.env")
@@ -38,52 +39,6 @@ dir_name = os.getenv("DATA_DIR_NAME") or "./"
 file_name = f"{dir_name}price_bars_{symbol}_{date_short}.csv"
 
 print(f"This script streams real-time stock bar prices for {symbol} via the Alpaca websocket API, and saves them to the CSV file {file_name}\n")
-
-
-# --------- Define the callback function for handling price bars --------
-
-# The price bar handler converts the JSON to a dictionary and then to a DataFrame, and saves it to a CSV file
-async def handle_bar(bar):
-
-    # bar is a dict from JSON, convert timestamp and extract fields
-    time_stamp = bar.get("t")
-    if time_stamp:
-        # If timestamp is in ISO format, parse it
-        try:
-            dt = datetime.fromisoformat(time_stamp.replace("Z", "+00:00")).astimezone(tzone)
-            time_stamp = dt.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
-            pass
-    else:
-        time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
-
-    symbol = bar.get("S")
-    open = bar.get("o")
-    high = bar.get("h")
-    low = bar.get("l")
-    close = bar.get("c")
-    volume = bar.get("v")
-    trade_count = bar.get("n")
-    vwap = bar.get("vw")
-    print(f"Time: {time_stamp}, Symbol: {symbol}, Open: {open}, High: {high}, Low: {low}, Close: {close}, Volume: {volume}, Trade_count: {trade_count}, VWAP: {vwap}")
-
-    # Prepare a dict with the price bar data from JSON fields
-    bar_dict = {
-        "timestamp": time_stamp,
-        "symbol": symbol,
-        "open": open,
-        "high": high,
-        "low": low,
-        "close": close,
-        "volume": volume,
-        "trade_count": trade_count,
-        "vwap": vwap
-    }
-    # Append the price bars to the CSV file for the symbol
-    price_bar = pd.DataFrame([bar_dict])
-    price_bar.to_csv(file_name, mode="a", header=not os.path.exists(file_name), index=False)
-
-# End handle_bar callback
 
 
 # --------- Define the callback function for streaming price bars --------
@@ -105,10 +60,14 @@ async def stream_bars():
                             for event in data:
                                 # Only handle bar events for our symbol
                                 if event.get("T") == "b" and event.get("S") == symbol:
-                                    await handle_bar(event)
+                                    # Create Bar object and save to CSV
+                                    bar_object = Bar(event, timezone)
+                                    await bar_object.save_bar(file_name)
                         elif isinstance(data, dict):
                             if data.get("T") == "b" and data.get("S") == symbol:
-                                await handle_bar(data)
+                                # Create Bar object and save to CSV
+                                bar_object = Bar(data, timezone)
+                                await bar_object.save_bar(file_name)
                     except Exception as e:
                         print(f"Error processing message: {e}")
         except Exception as e:

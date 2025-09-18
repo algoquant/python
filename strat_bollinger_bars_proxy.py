@@ -1,4 +1,8 @@
 """
+This is a strategy script for trading stocks using the Alpaca API.
+It first creates a strategy object, which is an instance of the Strategies class, and then it subscribes to the bar data stream via the proxy server.
+It passes the bar data to the strategy object via the Bar.stream_bars method.
+
 Strategy trades a single stock using the streaming real-time stock price bars from the proxy server - not directly the Alpaca API.
 The strategy is based on the Z-score, equal to the difference between the stock's price minus its Moving Average Price (EMA), divided by the volatility.
 
@@ -15,6 +19,15 @@ Then run the strategy by executing this script with the appropriate parameters i
     python3 strat_bollinger_bars_vwap.py symbol num_shares type alpha vol_floor risk_premium take_profit_factor delay
 For example:
     python3 strat_bollinger_bars_proxy.py SPY 1 limit 0.3 0.1 2.0 20.0 5.0
+
+# Simple usage with defaults
+python3 strat_bollinger_bars_proxy.py SPY
+
+# With specific parameters
+python3 strat_bollinger_bars_proxy.py SPY --shares 10 --type market --alpha 0.3
+
+# Full parameter specification
+python3 strat_bollinger_bars_proxy.py AAPL --shares 5 --type limit --alpha 0.2 --vol-floor 0.05 --risk-premium 1.5 --take-profit 15.0 --delay 2.0 --strategy=trade_zscore
 
 The num_shares parameter specifies the number of shares for each trade.
 
@@ -64,107 +77,104 @@ This is only an illustration how to use the streaming real-time data from the pr
 """
 
 
-import os
-import sys
+import argparse
 import asyncio
-import json
-import signal
-import websockets
-import time
-import math
-from datetime import datetime
 from zoneinfo import ZoneInfo
-import pandas as pd
-from dotenv import load_dotenv
-from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest, GetOrdersRequest
-from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
-from alpaca.trading.stream import TradingStream
-from alpaca.data.enums import DataFeed
-from alpaca.data.live.stock import StockDataStream
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_position, cancel_orders, submit_order, convert_to_nytzone, calc_unrealized_pnl, EMACalculator
-
-
-# Bar class for representing a single price bar, same as the bar data produced by Alpaca function subscribe_bars
-class Bar:
-    def __init__(self, data_dict):
-        # Convert dictionary data to bar object attributes
-        self.symbol = data_dict.get("symbol") or data_dict.get("S")
-        self.open = data_dict.get("open") or data_dict.get("o")
-        self.high = data_dict.get("high") or data_dict.get("h") 
-        self.low = data_dict.get("low") or data_dict.get("l")
-        self.close = data_dict.get("close") or data_dict.get("c")
-        self.volume = data_dict.get("volume") or data_dict.get("v")
-        self.trade_count = data_dict.get("trade_count") or data_dict.get("n")
-        self.vwap = data_dict.get("vwap") or data_dict.get("vw")
-        
-        # Handle timestamp conversion
-        timestamp_raw = data_dict.get("timestamp") or data_dict.get("t")
-        if timestamp_raw:
-            try:
-                if isinstance(timestamp_raw, str):
-                    # Parse ISO format timestamp
-                    self.timestamp = datetime.fromisoformat(timestamp_raw.replace("Z", "+00:00"))
-                else:
-                    self.timestamp = timestamp_raw
-            except Exception:
-                self.timestamp = datetime.now(ZoneInfo("UTC"))
-        else:
-            self.timestamp = datetime.now(ZoneInfo("UTC"))
-
-
-# --------- Create the SDK clients --------
-
-# Load the API keys from .env file
-load_dotenv("/Users/jerzy/Develop/Python/.env")
-# Data keys
-# DATA_KEY = os.getenv("DATA_KEY")
-# DATA_SECRET = os.getenv("DATA_SECRET")
-# Trade keys
-ALPACA_TRADE_KEY = os.getenv("ALPACA_TRADE_KEY")
-ALPACA_TRADE_SECRET = os.getenv("ALPACA_TRADE_SECRET")
-
-# Create the SDK data client for live stock prices
-# data_client = StockDataStream(DATA_KEY, DATA_SECRET, feed=DataFeed.SIP)
-# Create the SDK trading client
-trading_client = TradingClient(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
-# Create the SDK trade update and confirmation client
-confirm_stream = TradingStream(ALPACA_TRADE_KEY, ALPACA_TRADE_SECRET)
+from MachineTrader import Bar, CreateStrategy
 
 
 # --------- Get the trading parameters from the command line arguments --------
 
-# Get the symbol, type, shares_per_trade, risk_premium, alpha, vol_floor, take_profit_factor, and delay from the command line arguments
-if len(sys.argv) > 8:
-    symbol = sys.argv[1].strip().upper()  # Symbol to trade
-    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
-    type = sys.argv[3].strip().lower()  # Order type (market/limit)
-    alpha = float(sys.argv[4])  # EMA alpha parameter
-    vol_floor = float(sys.argv[5])  # Volatility floor
-    risk_premium = float(sys.argv[6])  # Limit price adjustment
-    take_profit_factor = float(sys.argv[7])  # Take profit level
-    delay = float(sys.argv[8])  # Delay before order submission (seconds)
+# Define a function to parse command line arguments
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='Bollinger Bands trading strategy using Alpaca API',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 strat_bollinger_bars_proxy.py SPY --shares 1 --type limit --alpha 0.3
+  python3 strat_bollinger_bars_proxy.py AAPL --shares 10 --risk-premium 2.0 --delay 5.0
+        """
+    )
+    
+    # Required arguments
+    parser.add_argument('symbol', help='Stock symbol to trade (e.g., SPY, AAPL)')
+    
+    # Optional arguments with defaults
+    parser.add_argument('--shares', type=float, default=1.0, 
+                       help='Number of shares per trade (default: 1.0)')
+    parser.add_argument('--type', choices=['market', 'limit'], default='limit',
+                       help='Order type: market or limit (default: limit)')
+    parser.add_argument('--alpha', type=float, default=0.1,
+                       help='EMA decay factor 0 < alpha <= 1 (default: 0.1) - larger values produce smoother EMA')
+    parser.add_argument('--vol_floor', type=float, default=0.1,
+                       help='Minimum volatility floor (default: 0.1)')
+    parser.add_argument('--risk_premium', type=float, default=2.0,
+                       help='The Z-score threshold (default: 2.0) - trade if the Z-score exceeds the threshold')
+    parser.add_argument('--take_profit', type=float, default=20.0,
+                       help='Take profit factor (default: 20.0) - Take profit if the unrealized PnL exceeds the factor times the volatility')
+    parser.add_argument('--delay', type=float, default=0.0,
+                       help='Delay the trade order submission in seconds (default: 0.0) - to avoid different strategies from submitting at the same time')
+    parser.add_argument('--strategy', default='trade_zscore',
+                       help='Name of the trading strategy function (default: trade_zscore)')
+
+    return parser.parse_args()
+
+# end parse_arguments
+
+
+# Parse the arguments
+args = parse_arguments()
+
+print(f"Trading parameters: symbol={args.symbol}, type={args.type}, "
+      f"shares_per_trade={args.shares}, alpha={args.alpha}, "
+      f"risk_premium={args.risk_premium}, vol_floor={args.vol_floor}, "
+      f"take_profit_factor={args.take_profit}, delay={args.delay}, "
+      f"strategy={args.strategy}\n")
+
+
+if len(sys.argv) > 9:
+    symbol = args.symbol
+    shares_per_trade = args.shares
+    type = args.type
+    alpha = args.alpha
+    vol_floor = args.vol_floor
+    risk_premium = args.risk_premium
+    take_profit_factor = args.take_profit
+    delay = args.delay
+    strategy_function = sys.argv[9].strip().lower()  # Strategy function name
+elif len(sys.argv) > 8:
+    symbol = args.symbol
+    shares_per_trade = args.shares
+    type = args.type
+    alpha = args.alpha
+    vol_floor = args.vol_floor
+    risk_premium = args.risk_premium
+    take_profit_factor = args.take_profit
+    delay = args.delay
+    strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 7:
-    symbol = sys.argv[1].strip().upper()  # Symbol to trade
-    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
-    type = sys.argv[3].strip().lower()  # Order type (market/limit)
-    alpha = float(sys.argv[4])  # EMA alpha parameter
-    vol_floor = float(sys.argv[5])  # Volatility floor
-    risk_premium = float(sys.argv[6])  # Limit price adjustment
-    take_profit_factor = float(sys.argv[7])  # Take profit level
-    delay = 0.0  # Default delay (no delay)
+    symbol = args.symbol
+    shares_per_trade = args.shares
+    type = args.type
+    alpha = args.alpha
+    vol_floor = args.vol_floor
+    risk_premium = args.risk_premium
+    take_profit_factor = args.take_profit
+    delay = args.delay
+    strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 6:
-    symbol = sys.argv[1].strip().upper()
-    shares_per_trade = float(sys.argv[2])
-    type = sys.argv[3].strip().lower()
-    alpha = float(sys.argv[4])
-    vol_floor = float(sys.argv[5])  # Volatility floor
-    risk_premium = float(sys.argv[6])  # Limit price adjustment
+    symbol = args.symbol
+    shares_per_trade = args.shares
+    type = args.type
+    alpha = args.alpha
+    vol_floor = args.vol_floor
+    risk_premium = args.risk_premium
     take_profit_factor = 20.0  # Default take profit level
     delay = 0.0  # Default delay (no delay)
+    strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 5:
-    symbol = sys.argv[1].strip().upper()
+    symbol = args.symbol
     shares_per_trade = float(sys.argv[2])  # Number of shares to trade
     type = sys.argv[3].strip().lower()  # Order type (market/limit)
     alpha = float(sys.argv[4])
@@ -172,15 +182,17 @@ elif len(sys.argv) > 5:
     risk_premium = 2.0  # Default risk_premium value
     take_profit_factor = 20.0  # Default take profit level
     delay = 0.0  # Default delay (no delay)
+    strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 4:
-    symbol = sys.argv[1].strip().upper()
-    shares_per_trade = float(sys.argv[2])  # Number of shares to trade
-    type = sys.argv[3].strip().lower()  # Order type (market/limit)
-    alpha = float(sys.argv[4])
-    vol_floor = 0.1  # Default vol_floor value
-    risk_premium = 2.0  # Default risk_premium value
-    take_profit_factor = 20.0  # Default take profit level
-    delay = 0.0  # Default delay (no delay)
+    symbol = args.symbol
+    shares_per_trade = args.shares
+    type = args.type
+    alpha = args.alpha
+    vol_floor = args.vol_floor
+    risk_premium = args.risk_premium
+    take_profit_factor = args.take_profit
+    delay = args.delay
+    strategy_function = "trade_zscore"  # Default strategy function
 else:
     # If not provided, prompt the user for input
     symbol = input("Enter symbol: ").strip().upper()
@@ -197,572 +209,32 @@ else:
     take_profit_factor = float(take_profit_input) if take_profit_input else 2.0
     delay_input = input("Enter order submission delay in seconds (default 0.0): ").strip()
     delay = float(delay_input) if delay_input else 0.0
-
-print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, risk_premium={risk_premium}, vol_floor={vol_floor}, take_profit_factor={take_profit_factor}, delay={delay}\n")
-
-
-# --------- Specify the strategy parameters --------
-
-# symbol = "SPY"
-# Specify the strategy name
-# Add to the strategy name its parameters.
-# For example: "StratBoll001_SPY_limit_1_0.5_0.9_0.05"
-strategy_name = f"StratBoll_{symbol}_ns{shares_per_trade}_{type}al{alpha}rp{risk_premium}vf{vol_floor}tp{take_profit_factor}"
-# Specify the trading parameters
-# shares_per_trade = 1  # Number of shares to trade per each order
-# type = "market"
-# type = "limit"
-# trade_side = OrderSide.BUY  # Set to BUY or SELL as needed
-# The risk_premium parameter, for the Z-score threshold and for setting the limit price
-# risk_premium = 2.0  # The risk_premium parameter
-
-# Initialize the strategy state variables
-# The position_list is a list of prices paid or received for each stock position.
-# Negative prices indicate long positions, and positive prices indicate short positions.
-# Because when we buy a stock we pay for it, which is a negative cash flow, and when we sell it, we receive the market price, which is a positive cash flow.
-# Initialize list of stock positions with fill prices
-position_list = []  # List of stock positions with fill prices: negative for buys, positive for sells
-position_shares = 0  # The number of shares currently owned (positive for long positions, negative for short positions)
-position_broker = None  # The number of shares owned according to the broker
-
-# A negative shares_available value indicates that there is a short position.
-# A positive shares_available value indicates that there is a long position.
-shares_available = 0  # The number of available shares to trade, according to the broker
-pnl_real = 0  # The realized PnL of the strategy
-pnl_unreal = 0  # The unrealized PnL of the strategy
-# Initialize the order response variable
-order_response = None
-order_id = None  # Initialize order_id variable
-# Initialize last limit price tracking for staggered orders
-last_buy_price = None  # Track the last buy limit price submitted
-last_sell_price = None  # Track the last sell limit price submitted
-# Initialize dictionary to track pending order IDs and their limit prices
-# Positive prices for sell orders, negative prices for buy orders
-orders_list = {}  # Dictionary of pending limit order IDs: {order_id: limit_price}
-# Initialize the cumulative realized P&L
-total_realized_pnl = 0.0  # The cumulative realized P&L from closed positions
-unrealized_pnl = 0.0  # The unrealized PnL from open positions
-price_vol = vol_floor  # The price volatility
-# The price adjustment for limit orders
-price_adjustment = risk_premium * price_vol
-# The take profit level
-take_profit_level = take_profit_factor * price_vol
-
-# Create an instance of the EMACalculator for calculating the EMA prices and Z-scores
-EMAC = EMACalculator()
-
-
-# --------- Create the file names --------
-
-# Create file names with today's NY date
-tzone = ZoneInfo("America/New_York")
-time_now = datetime.now(tzone)
-date_short = time_now.strftime("%Y%m%d")
-dir_name = os.getenv("DATA_DIR_NAME")
-# Create file name for the state variables
-state_file = f"{dir_name}" + "state_" + f"{strategy_name}_{symbol}_{date_short}.csv"
-# Create file name for the submitted trade orders
-submits_file = f"{dir_name}" + "submits_" + f"{strategy_name}_{symbol}_{date_short}.csv"
-# Create file name for the filled trade orders
-fills_file = f"{dir_name}" + "fills_" + f"{strategy_name}_{symbol}_{date_short}.csv"
-# Create file name for the canceled trade orders
-canceled_file = f"{dir_name}" + "canceled_" + f"{strategy_name}_{symbol}_{date_short}.csv"
-# Create file name for the websocket errors
-error_file = f"{dir_name}" + "error_" + f"{strategy_name}_{symbol}_{date_short}.csv"
-
-
-
-
-# --------- Calculate the number of shares to trade to take profit on the unrealized P&L --------
-
-# Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
-# Returns trade_side = None if no trade is to be made.
-def take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, price_adjustment):
-
-    # Initialize the trade buy/sell side variable and the limit price
-    trade_side = None
-    limit_price = None
-    shares_to_trade = 0  # Initialize shares_to_trade to 0
-
-    if position_shares > 0:
-        # If the position is long stock - submit a sell trade order
-        trade_side = OrderSide.SELL
-        # The limit price is equal to the last sell price plus the price_adjustment adjustment
-        if last_sell_price is None:
-            limit_price = round(price_last + price_adjustment, 2)
-        else:
-            limit_price = round(max(price_last, last_sell_price) + price_adjustment, 2)
-        last_sell_price = limit_price
-
-    else: # position_shares < 0
-        # The position is short stock - submit a buy trade order
-        trade_side = OrderSide.BUY
-        # The limit price is equal to the last buy price minus the price_adjustment adjustment
-        if last_buy_price is None:
-            limit_price = round(price_last - price_adjustment, 2)
-        else:
-            limit_price = round(min(price_last, last_buy_price) - price_adjustment, 2)
-        last_buy_price = limit_price
-
-    # The number of shares to trade is limited by the shares_available
-    shares_to_trade = min(abs(shares_available), shares_per_trade)
-
-    return trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price
-
-# End of take_profit
-
-
-
-# --------- Calculate the number of shares to trade based on the Z-score --------
-
-# Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
-# Returns trade_side = None if no trade is to be made.
-def calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, risk_premium, price_adjustment):
-
-    # Initialize the trade buy/sell side variable and the limit price
-    trade_side = None
-    limit_price = None
-    shares_to_trade = 0  # Initialize shares_to_trade to 0
-
-    # A negative shares_available value indicates that there is a short position.
-    # In that case, the strategy can only buy back the shares it has sold short.
-    # But it can sell more shares without limitation.
-
-    # A positive shares_available value indicates that there is a long position.
-    # In that case, the strategy can only sell the shares it owns.
-    # But it can buy more shares without limitation.
-
-    # If the Z-score is greater than the risk_premium, then submit a sell order
-    # If the price is significantly different from the EMA price
-    if zscore > risk_premium:
-        # Submit a sell order if the price is significantly above the EMA price
-        trade_side = OrderSide.SELL
-        # The limit price is equal to the last sell price plus the price_adjustment adjustment
-        if last_sell_price is None:
-            limit_price = round(price_last + price_adjustment, 2)
-        else:
-            limit_price = round(max(price_last, last_sell_price) + price_adjustment, 2)
-        last_sell_price = limit_price
-        if shares_available > 0:
-            # The number of shares to trade is limited by the shares_available
-            shares_to_trade = min(abs(shares_available), shares_per_trade)
-        else:
-            # The number of shares to trade is equal to the shares_per_trade
-            shares_to_trade = shares_per_trade
-
-    # If the Z-score is less than minus the risk_premium, then submit a buy order
-    elif zscore < (-risk_premium):
-        # Submit a buy order if the price is significantly below the EMA price
-        trade_side = OrderSide.BUY
-        # The limit price is equal to the last buy price minus the price_adjustment adjustment
-        if last_buy_price is None:
-            limit_price = round(price_last - price_adjustment, 2)
-        else:
-            limit_price = round(min(price_last, last_buy_price) - price_adjustment, 2)
-        last_buy_price = limit_price
-        if shares_available < 0:
-            # The number of shares to trade is limited by the shares_available
-            shares_to_trade = min(abs(shares_available), shares_per_trade)
-        else:
-            # The number of shares to trade is equal to the shares_per_trade
-            shares_to_trade = shares_per_trade
-
-    else:
-        # If the Z-score is not significant, do not trade
-        print(f"⏸️ No trade for {symbol} - the Z-score = {zscore:.2f} is not significant compared to the risk premium = {risk_premium}")
-        shares_to_trade = 0
-
-    return trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price
-
-# End of calc_shares_to_trade
-
-
-
-# --------- Define the trading function - the callback handler for the price bars --------
-# The trading function receives the price bars and submits the trade orders
-
-async def trade_bars(bar):
-
-    global order_response, order_id, position_shares, position_broker, last_buy_price, last_sell_price, orders_list, position_list, unrealized_pnl, total_realized_pnl
-
-    ### Get the latest price and volume from the price bar
-    # print(f"Bar price: {bar}")
-    # print(f"Symbol: {bar.symbol}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Trade_count: {bar.trade_count}, VWAP: {bar.vwap}")
-    price_last = bar.close
-    volume_last = bar.volume
-    time_stamp = bar.timestamp.astimezone(tzone)
-    date_time = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-
-
-    ### Calculate the Z-score, EMA price, and price volatility
-    zscore, ema_price, price_vol = EMAC.calc_zscorew(price_last, volume_last, alpha, vol_floor)
-    # The price adjustment for limit orders
-    price_adjustment = risk_premium * price_vol
-
-    ### Calculate the unrealized P&L and update the stock positions
-    position_shares, unrealized_pnl = calc_unrealized_pnl(position_list, price_last)
-
-    # Calculate the number of buy and sell limit orders
-    num_buy_orders = sum(1 for price in orders_list.values() if price < 0)
-    num_sell_orders = sum(1 for price in orders_list.values() if price > 0)
-    # Calculate the take profit level
-    take_profit_level = take_profit_factor * price_vol
-
-    print(f"📊 Time: {date_time}, Symbol: {bar.symbol}, Z-score: {zscore:.2f}, Price: {price_last}, EMA: {ema_price:.2f}, Vol: {price_vol:.4f}")
-    print(f"💼 Position: {position_shares} shares, Pending orders: {len(orders_list)} (Buy: {num_buy_orders}, Sell: {num_sell_orders}), Unrealized P&L: ${unrealized_pnl:.2f}, Take Profit Level: ${take_profit_level:.2f}, Realized P&L: ${total_realized_pnl:.2f}")
-    # Print the current position list
-    print(f"📋 Current position list: {position_list}")
-    # Print the current pending order IDs
-    print(f"🔄 Current pending order IDs: {list(orders_list.keys())}")
-
-
-    ### Get the current position from the broker and the number of available shares to trade for the symbol
-    position_broker = get_position(trading_client, symbol)
-    if position_broker is None:
-        # There is no open position - set the available shares to the number of shares traded per each order
-        shares_available = shares_per_trade
-        # position_shares = 0
-    else:
-        # Get the number of available shares to trade from the broker
-        shares_available = float(position_broker.qty_available)
-        position_broker = float(position_broker.qty)
-
-
-    ### Cancel all the open limit orders if the limit prices are too far apart
-    if (last_buy_price is not None) and (last_sell_price is not None):
-        if (last_sell_price - last_buy_price) > (10 * price_adjustment):
-            # Cancel all the open limit orders
-            print(f"\n❌ The limit prices are too far apart for {symbol} - Canceling all open limit orders")
-            remaining_order_ids = cancel_orders(trading_client, symbol, canceled_file, list(orders_list.keys()))
-            # Update orders_list to keep only the remaining orders
-            orders_list = {order_id: orders_list[order_id] for order_id in remaining_order_ids if order_id in orders_list}
-            last_sell_price = None  # Reset the last sell limit price
-            last_buy_price = None  # Reset the last buy limit price
-
-
-    ### If there are some shares available to trade, then either take profit on the unrealized P&L or execute the contrarian rule based on the Z-score.
-
-    # Initialize the trade side
-    trade_side = None
-
-    if (shares_available != 0):
-
-        # Apply the take-profit rule
-        if (unrealized_pnl > take_profit_level):
-            print(f"\n💰 Take profit triggered for {symbol}: Selling the position\n")
-            print(f"💵 Unrealized PnL = {unrealized_pnl:.2f} and Take profit level = {take_profit_level:.2f}\n")
-            trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, price_adjustment)
-
-        # Apply the contrarian rule based on the Z-score
-        elif (abs(zscore) > abs(risk_premium)):
-            print(f"\n🎯 Take profit not triggered for {symbol} - Applying contrarian rule\n")
-            # Calculate the trade side and the number of shares to trade based on the Z-score and the available shares.
-            trade_side, limit_price, shares_to_trade, last_buy_price, last_sell_price = calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, risk_premium, price_adjustment)
-
-        else:
-            print(f"\n⏸️ No trade conditions met for {symbol}")
-
-    ### Cancel all the open limit orders if there are no available shares for the symbol
-    else:
-        # No shares available
-        # Cancel all the open limit orders
-        print(f"\n⚠️ No shares available for {symbol}")
-        # print(f"\nNo shares available for {symbol} - Canceling all open limit orders")
-        # orders_list = cancel_orders(trading_client, symbol, canceled_file, orders_list)
-        # last_sell_price = None  # Reset the last sell limit price
-        # last_buy_price = None  # Reset the last buy limit price
-
-
-    ### Submit the trade order if the trade side is not None
-    if trade_side is not None:
-
-        print(f"📈 Z-score: {zscore:.2f}, Side: {trade_side}, Limit price: {limit_price}, Shares to trade: {shares_to_trade}")
-        
-        # Apply delay before order submission if specified
-        if delay > 0:
-            print(f"⏱️ Waiting {delay} seconds before submitting order...")
-            time.sleep(delay)
-        
-        order_response = None
-        order_response = submit_order(trading_client, symbol, shares_to_trade, trade_side, type, limit_price, submits_file, error_file)
-
-        # If the order submission failed, cancel all the open limit orders for the symbol and submit the order again
-        if order_response is None:
-            print(f"❌ Trade order submission failed for {symbol}")
-            # Do nothing - don't cancel all the open orders
-            # pass
-            print(f"🧹 Canceling all the open orders for {symbol}")
-            cancel_orders(trading_client, symbol, canceled_file)
-            # remaining_order_ids = cancel_orders(trading_client, symbol, canceled_file, list(orders_list.keys()))
-            # Update orders_list to keep only the remaining orders
-            # orders_list = {order_id: orders_list[order_id] for order_id in remaining_order_ids if order_id in orders_list}
-            last_sell_price = None  # Reset the last sell limit price
-            last_buy_price = None  # Reset the last buy limit price
-            # Submit the trade order again
-            print(f"🔄 Submitting the trade order again for {symbol}")
-            order_response = submit_order(trading_client, symbol, shares_to_trade, trade_side, type, limit_price, submits_file, error_file)
-
-        # Add the order ID to the pending orders dictionary with signed limit price
-        if order_response is not None:
-            # Extract the order ID from the order_response
-            order_id = str(order_response.id)
-            # Store signed limit price: positive for sell orders, negative for buy orders
-            signed_limit_price = limit_price if trade_side == OrderSide.SELL else -limit_price
-            orders_list[order_id] = signed_limit_price
-            print(f"✅ Added order ID {order_id} with limit price {signed_limit_price} to pending list. Total pending orders: {len(orders_list)}")
-            # Print the current pending order IDs
-            # print(f"Current pending order IDs: {orders_list}")
-        else:
-            print("❌ Failed to submit order after retry\n")
-    else:
-        trade_side = None # No trade executed, side remains None
-
-
-    ### Save the strategy state to the CSV file
-    state_data = {
-        "date_time": date_time,
-        "symbol": bar.symbol,
-        "price": bar.close,
-        "volatility": price_vol,
-        "zscore": zscore,
-        "order": trade_side,
-        "position_shares": position_shares,
-        "pnlReal": total_realized_pnl,
-        "pnlUnreal": unrealized_pnl,
-    }
-    state_data = pd.DataFrame([state_data])
-    state_data.to_csv(state_file, mode="a", header=not os.path.exists(state_file), index=False)
-    print("✨ Done\n")
-
-# End of callback function trade_bars
-
-
-
-# --------- Define the callback function for handling price bars --------
-
-# The price bar handler converts the JSON to a dictionary and then to a DataFrame, and saves it to a CSV file
-async def handle_bar(bar):
-
-
-    # bar is a dict from JSON, convert timestamp and extract fields
-    time_stamp = bar.get("t")
-    if time_stamp:
-        # If timestamp is in ISO format, parse it
-        try:
-            dt = datetime.fromisoformat(time_stamp.replace("Z", "+00:00")).astimezone(tzone)
-            time_stamp = dt.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
-            pass
-    else:
-        time_stamp = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
-
-    symbol = bar.get("S")
-    open = bar.get("o")
-    high = bar.get("h")
-    low = bar.get("l")
-    close = bar.get("c")
-    volume = bar.get("v")
-    trade_count = bar.get("n")
-    vwap = bar.get("vw")
-    print(f"Time: {time_stamp}, Symbol: {symbol}, Open: {open}, High: {high}, Low: {low}, Close: {close}, Volume: {volume}, Trade_count: {trade_count}, VWAP: {vwap}")
-
-    # Prepare a dict with the price bar data from JSON fields
-    bar_dict = {
-        "timestamp": time_stamp,
-        "symbol": symbol,
-        "open": open,
-        "high": high,
-        "low": low,
-        "close": close,
-        "volume": volume,
-        "trade_count": trade_count,
-        "vwap": vwap
-    }
-
-    # Create a Bar object from the dictionary
-    bar_object = Bar(bar_dict)
-
-    # Call the trade_bars function with the bar object (not dictionary)
-    await trade_bars(bar_object)
-
-# End handle_bar callback
-
-
-
-# --------- Define the callback function for streaming price bars --------
-
-async def stream_bars():
-
-    # Connect to the WebSocket proxy URL
-    proxy_url = "ws://localhost:8765"
-    reconnect_delay = 5
-    while True:
-        try:
-            async with websockets.connect(proxy_url) as ws:
-                print(f"Connected to WebSocket proxy at {proxy_url}")
-                async for message in ws:
-                    try:
-                        data = json.loads(message)
-                        # Alpaca sends a list of events, each is a dict
-                        if isinstance(data, list):
-                            for event in data:
-                                # Only handle bar events for our symbol
-                                if event.get("T") == "b" and event.get("S") == symbol:
-                                    await handle_bar(event)
-                        elif isinstance(data, dict):
-                            if data.get("T") == "b" and data.get("S") == symbol:
-                                await handle_bar(data)
-                    except Exception as e:
-                        print(f"Error processing message: {e}")
-        except Exception as e:
-            print(f"WebSocket error: {e}. Reconnecting in {reconnect_delay} seconds...")
-            time.sleep(reconnect_delay)
-
-# End stream_bars
-
-
-
-# --------- Define the callback handler for the trade updates and trade confirms --------
-
-async def handle_trade_update(event_data):
-
-    global position_shares, orders_list, position_list, total_realized_pnl
-
-    # Get the event order ID from the event data
-    order_id = str(event_data.order.id)
-
-    ### Check if this order ID is in the pending list - orders_list.keys are the order IDs
-    if order_id in orders_list.keys():
-
-        # Unpack the event_data into a dictionary
-        event_dict = event_data.model_dump()  # Convert to dictionary
-        event_dict = convert_to_nytzone(event_dict)
-        event_name = str(event_dict["event"]).lower()  # Get the event name
-        time_stamp = event_dict["timestamp"]
-        orderinfo = event_dict["order"]
-        # Remove the "order" key from the event_dict
-        event_dict.pop("order", None)
-        symbol = orderinfo["symbol"]
-        # event_dict = event_dict | orderinfo  # Combine dictionaries
-        event_dict.update(orderinfo)  # This adds order fields to event_dict while preserving the "order" key
-        time_now = datetime.now(tzone).strftime("%Y-%m-%d %H:%M:%S")
-
-        # Process the event data based on the event type
-        if (event_name == "fill") or (event_name == "partial_fill"):
-            type = orderinfo["order_type"]
-            trade_side = orderinfo["side"]
-            qty_filled = float(orderinfo["qty"])
-            fill_price = float(orderinfo.get("filled_avg_price", 0))
-            print(f"✅ Order {order_id} filled at {time_now} at price {fill_price}")
-            # Process the fill data FIRST before stopping
-            print(f"💸 {time_stamp} Filled {type} {trade_side} order for {qty_filled} shares of {symbol} at {fill_price}")
-
-            # Update position_list and calculate realized P&L after the trade is filled
-            if trade_side == "buy":
-                
-                # Check if there are existing positions and their direction
-                if (not position_list) or all(price < 0 for price in position_list):
-                    # Add new buy positions as negative prices
-                    for _ in range(int(qty_filled)):
-                        position_list.append(-fill_price)
-                    print(f"📈 Added {int(qty_filled)} buy positions at ${fill_price}")
-                else:
-                    # Existing positions are sells (positive) - closing short position
-                    realized_pnl = 0.0
-                    shares_to_close = int(qty_filled)
-                    for _ in range(shares_to_close):
-                        if position_list and position_list[0] > 0:  # Pop sell positions (positive prices)
-                            position_price = position_list.pop(0)
-                            # Realized P&L = sell price - buy price (for closing short)
-                            realized_pnl += (position_price - fill_price)
-                        else:
-                            # No more short positions to close, add as new long position
-                            position_list.append(-fill_price)
-                    print(f"🔄 Closed {shares_to_close} short positions. Realized P&L: ${realized_pnl:.2f}")
-                    total_realized_pnl += realized_pnl
-                    
-            elif trade_side == "sell":
-                
-                # Check if we have existing positions and their direction
-                if not (position_list) or all(price > 0 for price in position_list):
-                    # No existing positions - add new sell positions as positive prices
-                    # All existing positions are sells (positive) - add to short position
-                    for _ in range(int(qty_filled)):
-                        position_list.append(fill_price)
-                    print(f"📉 Added {int(qty_filled)} sell positions at ${fill_price}")
-                else:
-                    # Existing positions are buys (negative) - closing long position
-                    realized_pnl = 0.0
-                    shares_to_close = int(qty_filled)
-                    for _ in range(shares_to_close):
-                        if position_list and position_list[0] < 0:  # Pop buy positions (negative prices)
-                            position_price = position_list.pop(0)
-                            # Realized P&L = sell price - buy price (for closing long)
-                            realized_pnl += (position_price + fill_price)
-                        else:
-                            # No more long positions to close, add as new short position
-                            position_list.append(fill_price)
-                    print(f"🔄 Closed {shares_to_close} long positions. Realized P&L: ${realized_pnl:.2f}")
-                    total_realized_pnl += realized_pnl
-            # End Update position_list and calculate realized P&L after the trade is filled
-
-            # Print the current position list
-            print(f"📋 Current position list: {position_list}")
-
-            # Update the position_shares - the number of shares currently owned (positive for long positions, negative for short positions)
-            if not position_list:
-                position_shares = 0
-            else:
-                position_shares = -math.copysign(1, position_list[0]) * len(position_list)
-            print(f"💼 Position after the fill: {position_shares} shares of {symbol}")
-            position_broker = event_dict.get("position_qty", 0)
-            print(f"🏦 Position from broker after the fill: {position_broker} shares of {symbol}")
-
-            # Remove the filled order ID from the orders list
-            removed_price = orders_list.pop(order_id)
-            print(f"🗑️ Removed order ID {order_id} with limit price {removed_price} from pending list. Remaining number of pending orders: {len(orders_list)}")
-            print(f"📊 Updated stock positions: {len(position_list)} total positions, current list: {position_list}")
-            
-            # Save fill data to CSV
-            event_frame = pd.DataFrame([event_dict])
-            event_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
-            print(f"💾 Fill appended to {fills_file}")
-
-        elif (event_name == "pending_new") or (event_name == "new") or (event_name == "accepted"):
-            # Do nothing on pending_new or new events
-            pass # Will implement later
-            # print(f"Event {event_name} received for order {order_id} at {time_now}")
-            # print("New order event received")
-            # event_frame = pd.DataFrame([event_dict])
-            # event_frame.to_csv(submits_file, mode="a", header=not os.path.exists(submits_file), index=False)
-            # print(f"{time_stamp} New {type} {trade_side} order for {qty_filled} shares of {symbol}")
-            # print(f"New trade appended to {submits_file}")
-
-        elif (event_name == "canceled") or (event_name == "expired") or (event_name == "rejected"):
-            # print(f"Cancel event: {event_dict}")
-            print(f"❌ Order {order_id} canceled or expired at {time_now}")
-            # Remove the canceled order ID from orders list
-            removed_price = orders_list.pop(order_id)
-            print(f"🗑️ Removed canceled order ID {order_id} with limit price {removed_price} from orders list. Remaining orders: {len(orders_list)}")
-            # Append to CSV (write header only if file does not exist)
-            event_frame = pd.DataFrame([event_dict])
-            event_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
-            print(f"💾 Canceled order appended to {canceled_file}")
-            # await confirm_stream.stop_ws()  # Stop on cancel too
-
-        elif event_name == "replaced":
-            print(f"🔄 Replace event: {event_dict}")
-        else:
-            print(f"❓ Unknown event: {event_name}")
-
-        print(f"✅ Finished processing the {event_name} update for order {order_id} at {time_now}\n")
-
-    else:
-        # Order ID not in pending list - ignore or log
-        pass # Will implement later?
-        # print(f"Received update for order {order_id} which is not in pending list")
-
-# End of handle_trade_update function
+    strategy_function_input = input("Enter strategy function name (default trade_zscore): ").strip()
+    strategy_function = strategy_function_input if strategy_function_input else "trade_zscore"
+
+print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, risk_premium={risk_premium}, vol_floor={vol_floor}, take_profit_factor={take_profit_factor}, delay={delay}, strategy_function={strategy_function}\n")
+
+
+# --------- Initialize the Strategies instance (will be created after getting parameters) --------
+
+# Define the timezone for date/time operations
+timezone = ZoneInfo("America/New_York")
+
+# Initialize the Strategies instance with all state variables
+# The strategy name, MovAvg, and SDK clients will be created automatically
+strategy = CreateStrategy(
+    symbol=symbol,
+    shares_per_trade=shares_per_trade,
+    timezone=timezone,
+    type=type,
+    alpha=alpha,
+    vol_floor=vol_floor,
+    risk_premium=risk_premium,
+    take_profit_factor=take_profit_factor,
+    delay=delay,
+    strategy_function=strategy_function,
+    env_file="/Users/jerzy/Develop/Python/.env"
+)
 
 
 # --------- Run the WebSocket to handle trade updates and confirmations, and exceptions and Ctrl-C interrupt --------
@@ -772,16 +244,14 @@ async def handle_trade_update(event_data):
 async def main():
 
     try:
-        # Subscribe to the price bar updates and pass them to the callback function
-        # data_client.subscribe_bars(trade_bars, symbol)
         # Subscribe to the trade updates and confirms, and handle them using handle_trade_update()
-        confirm_stream.subscribe_trade_updates(handle_trade_update)
+        strategy.alpaca_sdk.get_confirm_stream().subscribe_trade_updates(strategy.handle_trade_update)
         # Run both WebSocket streams concurrently
         print("\nStarting the data WebSocket connection...")
         print("\nStarting the trade updates and confirmations WebSocket connection...")
         await asyncio.gather(
-            stream_bars(),
-            confirm_stream._run_forever()
+            Bar.stream_bars(symbol, strategy),
+            strategy.alpaca_sdk.get_confirm_stream()._run_forever()
         )
     except Exception as e:
         pass  # Handle exceptions here if needed
@@ -790,7 +260,7 @@ async def main():
         print("\nClosing the trade updates and confirmations WebSocket connection...")
         try:
             # await data_client.close()
-            await confirm_stream.close()
+            await strategy.alpaca_sdk.get_confirm_stream().close()
         except:
             pass  # Ignore errors when closing
 

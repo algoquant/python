@@ -1,6 +1,10 @@
 ### Cancel all the open trade orders, using the Alpaca SDK.
 # https://alpaca.markets/sdks/python/trading.html
 
+# Cancel the open trade orders by running the script in the terminal:
+#   python3 cancel_orders_all.py
+
+
 import pandas as pd
 from datetime import date, datetime
 from zoneinfo import ZoneInfo

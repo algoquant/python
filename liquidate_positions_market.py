@@ -90,7 +90,6 @@ if symbols:
                     if order.type == "limit":
                         print(f"Cancelling limit order {order.id} for {symbol}")
                         trading_client.cancel_order(order.id)
-                            continue
                 print(f"Closing the positions again for {symbol}...")
                 response = trading_client.close_position(symbol)
         

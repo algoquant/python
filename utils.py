@@ -1,6 +1,5 @@
 ## Utility functions for data processing, calculating EMA prices, submitting trades, and managing orders.
 
-
 import os
 import sys
 import io
@@ -11,15 +10,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
-from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetOrdersRequest, LimitOrderRequest, MarketOrderRequest
-from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
 from dotenv import load_dotenv
 # Package for download
 import requests
-
-# Broker name
-BROKER_NAME = "Alpaca"
 
 ## Lag a numpy array and pad with zeros
 def lagit(xs, n):
@@ -44,21 +37,6 @@ def calc_rollsum(a, lb=3):
 
 
 
-## Calculate the Sharpe ratio
-def calc_sharpe(retsp, raterf=0.0):
-    # Calculate mean returns
-    meanret = retsp.mean()
-    # Calculate standard deviation
-    stdev = retsp.std()
-    # Calculate day Sharpe ratio
-    sharper = (meanret-raterf)/stdev
-    # Annualize Sharpe ratio
-    sharper = math.sqrt(252)*sharper
-    return sharper
-# end calc_sharpe
-
-
-
 ## Load OHLC data from CSV file
 # For example:
 # ohlc = read_csv('/Users/jerzy/Develop/data/BTC_minute.csv')
@@ -75,10 +53,10 @@ def read_csv(filename):
 ## Download OHLC time series from Polygon
 
 # Load the API keys from /Users/jerzy/Develop/Python/.env file
-load_dotenv("/Users/jerzy/Develop/Python/.env")
+# load_dotenv("/Users/jerzy/Develop/Python/.env")
 # Get the Polygon key
-POLYGON_KEY = os.getenv("POLYGON_KEY")
-
+# POLYGON_KEY = os.getenv("POLYGON_KEY")
+POLYGON_KEY = None
 
 ## Define exception handler function
 def CatchException():
@@ -137,25 +115,15 @@ def get_symbol(symbol, startd, endd, range='day', polygon_key=POLYGON_KEY):
 # end get_symbol
 
 
-# Get the open position for the symbol
-def get_position(trading_client, symbol):
-    position = None  # Initialize position variable
-    # Get the open position for the symbol
-    try:
-        position = trading_client.get_open_position(symbol)
-    except Exception as e:
-        pass # Do nothing
-        # print(f"Error getting open position for {symbol}: {e}")
-    if position:
-        print(f"({BROKER_NAME}) Open position for {symbol}: {position.qty} shares at {position.avg_entry_price}")
-    else:
-        print(f"({BROKER_NAME}) No open position for {symbol}.")
-    return position
+# end get_symbol
+
+
+# Plot function to plot the EMA price and Bollinger Bands
 # End of get_position
 
 
 # Cancel all open orders in the list orders_list for the symbol
-def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
+def cancel_orders(trading_client, symbol, orders_list=None, canceled_file=None):
 
     # Case when orders_list is None
     # Cancel all the open orders for the symbol because orders_list is None
@@ -179,16 +147,20 @@ def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
                 trading_client.cancel_order_by_id(order_id=order_id)
                 # Get the canceled order status
                 order_status = trading_client.get_order_by_id(order_id=order_id)
-                # Append the canceled order status to CSV file (write header only if file does not exist)
-                canceled_frame = pd.DataFrame([order_status.model_dump()])
-                canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+                # Append the canceled order status to CSV file only if canceled_file is not None
+                if canceled_file is not None:
+                    canceled_frame = pd.DataFrame([order_status.model_dump()])
+                    canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
                 print(f"Cancelled order: {order_id} for {symbol}")
                 # Remove the canceled order ID from the open orders list
                 orders_list.remove(open_order)
                 print(f"Removed order ID {order_id} from open orders list. Remaining number of open orders: {len(orders_list)}")
             except Exception as e:
                 print(f"Error canceling order {order_id} for {symbol}: {e}")
-        print(f"Canceled orders saved to {canceled_file}")
+        if canceled_file is not None:
+            print(f"Canceled orders saved to {canceled_file}")
+        else:
+            print("Canceled orders not saved (canceled_file=None)")
         return orders_list
 
     # Case when orders_list is not None
@@ -209,9 +181,10 @@ def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
                 trading_client.cancel_order_by_id(order_id=order_id)
                 # Get the canceled order status
                 order_status = trading_client.get_order_by_id(order_id=order_id)
-                # Append the canceled order status to CSV file (write header only if file does not exist)
-                canceled_frame = pd.DataFrame([order_status.model_dump()])
-                canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
+                # Append the canceled order status to CSV file only if canceled_file is not None
+                if canceled_file is not None:
+                    canceled_frame = pd.DataFrame([order_status.model_dump()])
+                    canceled_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
                 # Remove the canceled order ID from the open orders list
                 orders_list.remove(order_id)
                 print(f"Cancelled order: {order_id} for {symbol}")
@@ -221,7 +194,10 @@ def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
                 # Remove the order ID from the open orders list anyway
                 orders_list.remove(order_id)
                 print(f"Removed order ID {order_id} from the open orders list after the error. Remaining number of open orders: {len(orders_list)}")
-        print(f"Canceled orders saved to {canceled_file}")
+        if canceled_file is not None:
+            print(f"Canceled orders saved to {canceled_file}")
+        else:
+            print("Canceled orders not saved (canceled_file=None)")
         return orders_list
 
 # End of cancel_orders
@@ -231,8 +207,8 @@ def cancel_orders(trading_client, symbol, canceled_file, orders_list=None):
 # The function submit_order submits a trade order using the Alpaca TradingClient
 def submit_order(trading_client, symbol, shares_per_trade, side, type, limit_price, submits_file, error_file):
 
-    tzone = ZoneInfo("America/New_York")
-    time_now = datetime.now(tzone)
+    timezone = ZoneInfo("America/New_York")
+    time_now = datetime.now(timezone)
 
     # Define the order parameters based on the order type
     if type == "market":
@@ -316,187 +292,10 @@ def plot_ema(price_frame):
 
 
 
-# --------- Calculate the total stock position and the unrealized P&L --------
-
-# Calculate the unrealized P&L and the stock positions
-def calc_unrealized_pnl(position_list, current_price):
-    """
-    The position_list is a list of prices paid or received for each stock position.
-    Negative prices indicate long positions, and positive prices indicate short positions.
-    Because when we buy a stock we pay for it, which is a negative cash flow, and when we sell it, we receive the market price, which is a positive cash flow.
-    """
-
-    if not position_list:
-        position_shares = 0
-        unrealized_pnl = 0.0
-    else:
-        # Calculate the number of shares owned
-        num_shares = len(position_list)
-        # Calculate the amount of shares owned (positive for long positions, negative for short positions)
-        position_shares = -math.copysign(1, position_list[0]) * num_shares
-        cost_basis = sum(position_list)  # Calculate the total cost basis
-        # Calculate the unrealized P&L
-        unrealized_pnl = (cost_basis + position_shares * current_price)
-
-    return position_shares, unrealized_pnl
-
-# End of calc_unrealized_pnl
-
-
-
-# --------- EMA class for calculating the Exponential Moving Average --------
-
-"""
-EMACalculator: Calculate the Exponential Moving Average EMA with persistent state.
-
-Methods:
-    calc_ema(current_price, alpha): Calculate and update EMA
-    calc_zscore(current_price, alpha, vol_floor): Calculate z-score with persistent state
-    calc_zscorew(current_price, alpha, volume, vol_floor): Calculate z-score with EMA weighted by volumes
-    reset(): Reset the EMA state
-
-Args:
-    current_price (float): The latest price value
-    alpha (float): Smoothing factor (0 < alpha <= 1)
-    volume (float): Trading volume for the current price
-    vol_floor (float): Minimum volatility to avoid division by zero
-
-Returns:
-    float: Updated EMA value
-
-Updating formulas:
-EMA = α × EMA + (1-α) × current_price
-Weighted EMA: EMAw = α × EMAw + (1-α) × volume × current_price
-EMA volume: EMAvolume = α × EMAvolume + (1-α) × volume
-EMA scaled: EMA = EMAw / EMAvolume
-
-"""
-
-
-class EMACalculator:
-
-    def __init__(self):
-        self.ema_price = None
-        self.alpha1 = None
-        self.price_var = None
-        self.alpha_squared = None
-        self.alpha2 = None
-    
-    def reset(self):
-        """Reset the EMA state"""
-        self.ema_price = None
-        self.alpha1 = None
-        self.price_var = None
-        self.alpha_squared = None
-        self.alpha2 = None
-
-
-    """
-    Calculate the EMA price using a persistent state.
-    Returns: (ema_price)
-    """
-    def calc_ema(self, current_price, alpha):
-
-        if self.ema_price is None:
-            # Initialize EMA with first price
-            self.ema_price = current_price
-            self.alpha1 = 1 - alpha  # Store for efficiency
-        else:
-            # Update the EMA: EMA = alpha * previous_EMA + (1 - alpha) * current_price
-            self.ema_price = alpha * self.ema_price + self.alpha1 * current_price
-        
-        return self.ema_price
-
-    # end of calc_ema method
-
-
-    """
-    Calculate the Z-score from the EMA price and variance.
-    Returns: (zscore, ema_price, price_vol)
-    """
-    def calc_zscore(self, current_price, alpha, vol_floor=0.01):
-
-        if self.ema_price is None:
-            # Initialize on first call
-            self.ema_price = current_price  # Start with current price
-            self.price_var = vol_floor  # Start with floor variance
-            self.alpha1 = 1 - alpha
-            self.alpha_squared = alpha * alpha
-            self.alpha2 = 1 - self.alpha_squared
-            # First call returns zero z-score
-            return 0.0, self.ema_price, vol_floor
-
-        else:
-            # Calculate the price deviation from the current EMA
-            price_deviation = current_price - self.ema_price
-            
-            # Calculate the volatility as the square root of variance with vol_floor
-            price_vol = max(self.price_var ** 0.5, vol_floor)
-            
-            # Calculate the Z-score
-            zscore = price_deviation / price_vol
-
-            # Update the EMA variance
-            self.price_var = self.alpha_squared * self.price_var + self.alpha2 * (price_deviation * price_deviation)
-
-            # Update the EMA price
-            self.ema_price = alpha * self.ema_price + self.alpha1 * current_price
-            
-            return zscore, self.ema_price, price_vol
-
-    # end of calc_zscore method
-
-
-    """
-    Calculate the Z-score from the EMA price and variance weighted by the trading volumes.
-    Returns: (zscore, ema_price, price_vol)
-    """
-    def calc_zscorew(self, current_price, volume, alpha, vol_floor=0.01):
-
-        if self.ema_price is None:
-            # Initialize on first call
-            self.ema_price = volume * current_price  # Start with current price times volume
-            self.price_var = volume * vol_floor * vol_floor  # Start with floor variance times volume
-            self.alpha1 = 1 - alpha
-            self.alpha_squared = alpha * alpha
-            self.alpha2 = 1 - self.alpha_squared
-            self.volume = volume  # Initialize the volume to avoid division by zero
-            # First call returns zero z-score
-            return 0.0, self.ema_price / self.volume, vol_floor
-
-        else:
-            # Calculate the price deviation from the current EMA
-            price_deviation = current_price - self.ema_price / self.volume
-
-            # Calculate the volatility as the square root of variance with vol_floor
-            price_vol = max((self.price_var / self.volume) ** 0.5, vol_floor)  # Normalize by volume
-
-            # Calculate the Z-score
-            zscore = price_deviation / price_vol
-
-            # Update the EMA volume
-            self.volume = alpha * self.volume + self.alpha1 * volume
-
-            # Update the EMA variance
-            self.price_var = self.alpha_squared * self.price_var + self.alpha2 * volume * (price_deviation * price_deviation)
-
-            # Update the EMA price
-            self.ema_price = alpha * self.ema_price + self.alpha1 * volume * current_price
-            ema_price = self.ema_price / self.volume  # Normalize by volume
-
-            return zscore, ema_price, price_vol
-
-    # end of calc_zscorew method
-
-
-# end of EMACalculator class
-
-
-
 # Convert all the nested datetime objects to NY timezone
 def convert_to_nytzone(obj):
 
-    tzone = ZoneInfo("America/New_York")
+    timezone = ZoneInfo("America/New_York")
     if isinstance(obj, dict):
         return {k: convert_to_nytzone(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -506,24 +305,26 @@ def convert_to_nytzone(obj):
         if obj.tzinfo is None:
             # If no timezone info, assume UTC
             obj = obj.replace(tzinfo=ZoneInfo("UTC"))
-        return obj.astimezone(tzone)
+        return obj.astimezone(timezone)
     elif isinstance(obj, str):
         # Try to parse string as datetime if it looks like ISO format
         try:
             if 'T' in obj and ('Z' in obj or '+' in obj or obj.endswith('00')):
                 dt = datetime.fromisoformat(obj.replace('Z', '+00:00'))
-                return dt.astimezone(tzone).strftime("%Y-%m-%d %H:%M:%S")
+                return dt.astimezone(timezone).strftime("%Y-%m-%d %H:%M:%S")
         except:
             pass
         return obj
     else:
         return obj
+
 # End of convert_to_nytzone function
+
 
 
 # Disconnect any existing data_client websocket connections
 # Run the function disconnect_data_client before subscribing to the price bars
-def disconnect_data_client():
+def disconnect_data_client(data_client):
     try:
         # Check if stream client exists and has an active connection
         if hasattr(data_client, '_ws') and data_client._ws:
@@ -566,6 +367,4 @@ def ctrlc_handler(websocket):
     print("Press Ctrl-C to stop the stream... \n")
     signal.signal(signal.SIGINT, signal_handler)
 
-
-
-
+# End of ctrlc_handler function

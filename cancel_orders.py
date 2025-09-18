@@ -2,9 +2,11 @@
 # https://alpaca.markets/sdks/python/trading.html
 
 # Cancel the open trade orders by running the script in the terminal:
-# python3 cancel_orders.py SPY
+#   python3 cancel_orders.py SPY
 
 
+import os
+import sys
 import pandas as pd
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -12,8 +14,6 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import QueryOrderStatus
 from dotenv import load_dotenv
-import os
-import sys
 
 
 # --------- Create the SDK clients --------

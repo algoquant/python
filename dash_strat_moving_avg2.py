@@ -26,7 +26,8 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
 
-from utils import get_symbol, calc_sharpe
+from utils import get_symbol
+from TechIndic import calc_sharpe
 from strategies import strat_movavg
 
 # Define marks for sliders

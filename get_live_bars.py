@@ -1,16 +1,20 @@
-### Get the latest bar stock prices using the Alpaca API.
-# https://alpaca.markets/sdks/python/api_reference/data/stock/requests.html
-# https://alpaca.markets/sdks/python/api_reference/data/stock.html
+"""
+Get the latest bar stock prices using the Alpaca API.
+https://alpaca.markets/sdks/python/api_reference/data/stock/requests.html
+https://alpaca.markets/sdks/python/api_reference/data/stock.html
 
-# There are at least three different ways to get the latest OHLCV bar of prices for a stock using the Alpaca API:
-# Using get_stock_latest_bar(), using the endpoint /v2/stocks/bars/latest, and using get_stock_bars().
-# get_stock_latest_bar() and the endpoint produce the same prices.
-# But both are different from the bar prices using get_stock_bars() with a time range.
-# The close price using get_stock_latest_bar() is different from the latest price, because the latest bar price is formed only once a minute, and doesn't change in between.
+There are at least three different ways to get the latest OHLCV bar of prices for a stock using the Alpaca API:
+Using get_stock_latest_bar(), using the endpoint /v2/stocks/bars/latest, and using get_stock_bars().
 
-# And there two different StockHistoricalDataClient classes in the Alpaca SDK.
-# On from alpaca.data and another one from alpaca.data.historical.
-# Both produce the same results, but the one from alpaca.data is the newer version?
+Using the function get_stock_latest_bar() and the endpoint produce the same prices.
+But both are different from the bar prices using get_stock_bars() with a time range.
+The close price using get_stock_latest_bar() is different from the latest price, because the latest bar price is formed only once a minute, and it doesn't change in between.
+
+And there are two different StockHistoricalDataClient classes in the Alpaca SDK.
+One from alpaca.data and another one from alpaca.data.historical.
+Both produce the same results, but the one from alpaca.data is the newer version?
+
+"""
 
 
 import os
@@ -35,6 +39,8 @@ DATA_SECRET = os.getenv("DATA_SECRET")
 
 # Data client for historical stock data
 data_client = StockHistoricalDataClient(DATA_KEY, DATA_SECRET)
+# Use SIP for comprehensive data, or IEX for free data.
+data_feed = DataFeed.SIP
 
 # Define the trading symbol
 symbol = "SPY"
@@ -42,7 +48,7 @@ symbol = "SPY"
 
 ### Get the latest bid/ask prices using the Alpaca SDK.
 
-request_params = StockLatestQuoteRequest(symbol_or_symbols=symbol, feed=DataFeed.SIP)
+request_params = StockLatestQuoteRequest(symbol_or_symbols=symbol, feed=data_feed)
 latest_quotes = data_client.get_stock_latest_quote(request_params)
 price_quotes = latest_quotes[symbol]
 ask_price = price_quotes.ask_price
@@ -54,7 +60,7 @@ print(f"Latest quotes for {symbol}: Ask = {price_quotes.ask_price}, Bid = {price
 
 request_params = StockLatestBarRequest(
     symbol_or_symbols=symbol,
-    feed=DataFeed.SIP, # Or DataFeed.SIP, DataFeed.OTC
+    feed=data_feed, # Or DataFeed.SIP, DataFeed.OTC
 )
 
 bar_data = data_client.get_stock_latest_bar(request_params)

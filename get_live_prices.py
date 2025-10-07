@@ -1,7 +1,10 @@
-### Get live stock prices using the Alpaca API.
-# https://alpaca.markets/sdks/python/api_reference/data/stock/requests.html
-# https://alpaca.markets/sdks/python/api_reference/data/stock.html
-# https://alpaca.markets/sdks/python/trading.html
+"""
+Get live stock prices using the Alpaca API.
+https://alpaca.markets/sdks/python/api_reference/data/stock/requests.html
+https://alpaca.markets/sdks/python/api_reference/data/stock.html
+https://alpaca.markets/sdks/python/trading.html
+"""
+
 
 import pandas as pd
 from alpaca.data import StockHistoricalDataClient

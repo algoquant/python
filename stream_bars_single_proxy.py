@@ -20,7 +20,7 @@ import json
 import asyncio
 import signal
 import websockets
-from MachineTrader import Bar
+from TechIndic import Bar
 
 # --------- Get the trading symbol from the command line arguments --------
 if len(sys.argv) > 1:
@@ -44,6 +44,17 @@ print(f"This script streams real-time stock bar prices for {symbol} via the Alpa
 # --------- Define the callback function for streaming price bars --------
 
 async def stream_bars():
+    """
+    Stream the price bars from WebSocket proxy and process them for trading strategy.
+    
+    When a new WebSocket bar message arrives matching the symbol, it creates a new Bar instance
+    directly from the JSON data using the Bar constructor.
+    It then calls the strategy function specified by strategy.strategy_function via the execute_strategy method.
+    
+    Args:
+        symbol (str): Trading symbol to filter for
+        strategy: Strategy instance with execute_strategy method and strategy_function attribute
+    """
 
     # Connect to the WebSocket proxy URL
     proxy_url = "ws://localhost:8765"

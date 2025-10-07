@@ -197,6 +197,55 @@ try:
     order_id = str(order_response.id)
     print(f"✅ Submitted {side} order for {shares_to_trade} shares of {symbol} with the order-id: {order_id}")
     print(f"📁 Order appended to {submits_file}")
+    
+    # Check if order is already filled (common with market orders)
+    print("🔍 Checking order status after submission...")
+    try:
+        import time
+        time.sleep(0.1)  # Small delay to allow order to process
+        order_status = trading_client.get_order_by_id(order_id)
+        print(f"📊 Order status: {order_status.status}")
+        
+        if order_status.status.value in ['filled', 'partially_filled']:
+            print(f"✅ Order already filled! No need to wait for WebSocket events.")
+            print(f"💰 Filled {order_status.filled_qty} shares at average price {order_status.filled_avg_price}")
+            
+            # Log the fill manually since WebSocket would miss it
+            time_now = datetime.now(strategy_instance.timezone).strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Create fill record
+            fill_record = {
+                "event": "fill",
+                "timestamp": order_status.updated_at if order_status.updated_at else time_now,
+                "symbol": order_status.symbol,
+                "side": order_status.side.value,
+                "qty": float(order_status.filled_qty) if order_status.filled_qty else 0,
+                "filled_avg_price": float(order_status.filled_avg_price) if order_status.filled_avg_price else 0,
+                "order_id": order_id,
+                "order_type": order_status.order_type.value,
+                "status": order_status.status.value
+            }
+            
+            # Save to fills file
+            fill_frame = pd.DataFrame([fill_record])
+            fill_frame = convert_to_nytzone(fill_frame)
+            fill_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
+            print(f"📁 Fill record saved to {fills_file}")
+            
+            # Exit successfully - no need for WebSocket
+            print("🎉 Trading completed successfully!")
+            exit(0)
+
+        elif order_status.status.value in ['canceled', 'expired', 'rejected']:
+            print(f"❌ Order {order_status.status.value}. No WebSocket needed.")
+            exit(1)
+        else:
+            print(f"⏳ Order status: {order_status.status.value} - will use WebSocket to monitor")
+            
+    except Exception as e:
+        print(f"⚠️ Could not check order status: {e}")
+        print("🔄 Proceeding with WebSocket to catch events...")
+        
 except Exception as e:
     # Convert error to string and save to CSV
     time_now = datetime.now(strategy_instance.timezone)
@@ -208,75 +257,22 @@ except Exception as e:
 
 
 
-# --------- Define the callback function to handle the trade updates and trade confirms --------
+# --------- Set up AlpacaSDK trade update handler --------
 
-async def handle_trade_update(event_data):
-    if (order_response is not None) and (order_id == str(event_data.order.id)):
-        # Use the MachineTrader approach for consistent event handling
-        event_dict = event_data.model_dump()  # Convert to dictionary
-        event_dict = convert_to_nytzone(event_dict)
-        event_name = str(event_dict["event"]).lower()  # Get the event name
-        time_stamp = event_dict["timestamp"]
-        orderinfo = event_dict["order"]
-        # Remove the "order" key from the event_dict
-        event_dict.pop("order", None)
-        symbol = orderinfo["symbol"]
-        event_dict.update(orderinfo)  # This adds order fields to event_dict
-        time_now = datetime.now(strategy_instance.timezone).strftime("%Y-%m-%d %H:%M:%S")
-
-        # Process the event data based on the event type
-        if (event_name == "fill") or (event_name == "partial_fill"):
-            order_type = orderinfo["order_type"]
-            trade_side = orderinfo["side"]
-            qty_filled = float(orderinfo["qty"])
-            fill_price = float(orderinfo.get("filled_avg_price", 0))
-            print(f"✅ Order {order_id} filled at {time_now} at price {fill_price}")
-            print(f"💸 {time_stamp} Filled {order_type} {trade_side} order for {qty_filled} shares of {symbol} at {fill_price}")
-            
-            position_fill = event_dict.get("position_qty", 0)
-            print(f"📊 Position from broker after the fill: {position_fill} shares of {symbol}")
-            
-            # Append to CSV (write header only if file does not exist)
-            event_frame = pd.DataFrame([event_dict])
-            event_frame.to_csv(fills_file, mode="a", header=not os.path.exists(fills_file), index=False)
-            print(f"📁 Fill appended to {fills_file}")
-            
-            # STOP the stream AFTER processing the fill
-            print("🛑 Stopping WebSocket stream after fill...")
-            await confirm_stream.stop_ws()
-            
-        elif (event_name == "pending_new") or (event_name == "new") or (event_name == "accepted"):
-            print(f"📋 Event {event_name} received for order {order_id} at {time_now}")
-            
-        elif event_name == "canceled":
-            print(f"❌ Order {order_id} canceled at {time_now}")
-            # Append to CSV (write header only if file does not exist)
-            event_frame = pd.DataFrame([event_dict])
-            event_frame.to_csv(canceled_file, mode="a", header=not os.path.exists(canceled_file), index=False)
-            print(f"📁 Canceled order appended to {canceled_file}")
-            await confirm_stream.stop_ws()  # Stop on cancel too
-            
-        elif event_name == "replaced":
-            print(f"🔄 Replaced event: {event_dict}")
-            await confirm_stream.stop_ws()
-            
-        elif event_name == "expired":
-            print(f"⏰ Expired event: {event_dict}")
-            await confirm_stream.stop_ws()
-            
-        else:
-            print(f"❓ Unknown event: {event_name}")
-            
-        print(f"✅ Finished processing the {event_name} update for order {order_id} at {time_now}")
-
-# End of handle_trade_update function
-
+# Set the file paths as instance variables for AlpacaSDK
+if order_response is not None:
+    alpaca_sdk.fills_file = fills_file
+    alpaca_sdk.canceled_file = canceled_file
+    print(f"⚙️ Configured AlpacaSDK trade handler for order {order_id}")
+    print(f"📝 Order {order_id} is automatically tracked in orders_list")
 
 
 # --------- Run the WebSocket to handle trade updates and confirms, and exceptions and Ctrl-C interrupt --------
 
-# Subscribe to the trade updates and confirms, and handle them using handle_trade_update()
-confirm_stream.subscribe_trade_updates(handle_trade_update)
+# Subscribe to the trade updates and confirms, and handle them using AlpacaSDK trade_update_handler()
+confirm_stream.subscribe_trade_updates(alpaca_sdk.trade_update_handler)
+
+
 
 # Define the main function to run the confirm_stream until the order is filled
 async def main():

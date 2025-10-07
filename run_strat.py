@@ -1,7 +1,7 @@
 """
-This is a strategy script for trading stocks using the Alpaca API.
-It first creates a strategy object, which is an instance of the Strategies class, and then it subscribes to the bar data stream via the proxy server.
-It passes the bar data to the strategy object via the Bar.stream_bars method.
+This is a script for running trading strategies using the Alpaca API.
+It first creates a strategy object, which is an instance of the CreateStrategy class, and then it subscribes to the bar data stream via the proxy server.
+It passes the bar data to the strategy object via the AlpacaSDK.stream_bars method.
 
 Strategy trades a single stock using the streaming real-time stock price bars from the proxy server - not directly the Alpaca API.
 The strategy is based on the Z-score, equal to the difference between the stock's price minus its Moving Average Price (EMA), divided by the volatility.
@@ -16,7 +16,7 @@ The strategy uses the contrarian rule based on the Bollinger Bands concept, wher
 
 To run the strategy, first change the path to the .env file.
 Then run the strategy by executing this script with the appropriate parameters in the terminal:
-    python3 strat_bollinger_bars_vwap.py symbol num_shares type alpha vol_floor risk_premium take_profit_factor delay
+    python3 strat_bollinger_bars_vwap.py symbol num_shares type alpha vol_floor thresholdz profit_factor delay
 For example:
     python3 strat_bollinger_bars_proxy.py SPY 1 limit 0.3 0.1 2.0 20.0 5.0
 
@@ -42,29 +42,29 @@ The vol_floor is the minimum value of the dollar volatility used in the Z-score 
 This prevents division by very small numbers when the price volatility is low.
 Typical values range from 0.01 to 0.2 depending on the asset and the time horizon.
 
-The risk_premium parameter serves two purposes:
+The thresholdz parameter serves two purposes:
 1. It adjusts the limit price for limit orders.
 2. It serves as the threshold for the Z-score.
 
-The risk_premium parameter is used to determine the limit price, compared to the ask or bid price.
-The limit price adjustment pa is equal to the risk_premium parameter times the volatility.
-For example, if the risk_premium is 2.0 and the volatility is $0.1, then the price adjustment pa is $0.2.
+The thresholdz parameter is used to determine the limit price, compared to the ask or bid price.
+The limit price adjustment pa is equal to the thresholdz parameter times the volatility.
+For example, if the thresholdz is 2.0 and the volatility is $0.1, then the price adjustment pa is $0.2.
 If the ask price is $100, then the limit buy price is set to $99.8.
 If the bid price is $99, then the limit sell price is set to $99.2.
 The subsequent limit order prices are spread apart by the price adjustment pa, to avoid submitting multiple limit orders at the same price.
-If another limit order is submitted, then its price is set based on the previous limit order price and the risk_premium parameter.
+If another limit order is submitted, then its price is set based on the previous limit order price and the thresholdz parameter.
 For example, the next limit buy price after $99.8 would be set to $99.6.
 This is to avoid submitting multiple limit orders at the same price.
 
-The risk_premium serves as the threshold level for the Z-score.
-If the Z-score is between -risk_premium and risk_premium, then the strategy does not trade.
-If the Z-score is below -risk_premium, then it buys the stock.
-If the Z-score is above +risk_premium, then it sells the stock.
-It submits either limit or market orders when the Z-score is above +risk_premium or below -risk_premium.
+The thresholdz serves as the threshold level for the Z-score.
+If the Z-score is between -thresholdz and thresholdz, then the strategy does not trade.
+If the Z-score is below -thresholdz, then it buys the stock.
+If the Z-score is above +thresholdz, then it sells the stock.
+It submits either limit or market orders when the Z-score is above +thresholdz or below -thresholdz.
 
-The take_profit_factor is used to determine the take profit level for the strategy.
+The profit_factor is used to determine the take profit level for the strategy.
 It is a multiplier applied to the average cost basis of the position.
-For example, if the take_profit_factor is 2.0 and the average cost basis is $100, then the take profit level is set to $102.
+For example, if the profit_factor is 2.0 and the average cost basis is $100, then the take profit level is set to $102.
 
 The delay parameter specifies the number of seconds to wait before submitting trade orders.
 This delay allows for better timing control and can help avoid rapid-fire trading.
@@ -80,7 +80,9 @@ This is only an illustration how to use the streaming real-time data from the pr
 import argparse
 import asyncio
 from zoneinfo import ZoneInfo
-from MachineTrader import Bar, CreateStrategy
+from MachineTrader import CreateStrategy
+from AlpacaSDK import AlpacaSDK
+from TechIndic import Bar
 
 
 # --------- Get the trading parameters from the command line arguments --------
@@ -109,7 +111,7 @@ Examples:
                        help='EMA decay factor 0 < alpha <= 1 (default: 0.1) - larger values produce smoother EMA')
     parser.add_argument('--vol_floor', type=float, default=0.1,
                        help='Minimum volatility floor (default: 0.1)')
-    parser.add_argument('--risk_premium', type=float, default=2.0,
+    parser.add_argument('--thresholdz', type=float, default=2.0,
                        help='The Z-score threshold (default: 2.0) - trade if the Z-score exceeds the threshold')
     parser.add_argument('--take_profit', type=float, default=20.0,
                        help='Take profit factor (default: 20.0) - Take profit if the unrealized PnL exceeds the factor times the volatility')
@@ -128,8 +130,8 @@ args = parse_arguments()
 
 print(f"Trading parameters: symbol={args.symbol}, type={args.type}, "
       f"shares_per_trade={args.shares}, alpha={args.alpha}, "
-      f"risk_premium={args.risk_premium}, vol_floor={args.vol_floor}, "
-      f"take_profit_factor={args.take_profit}, delay={args.delay}, "
+      f"thresholdz={args.thresholdz}, vol_floor={args.vol_floor}, "
+      f"profit_factor={args.take_profit}, delay={args.delay}, "
       f"strategy={args.strategy}\n")
 
 
@@ -139,8 +141,8 @@ if len(sys.argv) > 9:
     type = args.type
     alpha = args.alpha
     vol_floor = args.vol_floor
-    risk_premium = args.risk_premium
-    take_profit_factor = args.take_profit
+    thresholdz = args.thresholdz
+    profit_factor = args.take_profit
     delay = args.delay
     strategy_function = sys.argv[9].strip().lower()  # Strategy function name
 elif len(sys.argv) > 8:
@@ -149,8 +151,8 @@ elif len(sys.argv) > 8:
     type = args.type
     alpha = args.alpha
     vol_floor = args.vol_floor
-    risk_premium = args.risk_premium
-    take_profit_factor = args.take_profit
+    thresholdz = args.thresholdz
+    profit_factor = args.take_profit
     delay = args.delay
     strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 7:
@@ -159,8 +161,8 @@ elif len(sys.argv) > 7:
     type = args.type
     alpha = args.alpha
     vol_floor = args.vol_floor
-    risk_premium = args.risk_premium
-    take_profit_factor = args.take_profit
+    thresholdz = args.thresholdz
+    profit_factor = args.take_profit
     delay = args.delay
     strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 6:
@@ -169,8 +171,8 @@ elif len(sys.argv) > 6:
     type = args.type
     alpha = args.alpha
     vol_floor = args.vol_floor
-    risk_premium = args.risk_premium
-    take_profit_factor = 20.0  # Default take profit level
+    thresholdz = args.thresholdz
+    profit_factor = 20.0  # Default take profit level
     delay = 0.0  # Default delay (no delay)
     strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 5:
@@ -179,8 +181,8 @@ elif len(sys.argv) > 5:
     type = sys.argv[3].strip().lower()  # Order type (market/limit)
     alpha = float(sys.argv[4])
     vol_floor = float(sys.argv[5])  # Volatility floor
-    risk_premium = 2.0  # Default risk_premium value
-    take_profit_factor = 20.0  # Default take profit level
+    thresholdz = 2.0  # Default thresholdz value
+    profit_factor = 20.0  # Default take profit level
     delay = 0.0  # Default delay (no delay)
     strategy_function = "trade_zscore"  # Default strategy function
 elif len(sys.argv) > 4:
@@ -189,8 +191,8 @@ elif len(sys.argv) > 4:
     type = args.type
     alpha = args.alpha
     vol_floor = args.vol_floor
-    risk_premium = args.risk_premium
-    take_profit_factor = args.take_profit
+    thresholdz = args.thresholdz
+    profit_factor = args.take_profit
     delay = args.delay
     strategy_function = "trade_zscore"  # Default strategy function
 else:
@@ -201,26 +203,26 @@ else:
     type = input("Enter order type (market/limit): ").strip().lower()
     alpha_input = input("Enter EMA alpha parameter (default 0.1): ").strip()
     alpha = float(alpha_input) if alpha_input else 0.1
-    risk_premium_input = input("Enter price adjustment (default 0.5): ").strip()
-    risk_premium = float(risk_premium_input) if risk_premium_input else 0.5
+    thresholdz_input = input("Enter price adjustment (default 0.5): ").strip()
+    thresholdz = float(thresholdz_input) if thresholdz_input else 0.5
     vol_floor_input = input("Enter volatility floor (default 0.05): ").strip()
     vol_floor = float(vol_floor_input) if vol_floor_input else 0.05
     take_profit_input = input("Enter take profit level (default 2.0): ").strip()
-    take_profit_factor = float(take_profit_input) if take_profit_input else 2.0
+    profit_factor = float(take_profit_input) if take_profit_input else 2.0
     delay_input = input("Enter order submission delay in seconds (default 0.0): ").strip()
     delay = float(delay_input) if delay_input else 0.0
     strategy_function_input = input("Enter strategy function name (default trade_zscore): ").strip()
     strategy_function = strategy_function_input if strategy_function_input else "trade_zscore"
 
-print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, risk_premium={risk_premium}, vol_floor={vol_floor}, take_profit_factor={take_profit_factor}, delay={delay}, strategy_function={strategy_function}\n")
+print(f"Trading parameters: symbol={symbol}, type={type}, shares_per_trade={shares_per_trade}, alpha={alpha}, thresholdz={thresholdz}, vol_floor={vol_floor}, profit_factor={profit_factor}, delay={delay}, strategy_function={strategy_function}\n")
 
 
-# --------- Initialize the Strategies instance (will be created after getting parameters) --------
+# --------- Initialize the CreateStrategy instance (will be created after getting parameters) --------
 
 # Define the timezone for date/time operations
 timezone = ZoneInfo("America/New_York")
 
-# Initialize the Strategies instance with all state variables
+# Initialize the CreateStrategy instance with all state variables
 # The strategy name, MovAvg, and SDK clients will be created automatically
 strategy = CreateStrategy(
     symbol=symbol,
@@ -229,8 +231,8 @@ strategy = CreateStrategy(
     type=type,
     alpha=alpha,
     vol_floor=vol_floor,
-    risk_premium=risk_premium,
-    take_profit_factor=take_profit_factor,
+    thresholdz=thresholdz,
+    profit_factor=profit_factor,
     delay=delay,
     strategy_function=strategy_function,
     env_file="/Users/jerzy/Develop/Python/.env"
@@ -250,7 +252,7 @@ async def main():
         print("\nStarting the data WebSocket connection...")
         print("\nStarting the trade updates and confirmations WebSocket connection...")
         await asyncio.gather(
-            Bar.stream_bars(symbol, strategy),
+            AlpacaSDK.stream_bars(symbol, strategy),
             strategy.alpaca_sdk.get_confirm_stream()._run_forever()
         )
     except Exception as e:

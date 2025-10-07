@@ -78,7 +78,7 @@ async def relay_alpaca_stream():
                         "secret": DATA_SECRET
                     }
                     await alpaca_ws.send(str(auth_msg).replace("'", '"'))
-                    # Optionally subscribe to channels
+                    # Subscribe to the trade prices and price bars data for the specified symbols
                     sub_msg = {
                         "action": "subscribe",
                         "trades": symbols,

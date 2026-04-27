@@ -1,0 +1,144 @@
+classDiagram
+    class GetArgs {
+        -arguments: dict
+        -args: Namespace
+        +__init__()
+        +get_user_input(prompt, default_value, value_type, choices) Any
+        +parse_arguments() Namespace
+        +prompt_for_missing_args() Namespace
+        +confirm_parameters() bool
+    }
+
+    class BaseStrategy {
+        <<abstract>>
+        -config: dict
+        -state: dict
+        +__init__(**kwargs)
+        +reset()*
+        +get_available_strategies() list*
+        +execute(strategy_name, *args, **kwargs) Any
+        +recalc(strategy_name, *args, **kwargs) Any
+    }
+
+    class StrategyFactory {
+        -_strategies: dict~str,type~
+        -_default_strategy: str
+        +register(name, strategy_class) void
+        +create(strategy_class, **kwargs) BaseStrategy
+        +set_default_strategy(name) void
+        +get_default_strategy() str
+        +get_available_strategies() list~str~
+    }
+
+    class SingleStockStrategy {
+        -alpaca_sdk: AlpacaSDK
+        -indicator: Indicator
+        -strategy_function: str
+        -indicator_name: str
+        -symbol: str
+        -order_type: str
+        -shares_per_trade: float
+        -alpha: float
+        -vol_floor: float
+        -thresholdz: float
+        -take_profit: float
+        -delay: float
+        -timezone: ZoneInfo
+        -strategy_name: str
+        -orders_list: dict~str,float~
+        -position_list: list~float~
+        -position_shares: int
+        -position_broker: float
+        -unrealized_pnl: float
+        -total_realized_pnl: float
+        -submits_file: str
+        -error_file: str
+        -state_file: str
+        -fills_file: str
+        -canceled_file: str
+        +__init__(arguments, **kwargs)
+        +reset() void
+        +get_available_strategies() list~str~
+        +execute_strategy(bar) async
+        +save_state(date_time, symbol, price, volatility, zscore, order, position_shares, total_realized_pnl, unrealized_pnl, state_file) bool
+        +take_profit(position_shares, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, price_adjustment) tuple
+        +calc_shares_to_trade(zscore, price_last, shares_per_trade, shares_available, last_buy_price, last_sell_price, thresholdz, price_adjustment) tuple
+        +handle_trade_update(event_data) async
+        +trade_zscore(bar) async
+        +trade_dual_ma(bar) async
+        +trade_bollinger(bar) async
+        +trade_momentum(bar) async
+        +trade_mean_reversion(bar) async
+    }
+
+    class AlpacaSDK {
+        <<external>>
+        +create_trade_clients(env_file) tuple
+        +create_file_names(strategy_name, symbol, timezone) dict
+        +get_position(symbol) Position
+        +submit_order(symbol, shares_per_trade, side, type, limit_price, submits_file, error_file) Order
+        +cancel_orders(symbol, orders_list, canceled_file) list
+    }
+
+    class Trading {
+        <<external>>
+        +position_list: list
+        +last_price: float
+        +calc_unrealized_pnl() tuple~int,float~
+    }
+
+    class Indicator {
+        <<external>>
+        +calculate(indicator_name, price, volume) tuple
+        +reset() void
+    }
+
+    class IndicatorFactory {
+        <<external>>
+        +create_indicator(name, **kwargs) Indicator
+        +validate_indicator_name(name, strategy_function, indicator) void
+    }
+
+    class Bar {
+        <<external>>
+        +symbol: str
+        +open: float
+        +high: float
+        +low: float
+        +close: float
+        +volume: float
+        +timestamp: datetime
+    }
+
+    class Position {
+        <<external>>
+        +qty: str
+        +avg_entry_price: str
+        +market_value: str
+    }
+
+    class Order {
+        <<external>>
+        +id: str
+        +status: str
+        +filled_avg_price: str
+    }
+
+    class OrderSide {
+        <<enum>>
+        BUY
+        SELL
+    }
+
+    GetArgs --> StrategyFactory : provides parsed args
+    BaseStrategy <|-- SingleStockStrategy
+    StrategyFactory --> BaseStrategy : creates
+    StrategyFactory ..> SingleStockStrategy : default type
+    SingleStockStrategy *-- AlpacaSDK : owns SDK client
+    SingleStockStrategy *-- Indicator : owns indicator
+    SingleStockStrategy --> Trading : uses PnL helper
+    SingleStockStrategy --> Bar : consumes
+    SingleStockStrategy --> OrderSide : uses enums
+    SingleStockStrategy --> Position : reads broker position
+    SingleStockStrategy --> Order : submits/cancels
+    IndicatorFactory --> Indicator : produces

@@ -1,0 +1,155 @@
+classDiagram
+    class Trading {
+        +STRATEGY_NAME: str
+        -symbol: str
+        -position_list: list
+        -position_shares: int
+        -position_broker: float
+        -broker_qty: float
+        -shares_available: float
+        -orders_list: dict
+        -total_realized_pnl: float
+        -num_shares: int
+        -unrealized_pnl: float
+        -last_buy_price: float
+        -last_sell_price: float
+        -num_buy_orders: int
+        -num_sell_orders: int
+        -total_orders: int
+        -last_price: float
+        -last_bar: dict/object
+        -fills_file: str
+        -canceled_file: str
+        -submits_file: str
+        -state_file: str
+        -error_file: str
+        -timezone: str
+        -env_file: str
+        
+        +__init__(symbol: str)
+        +create_file_names(strategy_name, timezone, dir_name, env_file, dir_env_var) tuple
+        +update_prices(*args, **kwargs) void
+        +is_bar(obj) bool
+        +calc_realized_pnl(trade_side, qty_filled, fill_price, order_id) float
+        +calc_unrealized_pnl() tuple~float,float,float~
+        +get_state(alpaca_api, shares_per_trade) dict~str,Any~
+        +save_state(**kwargs) bool
+        +handle_trade_event(event_data) async
+    }
+
+    class AlpacAPI {
+        +API_VERSION: str
+        -trading_client: TradingClient
+        -confirm_stream: TradingStream
+        -data_client: StockHistoricalDataClient
+        -enable_rate_limiting: bool
+        -max_retries: int
+        -base_delay: float
+        -max_delay: float
+        -last_request_time: float
+        -min_request_interval: float
+        -logger: Logger
+        +BROKER_NAME: str
+        
+        +__init__(enable_rate_limiting, max_retries, base_delay, max_delay)
+        +_is_rate_limit_error(error) bool
+        +_calculate_delay(attempt) float
+        +_enforce_rate_limit() async
+        +execute_with_retry_sync(func, *args, **kwargs) Any
+        +create_trade_clients(env_file, TRADE_KEY, TRADE_SECRET) tuple
+        +create_data_client(env_file, DATA_KEY, DATA_SECRET) StockHistoricalDataClient
+        +connect_websocket_with_retry(handle_trade_event, connection_timeout) bool async
+        +cleanup_websocket() async
+        +create_with_rate_limiting(max_retries, base_delay) AlpacAPI
+        +create_without_rate_limiting() AlpacAPI
+        +get_trading_client() TradingClient
+        +get_confirm_stream() TradingStream
+        +get_data_client() StockHistoricalDataClient
+        +get_position(symbol) Position
+        +cancel_orders(symbol, orders_list, canceled_file) list
+        +submit_order(symbol, shares_per_trade, side, type, limit_price) Order
+        +stream_bars(symbol, strategy) async
+    }
+
+    class RateLimitExceededError {
+        Exception raised when rate limits are exceeded
+    }
+
+    class TradingClient {
+        <<external>>
+        +get_account() Account
+        +get_open_position(symbol) Position
+        +submit_order(request) Order
+        +cancel_order_by_id(order_id) bool
+    }
+
+    class TradingStream {
+        <<external>>
+        +subscribe_trade_updates(handler) void
+        +run() async
+        +stop() async
+    }
+
+    class StockHistoricalDataClient {
+        <<external>>
+        +get_stock_bars(request) DataFrame
+        +get_stock_latest_quote(request) dict
+        +get_stock_latest_trade(request) dict
+    }
+
+    class Position {
+        <<external>>
+        +symbol: str
+        +qty: str
+        +avg_entry_price: str
+        +market_value: str
+        +unrealized_pl: str
+    }
+
+    class Order {
+        <<external>>
+        +id: str
+        +status: str
+        +filled_qty: str
+        +filled_avg_price: str
+    }
+
+    class Account {
+        <<external>>
+        +id: str
+        +buying_power: str
+        +account_number: str
+    }
+
+    class OrderSide {
+        <<enum>>
+        BUY
+        SELL
+    }
+
+    class OrderType {
+        <<enum>>
+        market
+        limit
+    }
+
+    class Logger {
+        <<stdlib>>
+        +info(msg)
+        +warning(msg)
+        +error(msg)
+    }
+
+    AlpacAPI --> RateLimitExceededError : raises
+    AlpacAPI *-- TradingClient : owns
+    AlpacAPI *-- TradingStream : owns
+    AlpacAPI *-- StockHistoricalDataClient : owns
+    AlpacAPI --> Position : returns
+    AlpacAPI --> Order : returns
+    AlpacAPI --> OrderSide : uses
+    AlpacAPI --> OrderType : uses
+    AlpacAPI --> Logger : logs through
+    Trading --> AlpacAPI : depends on
+    Trading --> Position : aggregates
+    Trading --> Order : tracks fills
+    TradingClient --> Account : exposes

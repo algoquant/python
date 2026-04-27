@@ -1,5 +1,15 @@
 # Ignore all files
 *
+.DS_Store
+.idea/
+.vscode/
+
+# Unignore directories
+!AlpacaSDK/
+!AlpacaSDK/**
+!MachineTrader/
+!MachineTrader/**
+
 # Ignore directories
 .pylint.d/
 __pycache__/
@@ -12,4 +22,4 @@ trade_by_tic/
 !*.py
 !*.ipynb
 !*.txt
-
+!*.md

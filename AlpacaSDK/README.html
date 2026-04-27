@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>README</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<!-- pandoc -s /Users/jerzy/Develop/Python/AlpacaSDK/README.md -o /Users/jerzy/Develop/Python/AlpacaSDK/README.html -->
+<h1 id="alpacasdk">AlpacaSDK</h1>
+<p><a href="https://www.python.org/downloads/"><img
+src="https://img.shields.io/badge/python-3.8%2B-blue.svg"
+alt="Python Version" /></a> <a href="https://alpaca.markets/"><img
+src="https://img.shields.io/badge/Alpaca-API%20v2-green.svg"
+alt="Alpaca API" /></a> <a href="LICENSE"><img
+src="https://img.shields.io/badge/license-MIT-green.svg"
+alt="License" /></a> <a href=""><img
+src="https://img.shields.io/badge/build-passing-brightgreen.svg"
+alt="Build Status" /></a></p>
+<blockquote>
+<p><strong>Object-Oriented Wrapper for Alpaca Trading API</strong></p>
+</blockquote>
+<p>AlpacaSDK is a comprehensive, object-oriented Python wrapper for the
+Alpaca Markets API that simplifies algorithmic trading operations. Built
+with professional-grade architecture, it provides unified access to
+trading, streaming, and market data functionality with robust error
+handling and flexible configuration management.</p>
+<h2 id="key-features">🚀 <strong>Key Features</strong></h2>
+<h3 id="core-functionality"><strong>🎯 Core Functionality</strong></h3>
+<ul>
+<li><strong><code>AlpacaSDK</code></strong> - Single class interface for
+all Alpaca API operations</li>
+<li><strong>Trading Client</strong> - Execute market and limit orders
+with comprehensive validation</li>
+<li><strong>Streaming Client</strong> - Real-time trade confirmations
+and updates</li>
+<li><strong>Data Client</strong> - Historical market data access and
+processing</li>
+<li><strong>Position Management</strong> - Real-time position tracking
+and monitoring</li>
+<li><strong>Order Management</strong> - Advanced order placement,
+cancellation, and tracking</li>
+</ul>
+<h3 id="advanced-capabilities"><strong>💡 Advanced
+Capabilities</strong></h3>
+<ul>
+<li>✅ <strong>Flexible Authentication</strong> - Multiple environment
+file support and custom key names</li>
+<li>✅ <strong>Error Handling</strong> - Robust exception handling with
+detailed error logging</li>
+<li>✅ <strong>CSV Integration</strong> - Automatic order and error
+logging to CSV files</li>
+<li>✅ <strong>State Management</strong> - Persistent client instances
+with lazy initialization</li>
+<li>✅ <strong>Type Safety</strong> - Full type hints and validation for
+all operations</li>
+<li>✅ <strong>Production Ready</strong> - Designed for both paper
+trading and live markets</li>
+</ul>
+<h2 id="installation">📦 <strong>Installation</strong></h2>
+<h3 id="requirements"><strong>Requirements</strong></h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Core Dependencies</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install alpaca-py pandas python-dotenv</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: For enhanced logging and data processing</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install numpy matplotlib</span></code></pre></div>
+<h3 id="quick-install"><strong>Quick Install</strong></h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install from source</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/your-username/AlpacaSDK.git</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> AlpacaSDK</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> .</span></code></pre></div>
+<h3 id="integration-with-machinetrader"><strong>Integration with
+MachineTrader</strong></h3>
+<p>AlpacaSDK is designed to work seamlessly with the MachineTrader
+framework:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install both packages</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> MachineTrader/</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> AlpacaSDK/</span></code></pre></div>
+<h2 id="architecture-overview">🏗️ <strong>Architecture
+Overview</strong></h2>
+<pre><code>AlpacaSDK/
+├── __init__.py          # Package initialization and exports
+├── alpacasdk.py         # Core AlpacaSDK class implementation
+└── README.md           # This documentation
+
+Core Dependencies:
+├── alpaca-py           # Official Alpaca Python SDK
+├── pandas              # Data manipulation and CSV handling  
+├── python-dotenv       # Environment variable management
+└── zoneinfo            # Timezone handling for market hours</code></pre>
+<h2 id="class-diagram">📊 <strong>Class Diagram</strong></h2>
+<p><a href="class-diagram.svg">Open standalone SVG version</a></p>
+<pre class="mermaid"><code>classDiagram
+    class Trading {
+        +STRATEGY_NAME: str
+        -symbol: str
+        -position_list: list
+        -position_shares: int
+        -position_broker: float
+        -broker_qty: float
+        -shares_available: float
+        -orders_list: dict
+        -total_realized_pnl: float
+        -num_shares: int
+        -unrealized_pnl: float
+        -last_buy_price: float
+        -last_sell_price: float
+        -num_buy_orders: int
+        -num_sell_orders: int
+        -total_orders: int
+        -last_price: float
+        -last_bar: dict/object
+        -fills_file: str
+        -canceled_file: str
+        -submits_file: str
+        -state_file: str
+        -error_file: str
+        -timezone: str
+        -env_file: str
+        
+        +__init__(symbol: str)
+        +create_file_names(strategy_name, timezone, dir_name, env_file, dir_env_var) tuple
+        +update_prices(*args, **kwargs) void
+        +is_bar(obj) bool
+        +calc_realized_pnl(trade_side, qty_filled, fill_price, order_id) float
+        +calc_unrealized_pnl() tuple~float,float,float~
+        +get_state(alpaca_api, shares_per_trade) dict~str,Any~
+        +save_state(**kwargs) bool
+        +handle_trade_event(event_data) async
+    }
+
+    class AlpacAPI {
+        +API_VERSION: str
+        -trading_client: TradingClient
+        -confirm_stream: TradingStream
+        -data_client: StockHistoricalDataClient
+        -enable_rate_limiting: bool
+        -max_retries: int
+        -base_delay: float
+        -max_delay: float
+        -last_request_time: float
+        -min_request_interval: float
+        -logger: Logger
+        +BROKER_NAME: str
+        
+        +__init__(enable_rate_limiting, max_retries, base_delay, max_delay)
+        +_is_rate_limit_error(error) bool
+        +_calculate_delay(attempt) float
+        +_enforce_rate_limit() async
+        +execute_with_retry_sync(func, *args, **kwargs) Any
+        +create_trade_clients(env_file, TRADE_KEY, TRADE_SECRET) tuple
+        +create_data_client(env_file, DATA_KEY, DATA_SECRET) StockHistoricalDataClient
+        +connect_websocket_with_retry(handle_trade_event, connection_timeout) bool async
+        +cleanup_websocket() async
+        +create_with_rate_limiting(max_retries, base_delay) AlpacAPI
+        +create_without_rate_limiting() AlpacAPI
+        +get_trading_client() TradingClient
+        +get_confirm_stream() TradingStream
+        +get_data_client() StockHistoricalDataClient
+        +get_position(symbol) Position
+        +cancel_orders(symbol, orders_list, canceled_file) list
+        +submit_order(symbol, shares_per_trade, side, type, limit_price) Order
+        +stream_bars(symbol, strategy) async
+    }
+
+    class RateLimitExceededError {
+        Exception raised when rate limits are exceeded
+    }
+
+    class TradingClient {
+        &lt;&lt;external&gt;&gt;
+        +get_account() Account
+        +get_open_position(symbol) Position
+        +submit_order(request) Order
+        +cancel_order_by_id(order_id) bool
+    }
+
+    class TradingStream {
+        &lt;&lt;external&gt;&gt;
+        +subscribe_trade_updates(handler) void
+        +run() async
+        +stop() async
+    }
+
+    class StockHistoricalDataClient {
+        &lt;&lt;external&gt;&gt;
+        +get_stock_bars(request) DataFrame
+        +get_stock_latest_quote(request) dict
+        +get_stock_latest_trade(request) dict
+    }
+
+    class Position {
+        &lt;&lt;external&gt;&gt;
+        +symbol: str
+        +qty: str
+        +avg_entry_price: str
+        +market_value: str
+        +unrealized_pl: str
+    }
+
+    class Order {
+        &lt;&lt;external&gt;&gt;
+        +id: str
+        +status: str
+        +filled_qty: str
+        +filled_avg_price: str
+    }
+
+    class Account {
+        &lt;&lt;external&gt;&gt;
+        +id: str
+        +buying_power: str
+        +account_number: str
+    }
+
+    class OrderSide {
+        &lt;&lt;enum&gt;&gt;
+        BUY
+        SELL
+    }
+
+    class OrderType {
+        &lt;&lt;enum&gt;&gt;
+        market
+        limit
+    }
+
+    class Logger {
+        &lt;&lt;stdlib&gt;&gt;
+        +info(msg)
+        +warning(msg)
+        +error(msg)
+    }
+
+    AlpacAPI --&gt; RateLimitExceededError : raises
+    AlpacAPI *-- TradingClient : owns
+    AlpacAPI *-- TradingStream : owns
+    AlpacAPI *-- StockHistoricalDataClient : owns
+    AlpacAPI --&gt; Position : returns
+    AlpacAPI --&gt; Order : returns
+    AlpacAPI --&gt; OrderSide : uses
+    AlpacAPI --&gt; OrderType : uses
+    AlpacAPI --&gt; Logger : logs through
+    Trading --&gt; AlpacAPI : depends on
+    Trading --&gt; Position : aggregates
+    Trading --&gt; Order : tracks fills
+    TradingClient --&gt; Account : exposes</code></pre>
+<!-- Mermaid renderer for Pandoc-generated HTML output -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const styleId = "mermaid-static-styles";
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = [
+            ".mermaid, .mermaid svg { font-size: 1em; font-family: inherit; }",
+            ".mermaid .label, .mermaid .nodeLabel, .mermaid .classTitle, .mermaid .classText { font-size: 1em !important; font-family: inherit !important; }",
+            ".mermaid .edgePath path, .mermaid .relation { stroke-linejoin: round; stroke-linecap: round; }"
+        ].join("\n");
+        document.head.appendChild(style);
+    }
+
+    const toRender = [];
+
+    document.querySelectorAll("pre.mermaid, pre code.language-mermaid, pre code.mermaid, code.language-mermaid, code.mermaid").forEach(function (node) {
+        const text = node.textContent || "";
+        if (!text.trim()) {
+            return;
+        }
+
+        const parentPre = node.matches("pre") ? node : node.closest("pre");
+        const replaceTarget = parentPre || node;
+
+        const container = document.createElement("div");
+        container.className = "mermaid";
+        container.textContent = text;
+        replaceTarget.replaceWith(container);
+        toRender.push(container);
+    });
+
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "loose",
+        themeVariables: {
+            fontSize: "16px",
+            fontFamily: "inherit"
+        },
+        class: {
+            curve: "basis",
+            diagramPadding: 16,
+            nodeSpacing: 80,
+            rankSpacing: 80,
+            padding: 28,
+            useMaxWidth: false
+        }
+    });
+
+    if (toRender.length > 0) {
+        mermaid.run({ nodes: toRender });
+    }
+});
+</script>
+<h2 id="quick-start">🎯 <strong>Quick Start</strong></h2>
+<h3 id="basic-setup"><strong>1. Basic Setup</strong></h3>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize the SDK</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create trading clients (uses default .env file)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>trading_client, confirm_stream <span class="op">=</span> sdk.create_trade_clients()</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Create data client for historical data</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>data_client <span class="op">=</span> sdk.create_data_client()</span></code></pre></div>
+<h3 id="environment-configuration"><strong>2. Environment
+Configuration</strong></h3>
+<p>Create a <code>.env</code> file in your project root:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Trading API Keys</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">ALPACA_TRADE_KEY</span><span class="op">=</span>your_trading_api_key</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="va">ALPACA_TRADE_SECRET</span><span class="op">=</span>your_trading_secret_key</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Data API Keys (for market data)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="va">DATA_KEY</span><span class="op">=</span>your_data_api_key</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="va">DATA_SECRET</span><span class="op">=</span>your_data_secret_key</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Base URL (paper trading vs live)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="va">ALPACA_BASE_URL</span><span class="op">=</span>https://paper-api.alpaca.markets</span></code></pre></div>
+<h3 id="simple-trading-example"><strong>3. Simple Trading
+Example</strong></h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> alpaca.trading.enums <span class="im">import</span> OrderSide</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize and setup clients</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients()</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Check current position</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>position <span class="op">=</span> sdk.get_position(<span class="st">&quot;AAPL&quot;</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Current AAPL position: </span><span class="sc">{</span>position<span class="sc">.</span>qty <span class="cf">if</span> position <span class="cf">else</span> <span class="dv">0</span><span class="sc">}</span><span class="ss"> shares&quot;</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Submit a market buy order</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;AAPL&quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    submits_file<span class="op">=</span><span class="st">&quot;orders.csv&quot;</span>,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    error_file<span class="op">=</span><span class="st">&quot;errors.csv&quot;</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> order:</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Order submitted: </span><span class="sc">{</span>order<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+<h2 id="detailed-documentation">📚 <strong>Detailed
+Documentation</strong></h2>
+<h3 id="alpacasdk-class"><strong>AlpacaSDK Class</strong></h3>
+<p>The <code>AlpacaSDK</code> class is the main interface for all Alpaca
+API operations, providing a unified, object-oriented approach to trading
+and data access.</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize the SDK</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>sdk <span class="op">=</span> AlpacaSDK()</span></code></pre></div>
+<h4 id="client-management-methods"><strong>Client Management
+Methods</strong></h4>
+<h5
+id="create_trade_clientsenv_filenone-trade_keyalpaca_trade_key-trade_secretalpaca_trade_secret"><strong><code>create_trade_clients(env_file=None, TRADE_KEY="ALPACA_TRADE_KEY", TRADE_SECRET="ALPACA_TRADE_SECRET")</code></strong></h5>
+<p>Creates and initializes trading and streaming clients.</p>
+<p><strong>Parameters:</strong> - <code>env_file</code> (str, optional):
+Path to environment file. If <code>None</code>, uses default
+<code>.env</code> or system environment - <code>TRADE_KEY</code> (str):
+Environment variable name for trading API key -
+<code>TRADE_SECRET</code> (str): Environment variable name for trading
+API secret</p>
+<p><strong>Returns:</strong> - <code>tuple</code>: (trading_client,
+confirm_stream) - Initialized SDK clients</p>
+<p><strong>Examples:</strong></p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use default .env file</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>trading_client, stream <span class="op">=</span> sdk.create_trade_clients()</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Use custom environment file</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>trading_client, stream <span class="op">=</span> sdk.create_trade_clients(<span class="st">&quot;/path/to/production.env&quot;</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Use custom environment variable names</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>trading_client, stream <span class="op">=</span> sdk.create_trade_clients(</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    TRADE_KEY<span class="op">=</span><span class="st">&quot;MY_TRADE_KEY&quot;</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    TRADE_SECRET<span class="op">=</span><span class="st">&quot;MY_TRADE_SECRET&quot;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<h5
+id="create_data_clientenv_filenone-data_keydata_key-data_secretdata_secret"><strong><code>create_data_client(env_file=None, DATA_KEY="DATA_KEY", DATA_SECRET="DATA_SECRET")</code></strong></h5>
+<p>Creates and configures the data client for historical market data
+access.</p>
+<p><strong>Parameters:</strong> - <code>env_file</code> (str, optional):
+Path to environment file - <code>DATA_KEY</code> (str): Environment
+variable name for data API key<br />
+- <code>DATA_SECRET</code> (str): Environment variable name for data API
+secret</p>
+<p><strong>Returns:</strong> - <code>StockHistoricalDataClient</code>:
+Configured data client instance</p>
+<p><strong>Examples:</strong></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create data client with default settings</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>data_client <span class="op">=</span> sdk.create_data_client()</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Use custom environment file</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>data_client <span class="op">=</span> sdk.create_data_client(<span class="st">&quot;/path/to/data.env&quot;</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Use custom environment variable names</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>data_client <span class="op">=</span> sdk.create_data_client(</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    DATA_KEY<span class="op">=</span><span class="st">&quot;CUSTOM_DATA_KEY&quot;</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    DATA_SECRET<span class="op">=</span><span class="st">&quot;CUSTOM_DATA_SECRET&quot;</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<h4 id="client-access-methods"><strong>Client Access
+Methods</strong></h4>
+<h5
+id="get_trading_client"><strong><code>get_trading_client()</code></strong></h5>
+<p>Returns the initialized trading client instance.</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> sdk.get_trading_client()</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use client for direct API calls</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>account <span class="op">=</span> client.get_account()</span></code></pre></div>
+<h5
+id="get_confirm_stream"><strong><code>get_confirm_stream()</code></strong></h5>
+<p>Returns the trading stream for order confirmations.</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>stream <span class="op">=</span> sdk.get_confirm_stream()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Subscribe to trade updates</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>stream.subscribe_trade_updates(handle_trade_update)</span></code></pre></div>
+<h5
+id="get_data_client"><strong><code>get_data_client()</code></strong></h5>
+<p>Returns the historical data client instance.</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data_client <span class="op">=</span> sdk.get_data_client()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Fetch historical bars</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>bars <span class="op">=</span> data_client.get_stock_bars(...)</span></code></pre></div>
+<h4 id="trading-operations"><strong>Trading Operations</strong></h4>
+<h5
+id="get_positionsymbol"><strong><code>get_position(symbol)</code></strong></h5>
+<p>Retrieves the current open position for a trading symbol.</p>
+<p><strong>Parameters:</strong> - <code>symbol</code> (str): Trading
+symbol (e.g., “AAPL”, “SPY”)</p>
+<p><strong>Returns:</strong> - <code>Position</code>: Position object
+with quantity, average price, etc., or <code>None</code> if no
+position</p>
+<p><strong>Examples:</strong></p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check AAPL position</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>position <span class="op">=</span> sdk.get_position(<span class="st">&quot;AAPL&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> position:</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;AAPL: </span><span class="sc">{</span>position<span class="sc">.</span>qty<span class="sc">}</span><span class="ss"> shares @ $</span><span class="sc">{</span>position<span class="sc">.</span>avg_entry_price<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Market value: $</span><span class="sc">{</span>position<span class="sc">.</span>market_value<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Unrealized P&amp;L: $</span><span class="sc">{</span>position<span class="sc">.</span>unrealized_pl<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;No AAPL position found&quot;</span>)</span></code></pre></div>
+<h5
+id="submit_ordersymbol-shares_per_trade-side-type-limit_price-submits_file-error_file"><strong><code>submit_order(symbol, shares_per_trade, side, type, limit_price, submits_file, error_file)</code></strong></h5>
+<p>Submits a trading order with comprehensive logging and error
+handling.</p>
+<p><strong>Parameters:</strong> - <code>symbol</code> (str): Trading
+symbol - <code>shares_per_trade</code> (int): Number of shares to trade
+- <code>side</code> (OrderSide): Order side (<code>OrderSide.BUY</code>
+or <code>OrderSide.SELL</code>) - <code>type</code> (str): Order type
+(<code>"market"</code> or <code>"limit"</code>) -
+<code>limit_price</code> (float): Limit price for limit orders (ignored
+for market orders) - <code>submits_file</code> (str): Path to CSV file
+for successful order logging - <code>error_file</code> (str): Path to
+CSV file for error logging</p>
+<p><strong>Returns:</strong> - <code>Order</code>: Order response object
+if successful, <code>None</code> if failed</p>
+<p><strong>Examples:</strong></p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> alpaca.trading.enums <span class="im">import</span> OrderSide</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Market buy order</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;AAPL&quot;</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    submits_file<span class="op">=</span><span class="st">&quot;successful_orders.csv&quot;</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    error_file<span class="op">=</span><span class="st">&quot;failed_orders.csv&quot;</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Limit sell order</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;TSLA&quot;</span>, </span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    side<span class="op">=</span>OrderSide.SELL,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;limit&quot;</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    limit_price<span class="op">=</span><span class="fl">250.00</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    submits_file<span class="op">=</span><span class="st">&quot;orders.csv&quot;</span>,</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    error_file<span class="op">=</span><span class="st">&quot;errors.csv&quot;</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> order:</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Order </span><span class="sc">{</span>order<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss"> submitted successfully&quot;</span>)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Status: </span><span class="sc">{</span>order<span class="sc">.</span>status<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;Order submission failed - check error log&quot;</span>)</span></code></pre></div>
+<h5
+id="cancel_orderssymbol-orders_listnone-canceled_filenone"><strong><code>cancel_orders(symbol, orders_list=None, canceled_file=None)</code></strong></h5>
+<p>Cancels orders for a specific symbol with flexible targeting
+options.</p>
+<p><strong>Parameters:</strong> - <code>symbol</code> (str): Trading
+symbol - <code>orders_list</code> (list, optional): Specific order IDs
+to cancel. If <code>None</code>, cancels all open orders for symbol -
+<code>canceled_file</code> (str, optional): Path to CSV file to save
+canceled order information</p>
+<p><strong>Returns:</strong> - <code>list</code>: Updated orders list
+with remaining orders after cancellation</p>
+<p><strong>Examples:</strong></p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cancel all open orders for AAPL</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>remaining_orders <span class="op">=</span> sdk.cancel_orders(<span class="st">&quot;AAPL&quot;</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Cancel specific orders</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>order_ids <span class="op">=</span> [<span class="st">&quot;order_id_1&quot;</span>, <span class="st">&quot;order_id_2&quot;</span>]</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>remaining_orders <span class="op">=</span> sdk.cancel_orders(<span class="st">&quot;SPY&quot;</span>, orders_list<span class="op">=</span>order_ids)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Cancel with logging</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>remaining_orders <span class="op">=</span> sdk.cancel_orders(</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;TSLA&quot;</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    canceled_file<span class="op">=</span><span class="st">&quot;canceled_orders.csv&quot;</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Remaining open orders: </span><span class="sc">{</span><span class="bu">len</span>(remaining_orders)<span class="sc">}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+<h2 id="configuration-management">🔧 <strong>Configuration
+Management</strong></h2>
+<h3 id="environment-files"><strong>Environment Files</strong></h3>
+<p>AlpacaSDK supports flexible environment configuration:</p>
+<h4 id="default-.env-configuration"><strong>Default .env
+Configuration</strong></h4>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Place in project root as .env</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="va">ALPACA_TRADE_KEY</span><span class="op">=</span>PKB...</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="va">ALPACA_TRADE_SECRET</span><span class="op">=</span>abc123...</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="va">DATA_KEY</span><span class="op">=</span>PK...  </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="va">DATA_SECRET</span><span class="op">=</span>def456...</span></code></pre></div>
+<h4 id="multiple-environment-files"><strong>Multiple Environment
+Files</strong></h4>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Development environment</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients(<span class="st">&quot;/path/to/dev.env&quot;</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Production environment  </span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients(<span class="st">&quot;/path/to/prod.env&quot;</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing environment</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients(<span class="st">&quot;/path/to/test.env&quot;</span>)</span></code></pre></div>
+<h4 id="custom-environment-variable-names"><strong>Custom Environment
+Variable Names</strong></h4>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If your .env uses different key names</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    TRADE_KEY<span class="op">=</span><span class="st">&quot;MY_ALPACA_KEY&quot;</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    TRADE_SECRET<span class="op">=</span><span class="st">&quot;MY_ALPACA_SECRET&quot;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>sdk.create_data_client(</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    DATA_KEY<span class="op">=</span><span class="st">&quot;MY_DATA_API_KEY&quot;</span>, </span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    DATA_SECRET<span class="op">=</span><span class="st">&quot;MY_DATA_API_SECRET&quot;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<h3 id="error-handling-and-logging"><strong>Error Handling and
+Logging</strong></h3>
+<h4 id="automatic-error-logging"><strong>Automatic Error
+Logging</strong></h4>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Orders and errors are automatically logged to CSV files</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;AAPL&quot;</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    submits_file<span class="op">=</span><span class="st">&quot;trade_log.csv&quot;</span>,      <span class="co"># Successful orders</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    error_file<span class="op">=</span><span class="st">&quot;error_log.csv&quot;</span>         <span class="co"># Failed orders with details</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<h4 id="exception-handling"><strong>Exception Handling</strong></h4>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    trading_client <span class="op">=</span> sdk.get_trading_client()</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> e:</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Configuration error: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Unexpected error: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+<h2 id="integration-examples">🔄 <strong>Integration
+Examples</strong></h2>
+<h3 id="with-machinetrader-framework"><strong>With MachineTrader
+Framework</strong></h3>
+<p>AlpacaSDK integrates seamlessly with the MachineTrader package:</p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> MachineTrader <span class="im">import</span> CreateStrategy</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Strategy uses AlpacaSDK internally</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> CreateStrategy(</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;AAPL&quot;</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    strategy_name<span class="op">=</span><span class="st">&quot;AAPL_Momentum&quot;</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Direct SDK access for advanced operations</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>sdk <span class="op">=</span> strategy.sdk  <span class="co"># Access the underlying AlpacaSDK instance</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>position <span class="op">=</span> sdk.get_position(<span class="st">&quot;AAPL&quot;</span>)</span></code></pre></div>
+<h3 id="real-time-trading-loop"><strong>Real-time Trading
+Loop</strong></h3>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> asyncio</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> alpaca.trading.enums <span class="im">import</span> OrderSide</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> trading_bot():</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Main trading loop</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Check positions</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>            position <span class="op">=</span> sdk.get_position(<span class="st">&quot;SPY&quot;</span>)</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Implement your trading logic here</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> should_buy():</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>                order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>                    symbol<span class="op">=</span><span class="st">&quot;SPY&quot;</span>,</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>                    shares_per_trade<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>                    side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>                    limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>                    submits_file<span class="op">=</span><span class="st">&quot;bot_orders.csv&quot;</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>                    error_file<span class="op">=</span><span class="st">&quot;bot_errors.csv&quot;</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">await</span> asyncio.sleep(<span class="dv">1</span>)  <span class="co"># 1-second interval</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;Trading loop error: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>            <span class="cf">await</span> asyncio.sleep(<span class="dv">5</span>)  <span class="co"># Wait before retrying</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the trading bot</span></span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>asyncio.run(trading_bot())</span></code></pre></div>
+<h3 id="portfolio-management"><strong>Portfolio Management</strong></h3>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_summary():</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    symbols <span class="op">=</span> [<span class="st">&quot;AAPL&quot;</span>, <span class="st">&quot;TSLA&quot;</span>, <span class="st">&quot;SPY&quot;</span>, <span class="st">&quot;QQQ&quot;</span>]</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    total_value <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;📊 Portfolio Summary&quot;</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;=&quot;</span> <span class="op">*</span> <span class="dv">50</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> symbol <span class="kw">in</span> symbols:</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>        position <span class="op">=</span> sdk.get_position(symbol)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> position:</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>            value <span class="op">=</span> <span class="bu">float</span>(position.market_value)</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>            total_value <span class="op">+=</span> value</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>symbol<span class="sc">:6}</span><span class="ss"> | </span><span class="sc">{</span>position<span class="sc">.</span>qty<span class="sc">:&gt;8}</span><span class="ss"> shares | $</span><span class="sc">{</span>value<span class="sc">:&gt;10,.2f}</span><span class="ss">&quot;</span>)</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>symbol<span class="sc">:6}</span><span class="ss"> | </span><span class="sc">{</span><span class="st">&#39;0&#39;</span><span class="sc">:&gt;8}</span><span class="ss"> shares | $</span><span class="sc">{</span><span class="st">&#39;0.00&#39;</span><span class="sc">:&gt;10}</span><span class="ss">&quot;</span>)</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;=&quot;</span> <span class="op">*</span> <span class="dv">50</span>)</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span><span class="st">&#39;TOTAL&#39;</span><span class="sc">:6}</span><span class="ss"> | </span><span class="sc">{</span><span class="st">&#39; &#39;</span><span class="sc">:&gt;8}</span><span class="ss"> | $</span><span class="sc">{</span>total_value<span class="sc">:&gt;10,.2f}</span><span class="ss">&quot;</span>)</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run portfolio summary</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>portfolio_summary()</span></code></pre></div>
+<h2 id="testing-development">🧪 <strong>Testing &amp;
+Development</strong></h2>
+<h3 id="testing-api-connection"><strong>Testing API
+Connection</strong></h3>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> AlpacaSDK <span class="im">import</span> AlpacaSDK</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_connection():</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Test API connection and credentials&quot;&quot;&quot;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>        sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>        sdk.create_trade_clients()</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Test trading client</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>        client <span class="op">=</span> sdk.get_trading_client()</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>        account <span class="op">=</span> client.get_account()</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;✅ Trading API connected - Account: </span><span class="sc">{</span>account<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Test data client</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>        sdk.create_data_client()</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>        data_client <span class="op">=</span> sdk.get_data_client()</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">&quot;✅ Data API connected&quot;</span>)</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;❌ Connection failed: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Test your setup</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>test_connection()</span></code></pre></div>
+<h3 id="paper-trading-verification"><strong>Paper Trading
+Verification</strong></h3>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> verify_paper_trading():</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Verify you&#39;re connected to paper trading (not live)&quot;&quot;&quot;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    client <span class="op">=</span> sdk.get_trading_client()</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    account <span class="op">=</span> client.get_account()</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check if account is paper trading</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">hasattr</span>(account, <span class="st">&#39;account_number&#39;</span>):</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">&#39;PA&#39;</span> <span class="kw">in</span> <span class="bu">str</span>(account.account_number):  <span class="co"># Paper accounts start with PA</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">&quot;✅ Connected to PAPER TRADING account&quot;</span>)</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">&quot;⚠️  WARNING: Connected to LIVE TRADING account&quot;</span>)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Account ID: </span><span class="sc">{</span>account<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Buying Power: $</span><span class="sc">{</span>account<span class="sc">.</span>buying_power<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>verify_paper_trading()</span></code></pre></div>
+<h2 id="csv-data-management">📊 <strong>CSV Data
+Management</strong></h2>
+<h3 id="order-logging"><strong>Order Logging</strong></h3>
+<p>AlpacaSDK automatically logs all order activity to CSV files:</p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Successful orders logged to this file</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>successful_orders <span class="op">=</span> <span class="st">&quot;successful_orders.csv&quot;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Failed orders logged to this file  </span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>failed_orders <span class="op">=</span> <span class="st">&quot;failed_orders.csv&quot;</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Canceled orders logged to this file</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>canceled_orders <span class="op">=</span> <span class="st">&quot;canceled_orders.csv&quot;</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Submit order with logging</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    symbol<span class="op">=</span><span class="st">&quot;AAPL&quot;</span>,</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    shares_per_trade<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>, </span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>    submits_file<span class="op">=</span>successful_orders,</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>    error_file<span class="op">=</span>failed_orders</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Cancel orders with logging</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>sdk.cancel_orders(<span class="st">&quot;AAPL&quot;</span>, canceled_file<span class="op">=</span>canceled_orders)</span></code></pre></div>
+<h3 id="csv-data-analysis"><strong>CSV Data Analysis</strong></h3>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Analyze order history</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> analyze_orders():</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Load order data</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    orders_df <span class="op">=</span> pd.read_csv(<span class="st">&quot;successful_orders.csv&quot;</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    errors_df <span class="op">=</span> pd.read_csv(<span class="st">&quot;failed_orders.csv&quot;</span>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;📈 Order Analysis&quot;</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Total successful orders: </span><span class="sc">{</span><span class="bu">len</span>(orders_df)<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Total failed orders: </span><span class="sc">{</span><span class="bu">len</span>(errors_df)<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Success rate</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    total_attempts <span class="op">=</span> <span class="bu">len</span>(orders_df) <span class="op">+</span> <span class="bu">len</span>(errors_df)</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    success_rate <span class="op">=</span> <span class="bu">len</span>(orders_df) <span class="op">/</span> total_attempts <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Success rate: </span><span class="sc">{</span>success_rate<span class="sc">:.1f}</span><span class="ss">%&quot;</span>)</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Order breakdown by symbol</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    symbol_counts <span class="op">=</span> orders_df[<span class="st">&#39;symbol&#39;</span>].value_counts()</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">Orders by symbol:&quot;</span>)</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(symbol_counts)</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>analyze_orders()</span></code></pre></div>
+<h2 id="best-practices">🚀 <strong>Best Practices</strong></h2>
+<h3 id="client-initialization"><strong>1. Client
+Initialization</strong></h3>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize clients once and reuse</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TradingManager:</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.sdk.create_trade_clients()</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.sdk.create_data_client()</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> execute_trade(<span class="va">self</span>, symbol, quantity):</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Use existing clients</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.sdk.submit_order(...)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Create manager instance</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>manager <span class="op">=</span> TradingManager()</span></code></pre></div>
+<h3 id="error-handling"><strong>2. Error Handling</strong></h3>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Always handle potential errors</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> safe_order_submission(sdk, symbol, quantity):</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        order <span class="op">=</span> sdk.submit_order(</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>            symbol<span class="op">=</span>symbol,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>            shares_per_trade<span class="op">=</span>quantity,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>            side<span class="op">=</span>OrderSide.BUY,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>            <span class="bu">type</span><span class="op">=</span><span class="st">&quot;market&quot;</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>            limit_price<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>            submits_file<span class="op">=</span><span class="st">&quot;orders.csv&quot;</span>,</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>            error_file<span class="op">=</span><span class="st">&quot;errors.csv&quot;</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> order</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Order submission failed: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span></code></pre></div>
+<h3 id="environment-management"><strong>3. Environment
+Management</strong></h3>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use different configs for different environments</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>env <span class="op">=</span> os.getenv(<span class="st">&quot;TRADING_ENV&quot;</span>, <span class="st">&quot;development&quot;</span>)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> env <span class="op">==</span> <span class="st">&quot;production&quot;</span>:</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients(<span class="st">&quot;/path/to/prod.env&quot;</span>)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> env <span class="op">==</span> <span class="st">&quot;staging&quot;</span>:</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients(<span class="st">&quot;/path/to/staging.env&quot;</span>) </span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()  <span class="co"># Use default dev config</span></span></code></pre></div>
+<h2 id="troubleshooting">🔍 <strong>Troubleshooting</strong></h2>
+<h3 id="common-issues"><strong>Common Issues</strong></h3>
+<p><strong>1. Authentication Errors</strong></p>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check API key format and permissions</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    sdk.create_trade_clients()</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> e:</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Authentication failed: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Verify .env file exists and contains correct keys</span></span></code></pre></div>
+<p><strong>2. Network Connectivity</strong></p>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test basic connectivity</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_alpaca_connectivity():</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>        response <span class="op">=</span> requests.get(<span class="st">&quot;https://paper-api.alpaca.markets/v2/account&quot;</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;API reachable: </span><span class="sc">{</span>response<span class="sc">.</span>status_code<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Network error: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>test_alpaca_connectivity()</span></code></pre></div>
+<p><strong>3. Order Rejection</strong></p>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Common reasons for order rejection:</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co"># - Insufficient buying power</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="co"># - Market closed</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># - Invalid symbol</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="co"># - Minimum order size not met</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>position <span class="op">=</span> sdk.get_position(symbol)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>account <span class="op">=</span> sdk.get_trading_client().get_account()</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Buying power: </span><span class="sc">{</span>account<span class="sc">.</span>buying_power<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Current position: </span><span class="sc">{</span>position<span class="sc">.</span>qty <span class="cf">if</span> position <span class="cf">else</span> <span class="dv">0</span><span class="sc">}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+<h3 id="debug-mode"><strong>Debug Mode</strong></h3>
+<div class="sourceCode" id="cb36"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable detailed logging</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>logging.basicConfig(level<span class="op">=</span>logging.DEBUG)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="co"># SDK will now provide verbose output</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>sdk <span class="op">=</span> AlpacaSDK()</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>sdk.create_trade_clients()</span></code></pre></div>
+<h2 id="license">📄 <strong>License</strong></h2>
+<p>This project is licensed under the MIT License - see the <a
+href="LICENSE">LICENSE</a> file for details.</p>
+<h2 id="acknowledgments">🙏 <strong>Acknowledgments</strong></h2>
+<ul>
+<li><strong>Alpaca Markets</strong> - For providing the comprehensive
+trading API</li>
+<li><strong>Alpaca-py Team</strong> - For the excellent official Python
+SDK</li>
+<li><strong>Python Community</strong> - For the robust ecosystem of
+financial tools</li>
+</ul>
+<h2 id="support">📞 <strong>Support</strong></h2>
+<ul>
+<li><strong>Documentation</strong>: <a
+href="https://alpaca.markets/docs/">Alpaca API Docs</a></li>
+<li><strong>Issues</strong>: <a
+href="https://github.com/your-username/AlpacaSDK/issues">GitHub
+Issues</a></li>
+<li><strong>Community</strong>: <a
+href="https://alpaca.markets/community">Alpaca Community</a></li>
+<li><strong>Email</strong>: support@alpacasdk.com</li>
+</ul>
+<hr />
+<p><strong>⚠️ Important Notice:</strong> This SDK is designed for both
+paper trading and live trading. Always verify you’re connected to the
+correct environment (paper vs live) before executing trades. Paper
+trading is recommended for development and testing.</p>
+<hr />
+<div data-align="center">
+<p><strong>Built for Professional Algorithmic Trading</strong></p>
+<p><a href="https://github.com/your-username/AlpacaSDK">⭐ Star us on
+GitHub</a> | <a
+href="https://github.com/your-username/AlpacaSDK/issues">🐛 Report
+Bug</a> | <a href="https://github.com/your-username/AlpacaSDK/issues">💡
+Request Feature</a></p>
+</div>
+</body>
+</html>

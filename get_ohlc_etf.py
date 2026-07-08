@@ -10,17 +10,31 @@ import pandas as pd
 import re
 from datetime import datetime, timedelta
 from functools import reduce
+from dotenv import load_dotenv
 from tqdm.asyncio import tqdm_asyncio
 
-API_KEY = "d84fc2a9c5bde2d68e33034f65a838092c6b9f10"
+load_dotenv()
 
-DATA_DIR = "/Users/jerzy/Develop/data/daily/"
+API_KEY = os.getenv("API_KEY", "")
+if not API_KEY:
+    raise ValueError("Missing API_KEY in environment")
+
+DATA_DIR = os.getenv("ETF_DATA_DIR", "/Users/jerzy/Develop/data/daily/")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-LIQUIDITY_PATH = "/Users/jerzy/Develop/data/all_liquidity_etf.parquet"
-BACKTEST_PATH = "/Users/jerzy/Develop/data/backtesting_dataset_etf.parquet"
+LIQUIDITY_PATH = os.getenv("ETF_LIQUIDITY_PATH", "/Users/jerzy/Develop/data/all_liquidity_etf.parquet")
+BACKTEST_PATH = os.getenv("ETF_BACKTEST_PATH", "/Users/jerzy/Develop/data/backtesting_dataset_etf.parquet")
 
-BASE_URL = "https://api.tiingo.com"
+BASE_URL = os.getenv("TIINGO_BASE_URL", "https://api.tiingo.com")
+FETCH_TIMEOUT_SECONDS = int(os.getenv("TIINGO_FETCH_TIMEOUT_SECONDS", "60"))
+FETCH_MAX_RETRIES = int(os.getenv("TIINGO_FETCH_MAX_RETRIES", "5"))
+FETCH_BACKOFF = float(os.getenv("TIINGO_FETCH_BACKOFF", "1.5"))
+HISTORY_START_DATE = os.getenv("TIINGO_HISTORY_START_DATE", "1900-01-01")
+RESAMPLE_FREQ = os.getenv("TIINGO_RESAMPLE_FREQ", "daily")
+RANKING_LOOKBACK_DAYS = int(os.getenv("ETF_RANKING_LOOKBACK_DAYS", "365"))
+RANKING_BATCH_SIZE = int(os.getenv("ETF_RANKING_BATCH_SIZE", "64"))
+DOWNLOAD_BATCH_SIZE = int(os.getenv("ETF_DOWNLOAD_BATCH_SIZE", "64"))
+RANKING_PATH = os.getenv("ETF_RANKING_PATH", "/Users/jerzy/Develop/data/etf_candidate_ranking.parquet")
 
 REQUIRED_ETFS = [
     "SPY", "VTI", "QQQ", "VEU", "EEM", "XLY", "XLP", "XLE", "XLF", "XLV",
@@ -39,13 +53,13 @@ class TiingoQuotaError(RuntimeError):
 # ---------------------------------------------------------
 # HTTP helper with retry + backoff
 # ---------------------------------------------------------
-async def fetch_json(session, url, params=None, max_retries=5, backoff=1.5):
+async def fetch_json(session, url, params=None, max_retries=FETCH_MAX_RETRIES, backoff=FETCH_BACKOFF):
     params = params or {}
     params["token"] = API_KEY
 
     for attempt in range(max_retries):
         try:
-            async with session.get(url, params=params, timeout=60) as resp:
+            async with session.get(url, params=params, timeout=FETCH_TIMEOUT_SECONDS) as resp:
                 if resp.status in (429, 503):
                     await asyncio.sleep(backoff ** attempt)
                     continue
@@ -106,11 +120,11 @@ async def discover_etf_candidates() -> list[str]:
 # ---------------------------------------------------------
 # 2. Fetch daily bars for a ticker (full history by default)
 # ---------------------------------------------------------
-async def get_bars(session, ticker, start_date: str = "1900-01-01"):
+async def get_bars(session, ticker, start_date: str = HISTORY_START_DATE):
     url = f"{BASE_URL}/tiingo/daily/{ticker}/prices"
     params = {
         "startDate": start_date,
-        "resampleFreq": "daily",
+        "resampleFreq": RESAMPLE_FREQ,
     }
 
     data = await fetch_json(session, url, params=params)
@@ -146,7 +160,7 @@ async def get_bars(session, ticker, start_date: str = "1900-01-01"):
 # ---------------------------------------------------------
 # 3. Compute recent volume for ETF ranking
 # ---------------------------------------------------------
-async def compute_volume(session, ticker, lookback_days: int = 365):
+async def compute_volume(session, ticker, lookback_days: int = RANKING_LOOKBACK_DAYS):
     start_date = (datetime.utcnow().date() - timedelta(days=lookback_days)).isoformat()
     df = await get_bars(session, ticker, start_date=start_date)
     if df is None or df.empty:
@@ -186,7 +200,7 @@ async def process_ticker(session, ticker):
 # ---------------------------------------------------------
 # 5. Rank candidate ETFs by recent volume and select top 100
 # ---------------------------------------------------------
-async def select_top_100_etfs(candidates: list[str], batch_size: int = 64) -> tuple[list[str], pd.DataFrame]:
+async def select_top_100_etfs(candidates: list[str], batch_size: int = RANKING_BATCH_SIZE) -> tuple[list[str], pd.DataFrame]:
     volume_rows: list[tuple[str, float]] = []
     connector = aiohttp.TCPConnector(limit=batch_size)
 
@@ -235,7 +249,7 @@ async def select_top_100_etfs(candidates: list[str], batch_size: int = 64) -> tu
 # ---------------------------------------------------------
 # 6. Download full OHLCV for selected ETFs
 # ---------------------------------------------------------
-async def compute_volume(tickers, batch_size=64):
+async def compute_volume(tickers, batch_size=DOWNLOAD_BATCH_SIZE):
     liquidity = []
     all_prices = []
 
@@ -313,9 +327,8 @@ async def main():
     backtest_df.to_parquet(BACKTEST_PATH, index=False)
     print(f"Saved {BACKTEST_PATH}")
 
-    ranking_path = "/Users/jerzy/Develop/data/etf_candidate_ranking.parquet"
-    ranking_df.to_parquet(ranking_path, index=False)
-    print(f"Saved {ranking_path}")
+    ranking_df.to_parquet(RANKING_PATH, index=False)
+    print(f"Saved {RANKING_PATH}")
 
     print("\nTop 100 most liquid ETFs in target universe:")
     print(liquidity_df.head(100))

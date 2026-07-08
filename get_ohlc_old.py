@@ -3,10 +3,16 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dotenv import load_dotenv
 
-API_KEY = "YOUR_POLYGON_API_KEY"
-DATA_DIR = "prices"
+load_dotenv()
+
+API_KEY = os.getenv("POLYGON_API_KEY", "")
+DATA_DIR = os.getenv("POLYGON_LEGACY_DATA_DIR", "prices")
 os.makedirs(DATA_DIR, exist_ok=True)
+
+if not API_KEY:
+    raise ValueError("Missing POLYGON_API_KEY in environment")
 
 # ---------------------------------------------------------
 # 1. Get all active US stock tickers

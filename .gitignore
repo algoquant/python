@@ -1,5 +1,6 @@
 # Ignore all files
 *
+.env
 .DS_Store
 .idea/
 .vscode/
@@ -9,6 +10,7 @@
 !AlpacaSDK/**
 !MachineTrader/
 !MachineTrader/**
+!Trading/
 
 # Ignore directories
 .pylint.d/

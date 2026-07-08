@@ -1,10 +1,17 @@
 import alpaca_trade_api as tradeapi
 import pandas as pd
+import os
+from dotenv import load_dotenv
 
 # Alpaca API credentials
-API_KEY = "PKMIDDD0B792FZO6HF7E"
-SECRET_KEY = "u89kQV6dRJyom4ONFgpWHOr7jho8fY3SrMTD6Fvs"
-BASE_URL = "https://paper-api.alpaca.markets"
+load_dotenv()
+
+API_KEY = os.getenv("ALPACA_API_KEY", "")
+SECRET_KEY = os.getenv("ALPACA_SECRET_KEY", "")
+BASE_URL = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
+if not API_KEY or not SECRET_KEY:
+	raise ValueError("Missing ALPACA_API_KEY or ALPACA_SECRET_KEY in environment")
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, base_url=BASE_URL)
 

@@ -8,21 +8,72 @@ import os
 import sys
 import asyncio
 from datetime import date
+from pathlib import Path
 import aiohttp
 import pandas as pd
 from tqdm.asyncio import tqdm_asyncio
 
-API_KEY = "d84fc2a9c5bde2d68e33034f65a838092c6b9f10"
 
-BASE_URL = "https://api.tiingo.com"
+def _load_dotenv(dotenv_path: str = ".env") -> None:
+    """Load KEY=VALUE pairs from a .env file into os.environ if not already set."""
+    path = Path(dotenv_path)
+    if not path.exists():
+        return
 
-STOCKS_METADATA = "/Users/jerzy/Develop/data/stock_metadata.csv"
-ETFS_METADATA   = "/Users/jerzy/Develop/data/etf_metadata.csv"
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"").strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
-STOCKS_DATA_DIR     = "/Users/jerzy/Develop/data/daily/"
-ETFS_DATA_DIR       = "/Users/jerzy/Develop/data/daily/"
-STOCKS_LIQUIDITY    = "/Users/jerzy/Develop/data/all_liquidity.parquet"
-ETFS_LIQUIDITY      = "/Users/jerzy/Develop/data/all_liquidity_etf.parquet"
+
+def _get_env(name: str, default: str | None = None, required: bool = False) -> str:
+    value = os.getenv(name, default)
+    if required and (value is None or str(value).strip() == ""):
+        raise ValueError(f"Missing required environment variable: {name}")
+    return "" if value is None else value
+
+
+def _get_env_int(name: str, default: int) -> int:
+    raw = os.getenv(name, str(default))
+    try:
+        return int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Environment variable {name} must be an integer, got {raw!r}") from exc
+
+
+def _get_env_float(name: str, default: float) -> float:
+    raw = os.getenv(name, str(default))
+    try:
+        return float(raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Environment variable {name} must be a float, got {raw!r}") from exc
+
+
+_load_dotenv()
+
+API_KEY = _get_env("API_KEY", required=True)
+
+BASE_URL = _get_env("BASE_URL", "https://api.tiingo.com")
+
+STOCKS_METADATA = _get_env("STOCKS_METADATA", "/Users/jerzy/Develop/data/stock_metadata.csv")
+ETFS_METADATA   = _get_env("ETFS_METADATA", "/Users/jerzy/Develop/data/etf_metadata.csv")
+
+STOCKS_DATA_DIR     = _get_env("STOCKS_DATA_DIR", "/Users/jerzy/Develop/data/daily/")
+ETFS_DATA_DIR       = _get_env("ETFS_DATA_DIR", "/Users/jerzy/Develop/data/daily/")
+STOCKS_LIQUIDITY    = _get_env("STOCKS_LIQUIDITY", "/Users/jerzy/Develop/data/all_liquidity.parquet")
+ETFS_LIQUIDITY      = _get_env("ETFS_LIQUIDITY", "/Users/jerzy/Develop/data/all_liquidity_etf.parquet")
+
+FETCH_TIMEOUT_SECONDS = _get_env_int("FETCH_TIMEOUT_SECONDS", 60)
+FETCH_MAX_RETRIES = _get_env_int("FETCH_MAX_RETRIES", 5)
+FETCH_BACKOFF = _get_env_float("FETCH_BACKOFF", 1.5)
+HISTORY_START_DATE = _get_env("HISTORY_START_DATE", "1900-01-01")
+RESAMPLE_FREQ = _get_env("RESAMPLE_FREQ", "daily")
+BATCH_SIZE = _get_env_int("BATCH_SIZE", 64)
 
 
 def _parse_mode() -> str:
@@ -52,13 +103,13 @@ def _resolve_paths(mode: str) -> tuple[str, str, str]:
 # ---------------------------------------------------------
 # HTTP helper with retry + backoff
 # ---------------------------------------------------------
-async def fetch_json(session, url, params=None, max_retries=5, backoff=1.5):
+async def fetch_json(session, url, params=None, max_retries=FETCH_MAX_RETRIES, backoff=FETCH_BACKOFF):
     params = params or {}
     params["token"] = API_KEY
 
     for attempt in range(max_retries):
         try:
-            async with session.get(url, params=params, timeout=60) as resp:
+            async with session.get(url, params=params, timeout=FETCH_TIMEOUT_SECONDS) as resp:
                 if resp.status in (429, 503):
                     await asyncio.sleep(backoff ** attempt)
                     continue
@@ -99,11 +150,11 @@ def get_all_tickers(metadata_file: str) -> list[str]:
 async def get_all_bars(session, ticker):
     url = f"{BASE_URL}/tiingo/daily/{ticker}/prices"
     params = {
-        "startDate": "1900-01-01",
-        "resampleFreq": "daily",
+        "startDate": HISTORY_START_DATE,
+        "resampleFreq": RESAMPLE_FREQ,
     }
 
-    data = await fetch_json(session, url, params=params)
+    data = await fetch_json(session, url, params=params, max_retries=FETCH_MAX_RETRIES, backoff=FETCH_BACKOFF)
     if not data:
         return None
 
@@ -170,7 +221,7 @@ async def process_ticker(session, ticker):
 # ---------------------------------------------------------
 # 4. Async orchestration with batching + tqdm
 # ---------------------------------------------------------
-async def compute_volume(tickers, batch_size=64):
+async def compute_volume(tickers, batch_size=BATCH_SIZE):
     liquidity = []
 
     connector = aiohttp.TCPConnector(limit=batch_size)

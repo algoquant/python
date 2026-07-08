@@ -8,18 +8,29 @@ import asyncio
 import aiohttp
 import pandas as pd
 import re
+from dotenv import load_dotenv
 from tqdm.asyncio import tqdm_asyncio
 
-# Polygon API key (get your own free key at https://polygon.io/)
-API_KEY = "0Q2f8j8CwAbdY4M8VYt_8pwdP0V4TunxbvRVC_"
+# Polygon API key (set in .env)
+load_dotenv()
 
-DATA_DIR = "/Users/jerzy/Develop/data/daily/"
+API_KEY = os.getenv("POLYGON_API_KEY", "")
+if not API_KEY:
+    raise ValueError("Missing POLYGON_API_KEY in environment")
+
+DATA_DIR = os.getenv("POLYGON_DATA_DIR", "/Users/jerzy/Develop/data/daily/")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-LIQUIDITY_PATH = "/Users/jerzy/Develop/data/all_liquidity.parquet"
-BACKTEST_PATH = "/Users/jerzy/Develop/data/backtesting_dataset.parquet"
+LIQUIDITY_PATH = os.getenv("POLYGON_LIQUIDITY_PATH", "/Users/jerzy/Develop/data/all_liquidity.parquet")
+BACKTEST_PATH = os.getenv("POLYGON_BACKTEST_PATH", "/Users/jerzy/Develop/data/backtesting_dataset.parquet")
 
-BASE_URL = "https://api.polygon.io"
+BASE_URL = os.getenv("POLYGON_BASE_URL", "https://api.polygon.io")
+FETCH_TIMEOUT_SECONDS = int(os.getenv("POLYGON_FETCH_TIMEOUT_SECONDS", "60"))
+FETCH_MAX_RETRIES = int(os.getenv("POLYGON_FETCH_MAX_RETRIES", "5"))
+FETCH_BACKOFF = float(os.getenv("POLYGON_FETCH_BACKOFF", "1.5"))
+HISTORY_START_DATE = os.getenv("POLYGON_HISTORY_START_DATE", "1900-01-01")
+RESAMPLE_FREQ = os.getenv("POLYGON_RESAMPLE_FREQ", "daily")
+BATCH_SIZE = int(os.getenv("POLYGON_BATCH_SIZE", "64"))
 
 
 class PolygonQuotaError(RuntimeError):
@@ -29,13 +40,13 @@ class PolygonQuotaError(RuntimeError):
 # ---------------------------------------------------------
 # HTTP helper with retry + backoff
 # ---------------------------------------------------------
-async def fetch_json(session, url, params=None, max_retries=5, backoff=1.5):
+async def fetch_json(session, url, params=None, max_retries=FETCH_MAX_RETRIES, backoff=FETCH_BACKOFF):
     params = params or {}
     params["token"] = API_KEY
 
     for attempt in range(max_retries):
         try:
-            async with session.get(url, params=params, timeout=60) as resp:
+            async with session.get(url, params=params, timeout=FETCH_TIMEOUT_SECONDS) as resp:
                 if resp.status in (429, 503):
                     await asyncio.sleep(backoff ** attempt)
                     continue
@@ -57,7 +68,7 @@ async def get_all_tickers():
     url = f"{BASE_URL}/stocks/meta"
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, params={"token": API_KEY}, timeout=60) as resp:
+            async with session.get(url, params={"token": API_KEY}, timeout=FETCH_TIMEOUT_SECONDS) as resp:
                 if resp.status == 429:
                     detail = await resp.text()
                     raise PolygonQuotaError(
@@ -103,8 +114,8 @@ async def get_all_tickers():
 async def get_all_bars(session, ticker):
     url = f"{BASE_URL}/stocks/{ticker}/prices"
     params = {
-        "startDate": "1900-01-01",
-        "resampleFreq": "daily",
+        "startDate": HISTORY_START_DATE,
+        "resampleFreq": RESAMPLE_FREQ,
     }
 
     data = await fetch_json(session, url, params=params)
@@ -143,7 +154,7 @@ async def process_ticker(session, ticker):
 # ---------------------------------------------------------
 # 4. Async orchestration with batching + tqdm
 # ---------------------------------------------------------
-async def compute_adv_async(tickers, batch_size=64):
+async def compute_adv_async(tickers, batch_size=BATCH_SIZE):
     liquidity = []
     all_prices = []
 

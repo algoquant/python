@@ -7,12 +7,14 @@ import argparse
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+import os
 
 import logging
 import time
 
 import aiohttp
 import pandas as pd
+from dotenv import load_dotenv
 
 try:
     import yfinance as yf
@@ -21,13 +23,17 @@ try:
 except ImportError:
     yf = None
 
-API_KEY = "d84fc2a9c5bde2d68e33034f65a838092c6b9f10"
+load_dotenv()
 
-INPUT_FILE = Path("/Users/jerzy/Develop/data/all_liquidity.parquet")
-OUTPUT_FILE = Path("/Users/jerzy/Develop/data/stock_metadata.csv")
-YAHOO_CACHE_FILE = Path("/Users/jerzy/Develop/data/yahoo_sector_cache.parquet")
+API_KEY = os.getenv("API_KEY", "")
+if not API_KEY:
+    raise ValueError("Missing API_KEY in environment")
 
-BASE_URL = "https://api.tiingo.com"
+INPUT_FILE = Path(os.getenv("STOCK_METADATA_INPUT_FILE", "/Users/jerzy/Develop/data/all_liquidity.parquet"))
+OUTPUT_FILE = Path(os.getenv("STOCK_METADATA_OUTPUT_FILE", "/Users/jerzy/Develop/data/stock_metadata.csv"))
+YAHOO_CACHE_FILE = Path(os.getenv("YAHOO_CACHE_FILE", "/Users/jerzy/Develop/data/yahoo_sector_cache.parquet"))
+
+BASE_URL = os.getenv("TIINGO_BASE_URL", "https://api.tiingo.com")
 UNAVAILABLE_FREE_TEXT = "field not available for free/evaluation"
 OTC_MARKERS = {
     "OTC",

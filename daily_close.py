@@ -11,6 +11,9 @@ import sys
 import telegram_send
 import signal
 import argparse
+from dotenv import load_dotenv
+
+load_dotenv()
 
 timestamp = int(time.time())
 localtime = time.ctime(timestamp)
@@ -32,8 +35,19 @@ global polygon_api_key
 
 #connect to database
 
-con = mydb = mysql.connector.connect(user='root', password='waWWii21156!', host='127.0.0.1', database='pts', allow_local_infile=True)
-db_connection = mysql.connector.connect(user='root', password='waWWii21156!', host='127.0.0.1', database='pts')
+con = mydb = mysql.connector.connect(
+	user=os.getenv('DAILY_CLOSE_DB_USER', 'root'),
+	password=os.getenv('DAILY_CLOSE_DB_PASSWORD', ''),
+	host=os.getenv('DAILY_CLOSE_DB_HOST', '127.0.0.1'),
+	database=os.getenv('DAILY_CLOSE_DB_NAME', 'pts'),
+	allow_local_infile=True,
+)
+db_connection = mysql.connector.connect(
+	user=os.getenv('DAILY_CLOSE_DB_USER', 'root'),
+	password=os.getenv('DAILY_CLOSE_DB_PASSWORD', ''),
+	host=os.getenv('DAILY_CLOSE_DB_HOST', '127.0.0.1'),
+	database=os.getenv('DAILY_CLOSE_DB_NAME', 'pts'),
+)
 
 table = "equities"
 
@@ -69,7 +83,9 @@ for x in result:
 	
 	a = "https://api.polygon.io/v1/open-close/"
 	b = "/"
-	c = "?apiKey=jg0i3J_ZFD1_v4wBRQFEzp9NHDlYwHQff5_8_u"
+	c = "?apiKey=" + os.getenv("POLYGON_API_KEY", "")
+	if c == "?apiKey=":
+		raise ValueError("Missing POLYGON_API_KEY in environment")
 	url = a + symbol + b + yesterday + c
 	url = str(url)
 	print(url)

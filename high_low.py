@@ -1,9 +1,16 @@
 import requests
+import os
 from datetime import date
+from dotenv import load_dotenv
 
-API_KEY = "d84fc2a9c5bde2d68e33034f65a838092c6b9f10"
-TICKER = "SPY"
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY", "")
+TICKER = os.getenv("HIGH_LOW_TICKER", "SPY")
 TODAY = date.today().isoformat()
+
+if not API_KEY:
+    raise ValueError("Missing API_KEY in environment")
 
 # Try real-time IEX quote first (includes today's high/low during market hours)
 url = f"https://api.tiingo.com/iex/{TICKER}"
